@@ -186,8 +186,13 @@ footer{background:var(--bg);border-top:1px solid var(--border);padding:50px 40px
 
 /* ── MOBILE ── */
 @media(max-width:768px){
-  nav{padding:0 20px}
-  .hero{padding:100px 24px 80px}
+  nav{padding:0 14px;height:56px;gap:8px}
+  .logo-name{font-size:16px}
+  .nav-cta{padding:7px 10px;font-size:0}
+  .nav-cta svg{width:18px;height:18px}
+  .theme-toggle{padding:6px 9px;margin-left:0}
+  #themeLabel{display:none}
+  .hero{padding:90px 24px 80px}
   .hero-h1{letter-spacing:-1.5px}
   .hero-actions{flex-direction:column;align-items:stretch}
   .hero-actions a,.hero-actions button{text-align:center;justify-content:center}
@@ -207,10 +212,10 @@ footer{background:var(--bg);border-top:1px solid var(--border);padding:50px 40px
 }
 
 /* ── PATHFYNDER PHONE ANIMATION (pf- prefixed) ── */
-.pf-phone-frame{width:375px;min-height:660px;background:#0d0d1a;border-radius:44px;border:8px solid #1e1e2e;overflow:hidden;position:relative;margin:0 auto;box-shadow:0 0 0 1px #2a2a3e,0 32px 64px rgba(0,0,0,0.6)}
-.pf-notch{width:120px;height:28px;background:#0d0d1a;border-radius:0 0 20px 20px;margin:0 auto;position:relative;z-index:10}
-.pf-screen{padding:0 0 24px;position:relative;min-height:600px}
-.pf-slide{display:none;flex-direction:column;align-items:center;padding:0 24px 24px;min-height:580px}
+.pf-phone-frame{width:375px;height:680px;background:#0d0d1a;border-radius:44px;border:8px solid #1e1e2e;overflow:hidden;position:relative;margin:0 auto;box-shadow:0 0 0 1px #2a2a3e,0 32px 64px rgba(0,0,0,0.6);display:flex;flex-direction:column}
+.pf-notch{width:120px;height:28px;background:#0d0d1a;border-radius:0 0 20px 20px;margin:0 auto;position:relative;z-index:10;flex-shrink:0}
+.pf-screen{position:relative;flex:1;overflow:hidden}
+.pf-slide{display:none;flex-direction:column;align-items:center;padding:0 24px 16px;position:absolute;inset:0;overflow-y:auto;overflow-x:hidden}
 .pf-slide.pf-active{display:flex}
 .pf-scene-badge{margin:20px auto 24px;display:inline-flex;align-items:center;gap:8px;background:rgba(79,70,229,0.15);border:1px solid rgba(79,70,229,0.4);border-radius:100px;padding:8px 20px;font-size:13px;font-weight:700;letter-spacing:.5px;color:#a5b4fc;text-align:center}
 .pf-dot{width:7px;height:7px;border-radius:50%;background:#6366f1;flex-shrink:0}
@@ -279,7 +284,7 @@ footer{background:var(--bg);border-top:1px solid var(--border);padding:50px 40px
 .pf-end-pills{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
 .pf-end-pill{background:#161626;border:1px solid #1e2040;border-radius:100px;padding:8px 16px;font-size:11px;color:#a5b4fc;font-weight:600}
 /* controls */
-.pf-ctrl-row{display:flex;align-items:center;justify-content:space-between;padding:12px 24px 16px}
+.pf-ctrl-row{display:flex;align-items:center;justify-content:space-between;padding:10px 24px 14px;flex-shrink:0;background:#0d0d1a}
 .pf-ctrl-btn{background:#1e2040;border:none;border-radius:10px;padding:10px 18px;font-size:12px;font-weight:700;color:#a5b4fc;cursor:pointer;transition:background .2s}
 .pf-ctrl-btn:hover{background:#2a2a50}
 .pf-ctrl-btn.pf-play{background:#4f46e5;color:#fff;padding:10px 22px}
@@ -325,26 +330,26 @@ html.light #ontario-map{opacity:0.10}
   .pf-phone-frame{
     width:calc(100vw - 40px);
     max-width:340px;
-    min-height:auto;
+    height:580px;
     border-radius:28px;
-    border-width:6px;
+    border-width:5px;
   }
-  .pf-screen{min-height:auto}
-  .pf-slide{min-height:auto;padding:0 14px 16px}
-  .pf-scene-badge{font-size:11px;padding:6px 14px;margin:12px auto 16px}
-  .pf-chat-window{padding:12px}
+  .pf-slide{padding:0 14px 14px}
+  .pf-scene-badge{font-size:11px;padding:6px 14px;margin:10px auto 14px}
+  .pf-chat-window{padding:10px}
   .pf-msg-text{font-size:10px}
   .pf-notif-card{padding:12px}
   .pf-notif-title{font-size:13px}
   .pf-map-card{padding:12px}
-  .pf-eta-val{font-size:14px}
-  .pf-end-h{font-size:18px}
-  .pf-ctrl-row{padding:8px 16px 12px}
-  .pf-ctrl-btn{padding:8px 14px;font-size:11px}
+  .pf-eta-val{font-size:13px}
+  .pf-end-h{font-size:17px}
+  .pf-ctrl-row{padding:8px 14px 10px;flex-shrink:0}
+  .pf-ctrl-btn{padding:7px 12px;font-size:11px}
 }
 @media(max-width:400px){
   .pf-phone-frame{
     width:calc(100vw - 24px);
+    height:540px;
     border-radius:22px;
   }
 }
