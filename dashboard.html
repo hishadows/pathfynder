@@ -601,106 +601,61 @@ function buildGroups(data) {
 async function fetchLive() {
   if (!db) return Promise.resolve();
 
-  // ── KPI totals ──
+  var today    = new Date();
+  var todayStr = today.toISOString().slice(0, 10);
+  var sevenAgo = new Date(today.getTime() - 7 * 864e5).toISOString().slice(0, 10);
+
+  // ── KPIs: COUNT only (no rows fetched, fast) ──
   try {
-    var [r1, r2, r3, r4] = await Promise.all([
+    var results = await Promise.all([
       db.from('extracted_data_01').select('id', {count:'exact', head:true}),
-      db.from('extracted_data_01').select('sender_number', {count:'exact', head:true}).not('sender_number','is',null),
-      db.from('extracted_data_01').select('id', {count:'exact', head:true}).gte('pick up date', new Date(Date.now()-7*864e5).toISOString().slice(0,10)),
-      db.from('extracted_data_01').select('id', {count:'exact', head:true}).not('pickup_lat','is',null),
+      db.from('extracted_data_01').select('id', {count:'exact', head:true}).gte('"pick up date"', sevenAgo).lte('"pick up date"', todayStr),
+      db.from('extracted_data_01').select('id', {count:'exact', head:true}).not('pickup_lat', 'is', null),
+      db.from('extracted_data_01').select('id', {count:'exact', head:true}).eq('"Type"', 'Passenger'),
+      db.from('extracted_data_01').select('id', {count:'exact', head:true}).eq('"Type"', 'Driver')
     ]);
-    if (r1.count != null) document.getElementById('k-total').textContent = Number(r1.count).toLocaleString();
-    if (r2.count != null) document.getElementById('k-pax').textContent   = Number(r2.count).toLocaleString();
-    if (r3.count != null) {
-      document.getElementById('k-7d').textContent = Number(r3.count).toLocaleString();
-      document.querySelector('#k-7d').closest('.kpi-card').querySelector('.kpi-sub').textContent =
-        '~' + Math.round(r3.count/7) + ' / day avg';
-    }
-    if (r4.count != null) document.getElementById('k-geo').textContent = Number(r4.count).toLocaleString();
-  } catch(e){ console.warn('kpis:', e); }
+    var r_total = results[0], r_7d = results[1], r_geo = results[2], r_pax = results[3], r_drv = results[4];
 
-  // ── Activity chart (last 14 days) ──
-  try {
-    var today = new Date();
-    var from14 = new Date(today.getTime() - 14*864e5).toISOString().slice(0,10);
-    var act = await db.from('extracted_data_01')
-      .select('"pick up date"')
-      .gte('"pick up date"', from14)
-      .lte('"pick up date"', today.toISOString().slice(0,10));
-    if (act.data && act.data.length) {
-      // count by date
-      var counts = {};
-      act.data.forEach(function(r) {
-        var d = r['pick up date'];
-        if (d) counts[d] = (counts[d]||0) + 1;
-      });
-      var days = [];
-      for (var i = 13; i >= 0; i--) {
-        var dt = new Date(today.getTime() - i*864e5);
-        var key = dt.toISOString().slice(0,10);
-        var lbl = dt.toLocaleDateString('en-CA',{month:'short',day:'numeric'});
-        days.push({d: lbl, n: counts[key]||0});
-      }
-      buildActivity(days);
+    if (r_total.count != null) document.getElementById('k-total').textContent = fmt(r_total.count);
+    if (r_7d.count != null) {
+      document.getElementById('k-7d').textContent = fmt(r_7d.count);
+      var sub = document.getElementById('k-7d').closest('.kpi-card').querySelector('.kpi-sub');
+      if (sub) sub.textContent = '~' + Math.round(r_7d.count / 7) + ' / day avg';
     }
-  } catch(e){ console.warn('activity:', e); }
+    if (r_geo.count != null) document.getElementById('k-geo').textContent = fmt(r_geo.count);
 
-  // ── Type split ──
-  try {
-    var types = await db.from('extracted_data_01').select('"Type"');
-    if (types.data) {
-      var pax = 0, drv = 0;
-      types.data.forEach(function(r){
-        var t = (r['Type']||'').toLowerCase();
-        if (t === 'passenger') pax++;
-        else if (t === 'driver') drv++;
-      });
+    // Type split chart with live counts
+    if (r_pax.count != null && r_drv.count != null) {
       buildType([
-        {label:'Passenger', val:pax, color:'rgba(79,142,247,.75)'},
-        {label:'Driver',    val:drv, color:'rgba(34,197,94,.75)'}
+        {label:'Passenger', val: r_pax.count, color:'rgba(79,142,247,.75)'},
+        {label:'Driver',    val: r_drv.count, color:'rgba(34,197,94,.75)'}
       ]);
     }
-  } catch(e){ console.warn('types:', e); }
+  } catch(e){ console.warn('kpis:', e); }
 
-  // ── Top corridors ──
+  // ── Activity chart: 14 parallel COUNT queries (one per day, no limit issues) ──
   try {
-    var corr = await db.from('extracted_data_01')
-      .select('pickup_label,dropoff_label')
-      .not('pickup_label','is',null)
-      .not('dropoff_label','is',null)
-      .not('pickup_label','eq','N/A')
-      .not('dropoff_label','eq','N/A')
-      .limit(5000);
-    if (corr.data && corr.data.length) {
-      var counts = {};
-      corr.data.forEach(function(r){
-        var f = shortLbl(r.pickup_label), t = shortLbl(r.dropoff_label);
-        if (!f || !t || f==='—' || t==='—') return;
-        var key = f + '|||' + t;
-        counts[key] = (counts[key]||0) + 1;
-      });
-      var sorted = Object.keys(counts).map(function(k){
-        var parts = k.split('|||');
-        return {f:parts[0], t:parts[1], n:counts[k]};
-      }).sort(function(a,b){return b.n-a.n;}).slice(0,10);
-      if (sorted.length) buildCorridors(sorted);
+    var dayQueries = [];
+    for (var i = 13; i >= 0; i--) {
+      (function(offset) {
+        var dt      = new Date(today.getTime() - offset * 864e5);
+        var dateStr = dt.toISOString().slice(0, 10);
+        var lbl     = dt.toLocaleDateString('en-CA', {month:'short', day:'numeric'});
+        dayQueries.push(
+          db.from('extracted_data_01')
+            .select('id', {count:'exact', head:true})
+            .eq('"pick up date"', dateStr)
+            .then(function(r) { return {d: lbl, n: r.count || 0}; })
+        );
+      })(i);
     }
-  } catch(e){ console.warn('corridors:', e); }
+    var days = await Promise.all(dayQueries);
+    buildActivity(days);
+  } catch(e){ console.warn('activity chart:', e); }
 
-  // ── WhatsApp groups ──
+  // ── Rides (small table, fetch all) ──
   try {
-    var grps = await db.from('extracted_data_01').select('group_name').not('group_name','is',null).limit(5000);
-    if (grps.data && grps.data.length) {
-      var gc = {};
-      grps.data.forEach(function(r){ if(r.group_name) gc[r.group_name]=(gc[r.group_name]||0)+1; });
-      var sorted = Object.keys(gc).map(function(k){return {g:k,n:gc[k]};}).sort(function(a,b){return b.n-a.n;}).slice(0,8);
-      if (sorted.length) buildGroups(sorted);
-    }
-  } catch(e){ console.warn('groups:', e); }
-
-  // ── Rides ──
-  try {
-    var r = await db.from('driver_routines').select('*').order('created_at',{ascending:false});
+    var r = await db.from('driver_routines').select('*').order('created_at', {ascending:false});
     if (r.data && r.data.length) {
       document.getElementById('k-drivers').textContent = r.data.length;
       document.getElementById('k-active').textContent  = r.data.filter(function(x){return x.ride_status==='open';}).length;
@@ -725,15 +680,16 @@ async function fetchLive() {
 
   // ── Bookings ──
   try {
-    var pb = await db.from('passenger_requests').select('*').order('created_at',{ascending:false}).limit(20);
+    var pb = await db.from('passenger_requests').select('*').order('created_at', {ascending:false}).limit(50);
     if (pb.data) {
-      document.getElementById('book-badge').textContent = pb.data.length+' bookings';
+      document.getElementById('book-badge').textContent = pb.data.length + ' bookings';
       document.getElementById('book-tbody').innerHTML = pb.data.length
         ? pb.data.map(function(p){
-            var nm = p.passenger_name_web||p.passenger_name||'—';
-            var st = p.status||'pending';
-            var sc = st==='picked_up'?'td-green':st==='confirmed'?'td-accent':'';
-            return '<tr><td class="td-name">'+nm+'</td><td>'+shortLbl(p.pickup_label)+'</td><td>'+shortLbl(p.dropoff_label)+'</td><td class="'+sc+'">'+st+'</td></tr>';
+            var nm = p.passenger_name_web || p.passenger_name || '—';
+            var st = p.status || 'pending';
+            var sc = st==='picked_up' ? 'td-green' : st==='confirmed' ? 'td-accent' : '';
+            return '<tr><td class="td-name">'+nm+'</td><td>'+shortLbl(p.pickup_label)+'</td>'+
+                   '<td>'+shortLbl(p.dropoff_label)+'</td><td class="'+sc+'">'+st+'</td></tr>';
           }).join('')
         : '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:16px">No bookings yet</td></tr>';
     }
@@ -741,19 +697,23 @@ async function fetchLive() {
 
   // ── Telegram users ──
   try {
-    var tu = await db.from('telegram_users').select('*').order('created_at',{ascending:false});
+    var tu = await db.from('telegram_users').select('*').order('created_at', {ascending:false});
     if (tu.data) {
-      document.getElementById('k-tg').textContent = tu.data.length;
-      document.getElementById('tg-badge').textContent = tu.data.length+' users';
+      document.getElementById('k-tg').textContent      = tu.data.length;
+      document.getElementById('tg-badge').textContent  = tu.data.length + ' users';
       document.getElementById('tg-tbody').innerHTML = tu.data.map(function(u){
-        return '<tr><td class="td-name">'+(u.name||'—')+'</td><td style="color:var(--accent)">@'+(u.telegram_username||'—')+'</td>'+
-               '<td style="font-size:11px">'+(u.whatsapp_number||'—')+'</td><td>'+timeAgo(u.created_at)+'</td></tr>';
+        return '<tr><td class="td-name">'+(u.name||'—')+'</td>'+
+               '<td style="color:var(--accent)">@'+(u.telegram_username||'—')+'</td>'+
+               '<td style="font-size:11px">'+(u.whatsapp_number||'—')+'</td>'+
+               '<td>'+timeAgo(u.created_at)+'</td></tr>';
       }).join('');
     }
   } catch(e){ console.warn('tg users:', e); }
 
+  // Note: Corridors and Groups use pre-computed SQL values (accurate, stable historical data)
+
   document.getElementById('last-refresh').textContent =
-    'Refreshed '+new Date().toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    'Refreshed ' + new Date().toLocaleTimeString('en-CA', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
 }
 
 // ═══════════════════════════════════
