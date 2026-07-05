@@ -284,6 +284,71 @@ footer{background:var(--bg);border-top:1px solid var(--border);padding:50px 40px
 .pf-ctrl-btn:hover{background:#2a2a50}
 .pf-ctrl-btn.pf-play{background:#4f46e5;color:#fff;padding:10px 22px}
 .pf-ctrl-btn:disabled{opacity:.3;cursor:default}
+
+/* ── LIGHT MODE ── */
+html.light{
+  --bg:#f0f4f8;
+  --bg2:#e8edf4;
+  --card:#ffffff;
+  --card2:#f4f7fb;
+  --border:#cbd5e1;
+  --glow:rgba(0,180,140,0.10);
+  --glow2:rgba(99,102,241,0.10);
+  --text:#0f172a;
+  --text2:#334155;
+  --muted:#64748b;
+}
+html.light body{background:var(--bg);color:var(--text)}
+html.light nav{background:rgba(240,244,248,0.85);border-bottom-color:var(--border)}
+html.light .stats-bar{background:var(--card)}
+html.light .stat-num{background:linear-gradient(135deg,#0284c7,#6366f1);-webkit-background-clip:text;background-clip:text}
+html.light .why-card{background:var(--card);border-color:var(--border)}
+html.light .how-card{background:var(--card)}
+html.light .how-card:hover{background:var(--card2)}
+html.light .corridors-section{background:var(--bg)}
+html.light .ticker-wrap::before{background:linear-gradient(90deg,var(--bg),transparent)}
+html.light .ticker-wrap::after{background:linear-gradient(270deg,var(--bg),transparent)}
+html.light .corridor-pill{background:var(--card);color:var(--text2)}
+html.light .tg-section{background:var(--bg2)}
+html.light footer{background:var(--bg);border-color:var(--border)}
+html.light .hero-h1{color:#0f172a}
+html.light .hero{background:radial-gradient(ellipse at 60% 40%,rgba(0,200,150,0.08),transparent 60%),var(--bg)}
+html.light #ontario-map{opacity:0.10}
+
+/* light mode toggle button */
+.theme-toggle{background:transparent;border:1px solid var(--border);border-radius:50px;padding:7px 14px;cursor:pointer;font-size:13px;font-weight:600;color:var(--text2);display:flex;align-items:center;gap:6px;transition:all .2s;font-family:'Inter',sans-serif;margin-left:12px}
+.theme-toggle:hover{border-color:var(--teal);color:var(--teal)}
+.theme-toggle .icon{font-size:15px;line-height:1}
+
+/* ── MOBILE FIXES for phone animation ── */
+@media(max-width:520px){
+  .pf-phone-frame{
+    width:calc(100vw - 40px);
+    max-width:340px;
+    min-height:auto;
+    border-radius:28px;
+    border-width:6px;
+  }
+  .pf-screen{min-height:auto}
+  .pf-slide{min-height:auto;padding:0 14px 16px}
+  .pf-scene-badge{font-size:11px;padding:6px 14px;margin:12px auto 16px}
+  .pf-chat-window{padding:12px}
+  .pf-msg-text{font-size:10px}
+  .pf-notif-card{padding:12px}
+  .pf-notif-title{font-size:13px}
+  .pf-map-card{padding:12px}
+  .pf-eta-val{font-size:14px}
+  .pf-end-h{font-size:18px}
+  .pf-ctrl-row{padding:8px 16px 12px}
+  .pf-ctrl-btn{padding:8px 14px;font-size:11px}
+}
+@media(max-width:400px){
+  .pf-phone-frame{
+    width:calc(100vw - 24px);
+    border-radius:22px;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -298,6 +363,10 @@ footer{background:var(--bg);border-top:1px solid var(--border);padding:50px 40px
     <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.18 13.946l-2.96-.924c-.643-.203-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.968.613z"/></svg>
     Join on Telegram
   </a>
+  <button class="theme-toggle" id="themeToggle" onclick="pfToggleTheme()" aria-label="Toggle light/dark mode">
+    <span class="icon" id="themeIcon">☀️</span>
+    <span id="themeLabel">Light</span>
+  </button>
 </nav>
 
 <!-- HERO -->
@@ -926,6 +995,28 @@ document.querySelectorAll('.stat-item').forEach(el => statObserver.observe(el));
 
   var prevBtn=document.getElementById('pfPrev');
   if(prevBtn)prevBtn.disabled=true;
+})();
+</script>
+
+
+<script>
+function pfToggleTheme(){
+  var html=document.documentElement;
+  var isLight=html.classList.toggle('light');
+  localStorage.setItem('pf-theme',isLight?'light':'dark');
+  document.getElementById('themeIcon').textContent=isLight?'🌙':'☀️';
+  document.getElementById('themeLabel').textContent=isLight?'Dark':'Light';
+}
+// restore saved preference
+(function(){
+  var saved=localStorage.getItem('pf-theme');
+  if(saved==='light'){
+    document.documentElement.classList.add('light');
+    var icon=document.getElementById('themeIcon');
+    var label=document.getElementById('themeLabel');
+    if(icon)icon.textContent='🌙';
+    if(label)label.textContent='Dark';
+  }
 })();
 </script>
 
