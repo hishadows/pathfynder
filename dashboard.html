@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pathfynder — Founder HQ</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap');
 
@@ -434,7 +434,7 @@ function tryAuth() {
   authBtn.textContent = '…';
   sha256(authPw.value.trim()).then(function(h) {
     if (h === PASS_HASH) {
-      sessionStorage.setItem('pf_hq', '1');
+      window._pfAuthed = true;
       document.getElementById('auth-screen').style.display = 'none';
       document.getElementById('dashboard').style.display = '';
       init();
@@ -450,7 +450,7 @@ authBtn.addEventListener('click', tryAuth);
 authPw.addEventListener('keydown', function(e){ if(e.key==='Enter') tryAuth(); });
 
 // Auto-login if session exists
-if (sessionStorage.getItem('pf_hq') === '1') {
+if (window._pfAuthed) {
   document.getElementById('auth-screen').style.display = 'none';
   document.getElementById('dashboard').style.display = '';
 }
@@ -740,7 +740,7 @@ document.getElementById('refresh-btn').addEventListener('click', function() {
 });
 
 // Auto-init if already authed
-if (sessionStorage.getItem('pf_hq') === '1') init();
+// auto-init handled after auth gate
 </script>
 </body>
 </html>
