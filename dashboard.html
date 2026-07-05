@@ -140,8 +140,39 @@ tr:hover td{background:rgba(255,255,255,.015)}
 /* FOOTER */
 .dash-footer{border-top:1px solid var(--border);padding:14px 24px;display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted)}
 
-@media(max-width:1100px){.kpi-grid{grid-template-columns:repeat(3,1fr)}.charts-row{grid-template-columns:1fr 1fr}.rides-grid{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:700px){.kpi-grid,.kpi-grid-4{grid-template-columns:repeat(2,1fr)}.two-col,.charts-row{grid-template-columns:1fr}.rides-grid{grid-template-columns:1fr}}
+/* ── SCROLLABLE TABLE WRAPPER ── */
+.tbl-scroll{overflow-x:auto;overflow-y:auto;max-height:320px;-webkit-overflow-scrolling:touch}
+.tbl-scroll table{min-width:480px}
+.tbl-scroll::-webkit-scrollbar{width:4px;height:4px}
+.tbl-scroll::-webkit-scrollbar-track{background:var(--surface2)}
+.tbl-scroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+
+/* ── RESPONSIVE ── */
+@media(max-width:1200px){
+  .charts-row{grid-template-columns:1fr 1fr}
+  .charts-row > .chart-card:first-child{grid-column:1/-1}
+  .rides-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:900px){
+  .kpi-grid{grid-template-columns:repeat(3,1fr)}
+  .kpi-grid-4{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:700px){
+  .main{padding:12px 12px;gap:14px}
+  .hdr{padding:0 14px}
+  .hdr-clock{display:none}
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}
+  .kpi-grid-4{grid-template-columns:repeat(2,1fr)}
+  .kpi-val{font-size:24px}
+  .charts-row{grid-template-columns:1fr}
+  .two-col{grid-template-columns:1fr}
+  .rides-grid{grid-template-columns:1fr}
+  .dash-footer{flex-direction:column;gap:4px;align-items:flex-start}
+}
+@media(max-width:420px){
+  .kpi-grid,.kpi-grid-4{grid-template-columns:1fr 1fr}
+  .auth-box{width:calc(100vw - 32px);padding:32px 24px}
+}
 </style>
 </head>
 <body>
@@ -149,12 +180,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
 <!-- AUTH -->
 <div id="auth-screen">
   <div class="auth-box">
-    <div class="auth-logo">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="rgba(255,255,255,.15)"/>
-        <circle cx="12" cy="9" r="2.5" fill="#fff" stroke="none"/>
-      </svg>
-    </div>
+    <img src="logo.png" style="width:72px;height:72px;object-fit:contain;margin:0 auto 18px;display:block">
     <div class="auth-title">Founder HQ</div>
     <div class="auth-sub">Pathfynder — Private dashboard</div>
     <input class="auth-input" type="password" id="auth-pw" placeholder="Enter passphrase" autocomplete="off">
@@ -167,15 +193,8 @@ tr:hover td{background:rgba(255,255,255,.015)}
 <div id="dashboard">
 
   <header class="hdr">
-    <div class="hdr-logo">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="rgba(255,255,255,.15)"/>
-        <circle cx="12" cy="9" r="2.5" fill="#fff" stroke="none"/>
-      </svg>
-    </div>
-    <div class="hdr-brand">Path<span>fynder</span></div>
-    <div class="hdr-divider"></div>
-    <div class="hdr-tag">Founder HQ</div>
+    <img src="logo.png" style="width:36px;height:36px;object-fit:contain;flex-shrink:0">
+    <div class="hdr-brand" style="font-family:var(--font-display);font-size:17px;font-weight:700">Founder HQ</div>
     <div class="hdr-right">
       <div class="live-dot"></div>
       <div class="hdr-clock" id="hdr-clock"></div>
@@ -234,7 +253,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
     <div class="charts-row">
       <div class="chart-card">
         <div class="chart-title">Ride Requests — Last 14 Days</div>
-        <div class="chart-wrap"><canvas id="chart-activity"></canvas></div>
+        <div class="chart-wrap" style="height:clamp(140px,25vw,190px)"><canvas id="chart-activity"></canvas></div>
       </div>
       <div class="chart-card">
         <div class="chart-title">Request Type Split</div>
@@ -258,10 +277,10 @@ tr:hover td{background:rgba(255,255,255,.015)}
       </div>
       <div class="tbl-card">
         <div class="tbl-hdr"><div class="tbl-title">WhatsApp Group Sources</div><div class="tbl-badge" id="g-badge">—</div></div>
-        <table>
+        <div class="tbl-scroll"><table>
           <thead><tr><th>Group</th><th>Requests</th><th>%</th></tr></thead>
           <tbody id="groups-tbody"></tbody>
-        </table>
+        </table></div>
       </div>
     </div>
 
@@ -277,17 +296,17 @@ tr:hover td{background:rgba(255,255,255,.015)}
     <div class="two-col">
       <div class="tbl-card">
         <div class="tbl-hdr"><div class="tbl-title">Web Bookings</div><div class="tbl-badge" id="book-badge">—</div></div>
-        <table>
+        <div class="tbl-scroll"><table>
           <thead><tr><th>Name</th><th>Pickup</th><th>Dropoff</th><th>Status</th></tr></thead>
           <tbody id="book-tbody"><tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:16px">Loading…</td></tr></tbody>
-        </table>
+        </table></div>
       </div>
       <div class="tbl-card">
         <div class="tbl-hdr"><div class="tbl-title">Telegram Bot Users</div><div class="tbl-badge" id="tg-badge">—</div></div>
-        <table>
+        <div class="tbl-scroll"><table>
           <thead><tr><th>Name</th><th>Username</th><th>WhatsApp</th><th>Joined</th></tr></thead>
           <tbody id="tg-tbody"><tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:16px">Loading…</td></tr></tbody>
-        </table>
+        </table></div>
       </div>
     </div>
 
@@ -580,7 +599,7 @@ function buildGroups(data) {
 // LIVE DATA
 // ═══════════════════════════════════
 async function fetchLive() {
-  if (!db) return;
+  if (!db) return Promise.resolve();
 
   // Rides
   try {
@@ -663,8 +682,13 @@ function initDashboard() {
 }
 
 document.getElementById('refresh-btn').addEventListener('click', function(){
-  var dash = document.getElementById('dashboard');
-  if (dash.style.display !== 'none') fetchLive();
+  var btn = document.getElementById('refresh-btn');
+  btn.style.opacity = '0.5';
+  btn.style.pointerEvents = 'none';
+  fetchLive().finally(function(){
+    btn.style.opacity = '';
+    btn.style.pointerEvents = '';
+  });
 });
 </script>
 </body>
