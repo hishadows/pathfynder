@@ -416,7 +416,22 @@ var SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 // To change: update this hash with sha256 of your new password
 var PASS_HASH = '5b7eb8e3613957b5ffbf41589cffba6aacc4782a8214afdf2a84f9788c5bd710';
 
-var db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+var _noopStorage = {
+  getItem:    function() { return null; },
+  setItem:    function() {},
+  removeItem: function() {}
+};
+var db = null;
+try {
+  db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
+    auth: {
+      storage: _noopStorage,
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false
+    }
+  });
+} catch(e) { console.warn('Supabase init failed:', e); }
 
 // ════════════════════════════════════════
 // AUTH
@@ -632,6 +647,7 @@ function buildGroups(data) {
 // LIVE DATA FETCH
 // ════════════════════════════════════════
 async function fetchAndRender() {
+  if (!db) { console.warn('No db'); return; }
   // Rides
   try {
     var r = await db.from('driver_routines').select('*').order('created_at',{ascending:false});
@@ -724,11 +740,11 @@ function renderTgUsers(users) {
 // ════════════════════════════════════════
 function init() {
   // Build static charts immediately
-  buildActivityChart(STATIC.activity);
-  buildTypeChart(STATIC.type);
-  buildHourBars(STATIC.hours);
-  buildCorridors(STATIC.corridors);
-  buildGroups(STATIC.groups);
+  try { buildActivityChart(STATIC.activity); } catch(e) { console.warn('actChart',e); }
+  try { buildTypeChart(STATIC.type); } catch(e) { console.warn('typeChart',e); }
+  try { buildHourBars(STATIC.hours); } catch(e) { console.warn('hourBars',e); }
+  try { buildCorridors(STATIC.corridors); } catch(e) { console.warn('corridors',e); }
+  try { buildGroups(STATIC.groups); } catch(e) { console.warn('groups',e); }
 
   // Fetch live data
   fetchAndRender();
