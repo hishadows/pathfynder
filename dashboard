@@ -1,1 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pathfynder — Founder HQ</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap');
 
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080c14;--surface:#0f1420;--surface2:#161d2e;--surface3:#1e2740;
+  --border:#222d44;--border2:#2a3a58;
+  --accent:#4f8ef7;--accent-dim:rgba(79,142,247,.12);--accent-glow:rgba(79,142,247,.25);
+  --green:#22c55e;--green-dim:rgba(34,197,94,.10);
+  --amber:#f59e0b;--amber-dim:rgba(245,158,11,.10);
+  --red:#ef4444;--red-dim:rgba(239,68,68,.10);
+  --purple:#a855f7;--purple-dim:rgba(168,85,247,.10);
+  --cyan:#06b6d4;--cyan-dim:rgba(6,182,212,.10);
+  --text:#e8edf5;--text-dim:#8a95a8;--text-muted:#4e5a6e;
+  --font-display:'Space Grotesk',sans-serif;--font-body:'Inter',sans-serif;
+  --radius:12px;
+}
+html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:14px}
+
+/* ── AUTH SCREEN ── */
+#auth-screen{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse at 50% 40%, rgba(79,142,247,.08) 0%, transparent 70%);
+}
+.auth-box{
+  background:var(--surface);border:1px solid var(--border2);border-radius:20px;
+  padding:44px 40px;width:360px;text-align:center;
+  box-shadow:0 0 60px rgba(79,142,247,.06);
+}
+.auth-logo{
+  width:52px;height:52px;background:var(--accent);border-radius:14px;
+  display:flex;align-items:center;justify-content:center;margin:0 auto 18px;
+}
+.auth-logo svg{width:26px;height:26px}
+.auth-title{font-family:var(--font-display);font-size:22px;font-weight:700;margin-bottom:4px}
+.auth-sub{font-size:12px;color:var(--text-muted);margin-bottom:28px}
+.auth-input{
+  width:100%;padding:13px 16px;background:var(--surface2);border:1px solid var(--border2);
+  border-radius:10px;color:var(--text);font-family:var(--font-body);font-size:15px;
+  outline:none;transition:border-color .15s;text-align:center;letter-spacing:3px;margin-bottom:14px;
+}
+.auth-input:focus{border-color:var(--accent)}
+.auth-input::placeholder{letter-spacing:0;color:var(--text-muted)}
+.auth-btn{
+  width:100%;height:46px;background:var(--accent);border:none;border-radius:10px;
+  color:#fff;font-family:var(--font-display);font-size:15px;font-weight:600;
+  cursor:pointer;transition:opacity .15s;
+}
+.auth-btn:hover{opacity:.9}
+.auth-err{color:var(--red);font-size:12px;margin-top:10px;display:none}
+
+/* ── DASHBOARD ── */
+#dashboard{display:none;min-height:100vh}
+
+/* HEADER */
+.hdr{
+  background:var(--surface);border-bottom:1px solid var(--border);
+  padding:0 28px;height:58px;display:flex;align-items:center;gap:14px;
+  position:sticky;top:0;z-index:100;
+}
+.hdr-logo{width:36px;height:36px;background:var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.hdr-logo svg{width:20px;height:20px}
+.hdr-brand{font-family:var(--font-display);font-size:18px;font-weight:700}
+.hdr-brand span{color:var(--accent)}
+.hdr-sep{width:1px;height:22px;background:var(--border);margin:0 4px}
+.hdr-tag{font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em}
+.hdr-right{margin-left:auto;display:flex;align-items:center;gap:16px}
+.hdr-clock{font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--text-dim)}
+.hdr-refresh{
+  display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-muted);
+  background:var(--surface2);border:1px solid var(--border);border-radius:7px;
+  padding:5px 10px;cursor:pointer;transition:border-color .15s;
+}
+.hdr-refresh:hover{border-color:var(--accent);color:var(--accent)}
+.hdr-refresh svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.hdr-dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);flex-shrink:0}
+
+/* MAIN */
+.main{padding:24px 28px;max-width:1600px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+
+/* SECTION LABEL */
+.sec-hdr{display:flex;align-items:center;gap:8px;margin-bottom:2px}
+.sec-label{font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.1em}
+.sec-line{flex:1;height:1px;background:var(--border)}
+
+/* KPI GRID */
+.kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+.kpi-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:18px 20px;position:relative;overflow:hidden;
+}
+.kpi-card::before{content:'';position:absolute;inset:0;opacity:0;border-radius:var(--radius);transition:opacity .2s}
+.kpi-card.accent::before{background:radial-gradient(ellipse at top left,var(--accent-dim),transparent 70%);opacity:1}
+.kpi-card.green::before{background:radial-gradient(ellipse at top left,var(--green-dim),transparent 70%);opacity:1}
+.kpi-card.amber::before{background:radial-gradient(ellipse at top left,var(--amber-dim),transparent 70%);opacity:1}
+.kpi-card.purple::before{background:radial-gradient(ellipse at top left,var(--purple-dim),transparent 70%);opacity:1}
+.kpi-card.cyan::before{background:radial-gradient(ellipse at top left,var(--cyan-dim),transparent 70%);opacity:1}
+.kpi-label{font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;position:relative}
+.kpi-val{font-family:var(--font-display);font-size:32px;font-weight:700;line-height:1;position:relative}
+.kpi-val.accent{color:var(--accent)}
+.kpi-val.green{color:var(--green)}
+.kpi-val.amber{color:var(--amber)}
+.kpi-val.purple{color:var(--purple)}
+.kpi-val.cyan{color:var(--cyan)}
+.kpi-sub{font-size:11px;color:var(--text-muted);margin-top:6px;position:relative}
+.kpi-trend{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;padding:1px 6px;border-radius:5px;margin-left:4px}
+.trend-up{background:var(--green-dim);color:var(--green)}
+.trend-dn{background:var(--red-dim);color:var(--red)}
+
+/* CHARTS ROW */
+.charts-row{display:grid;grid-template-columns:1.6fr 0.7fr 0.7fr;gap:14px}
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px}
+.chart-title{font-family:var(--font-display);font-size:14px;font-weight:600;margin-bottom:16px;color:var(--text)}
+.chart-wrap{position:relative}
+
+/* TWO-COL */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.three-col{display:grid;grid-template-columns:1.2fr 1fr 0.8fr;gap:14px}
+
+/* TABLE CARD */
+.table-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.table-hdr{padding:16px 18px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.table-title{font-family:var(--font-display);font-size:14px;font-weight:600}
+.table-badge{font-size:10px;font-weight:600;padding:2px 8px;border-radius:8px;background:var(--accent-dim);color:var(--accent);border:1px solid rgba(79,142,247,.2)}
+table{width:100%;border-collapse:collapse}
+th{font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;padding:8px 18px;text-align:left;background:var(--surface2);border-bottom:1px solid var(--border)}
+td{padding:10px 18px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text-dim);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.02)}
+td.name{color:var(--text);font-weight:500}
+td.num{font-family:var(--font-display);font-weight:600;color:var(--text)}
+td.accent{color:var(--accent);font-weight:600}
+
+/* STATUS PILLS */
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:9px;font-weight:600;padding:2px 8px;border-radius:20px;text-transform:uppercase;letter-spacing:.04em}
+.pill-open{background:var(--green-dim);color:var(--green);border:1px solid rgba(34,197,94,.2)}
+.pill-started{background:var(--accent-dim);color:var(--accent);border:1px solid rgba(79,142,247,.2)}
+.pill-ended{background:var(--surface2);color:var(--text-muted);border:1px solid var(--border)}
+.pill-dot{width:5px;height:5px;border-radius:50%;background:currentColor}
+
+/* RIDE CARDS */
+.rides-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.ride-mini{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+.ride-mini-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.ride-mini-name{font-family:var(--font-display);font-size:13px;font-weight:600}
+.ride-mini-route{display:flex;flex-direction:column;gap:5px}
+.ride-mini-stop{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text-dim)}
+.ride-mini-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.dot-from{border:1.5px solid var(--text-muted)}
+.dot-to{background:var(--accent)}
+.ride-mini-meta{display:flex;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+.ride-mini-chip{font-size:10px;color:var(--text-muted)}
+.ride-mini-chip span{color:var(--text-dim);font-weight:500}
+
+/* HOUR BARS */
+.hour-bars{display:flex;align-items:flex-end;gap:2px;height:80px;padding-top:8px}
+.hour-bar{flex:1;border-radius:2px 2px 0 0;transition:opacity .2s;cursor:default;position:relative}
+.hour-bar:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--surface3);border:1px solid var(--border2);border-radius:5px;padding:3px 7px;font-size:10px;white-space:nowrap;color:var(--text);pointer-events:none;z-index:10}
+.hour-labels{display:flex;gap:2px;margin-top:4px}
+.hour-lbl{flex:1;text-align:center;font-size:8px;color:var(--text-muted)}
+
+/* CORRIDOR BARS */
+.corridor-rows{display:flex;flex-direction:column;gap:8px}
+.corridor-row{display:flex;flex-direction:column;gap:4px}
+.corridor-meta{display:flex;justify-content:space-between;font-size:11px}
+.corridor-label{color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:78%}
+.corridor-count{color:var(--text-muted);flex-shrink:0}
+.corridor-track{height:5px;background:var(--surface3);border-radius:3px;overflow:hidden}
+.corridor-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--accent),rgba(79,142,247,.5))}
+
+/* ALERT BANNER */
+.alert-banner{
+  background:linear-gradient(90deg,rgba(245,158,11,.08),rgba(245,158,11,.03));
+  border:1px solid rgba(245,158,11,.2);border-radius:var(--radius);
+  padding:12px 18px;display:flex;align-items:center;gap:10px;font-size:13px;
+}
+.alert-icon{font-size:16px;flex-shrink:0}
+.alert-text{color:var(--amber)}
+.alert-text b{font-weight:600}
+
+/* FOOTER */
+.dash-footer{padding:16px 28px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--text-muted)}
+
+/* SPINNER */
+.spin{display:inline-block;width:12px;height:12px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media(max-width:1200px){.kpi-grid{grid-template-columns:repeat(3,1fr)}.charts-row{grid-template-columns:1fr 1fr}.three-col{grid-template-columns:1fr 1fr}}
+@media(max-width:800px){.kpi-grid{grid-template-columns:1fr 1fr}.two-col,.three-col,.charts-row{grid-template-columns:1fr}.rides-grid{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+
+<!-- ══ AUTH SCREEN ══ -->
+<div id="auth-screen">
+  <div class="auth-box">
+    <div class="auth-logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="rgba(255,255,255,0.15)"/>
+        <circle cx="12" cy="9" r="2.5" fill="#fff" stroke="none"/>
+      </svg>
+    </div>
+    <div class="auth-title">Founder HQ</div>
+    <div class="auth-sub">Pathfynder — Private dashboard</div>
+    <input class="auth-input" type="password" id="auth-pw" placeholder="Enter passphrase" autocomplete="off">
+    <button class="auth-btn" id="auth-btn">Access Dashboard →</button>
+    <div class="auth-err" id="auth-err">Incorrect passphrase</div>
+  </div>
+</div>
+
+<!-- ══ DASHBOARD ══ -->
+<div id="dashboard">
+
+  <!-- HEADER -->
+  <header class="hdr">
+    <div class="hdr-logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="rgba(255,255,255,0.15)"/>
+        <circle cx="12" cy="9" r="2.5" fill="#fff" stroke="none"/>
+      </svg>
+    </div>
+    <div class="hdr-brand">Path<span>fynder</span></div>
+    <div class="hdr-sep"></div>
+    <div class="hdr-tag">Founder HQ</div>
+    <div class="hdr-right">
+      <div class="hdr-dot"></div>
+      <div class="hdr-clock" id="hdr-clock">--:--</div>
+      <div class="hdr-refresh" id="refresh-btn">
+        <svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.36"/></svg>
+        Refresh
+      </div>
+    </div>
+  </header>
+
+  <div class="main">
+
+    <!-- ALERT: supply/demand gap -->
+    <div class="alert-banner">
+      <div class="alert-icon">📊</div>
+      <div class="alert-text"><b>Supply gap:</b> ~91% of requests are passengers seeking rides. You have 6 drivers on platform. This is your #1 growth lever.</div>
+    </div>
+
+    <!-- KPIs -->
+    <div>
+      <div class="sec-hdr"><div class="sec-label">Platform Overview</div><div class="sec-line"></div></div>
+      <div class="kpi-grid">
+        <div class="kpi-card accent">
+          <div class="kpi-label">Total Ride Requests</div>
+          <div class="kpi-val accent" id="kpi-total">13,793</div>
+          <div class="kpi-sub">All time in database</div>
+        </div>
+        <div class="kpi-card green">
+          <div class="kpi-label">Unique Passengers</div>
+          <div class="kpi-val green" id="kpi-pax">1,837</div>
+          <div class="kpi-sub">Distinct phone numbers</div>
+        </div>
+        <div class="kpi-card amber">
+          <div class="kpi-label">Requests (Last 7d)</div>
+          <div class="kpi-val amber" id="kpi-7d">4,747</div>
+          <div class="kpi-sub">~<span id="kpi-daily">678</span>/day avg</div>
+        </div>
+        <div class="kpi-card purple">
+          <div class="kpi-label">Drivers on Platform</div>
+          <div class="kpi-val purple" id="kpi-drivers">6</div>
+          <div class="kpi-sub"><span id="kpi-active-rides">4</span> active · <span id="kpi-started">1</span> in progress</div>
+        </div>
+        <div class="kpi-card cyan">
+          <div class="kpi-label">Telegram Bot Users</div>
+          <div class="kpi-val cyan" id="kpi-tg">7</div>
+          <div class="kpi-sub">Registered with bot</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHARTS ROW -->
+    <div class="charts-row">
+      <!-- Activity chart -->
+      <div class="chart-card">
+        <div class="chart-title">Ride Requests — Last 14 Days</div>
+        <div class="chart-wrap" style="height:200px">
+          <canvas id="chart-activity"></canvas>
+        </div>
+      </div>
+      <!-- Passenger vs Driver donut -->
+      <div class="chart-card">
+        <div class="chart-title">Request Type Split</div>
+        <div class="chart-wrap" style="height:200px;display:flex;align-items:center;justify-content:center">
+          <canvas id="chart-type" style="max-width:200px;max-height:200px"></canvas>
+        </div>
+      </div>
+      <!-- Peak hours -->
+      <div class="chart-card">
+        <div class="chart-title">Peak Hours (message volume)</div>
+        <div id="hour-bars-wrap">
+          <div class="hour-bars" id="hour-bars"></div>
+          <div class="hour-labels" id="hour-labels"></div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:12px;font-size:10px;color:var(--text-muted)">
+          <div>🔥 Peak: <span style="color:var(--amber);font-weight:600">6–7 PM & 1–2 AM</span></div>
+          <div>Shift workers pattern</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CORRIDORS + GROUPS -->
+    <div class="two-col">
+      <!-- Top corridors -->
+      <div class="table-card">
+        <div class="table-hdr">
+          <div class="table-title">Top Corridors</div>
+          <div class="table-badge" id="corridor-count">15 routes</div>
+        </div>
+        <div style="padding:16px 18px" id="corridor-bars-wrap">
+          <div class="corridor-rows" id="corridor-rows"></div>
+        </div>
+      </div>
+      <!-- WhatsApp groups -->
+      <div class="table-card">
+        <div class="table-hdr">
+          <div class="table-title">WhatsApp Group Sources</div>
+          <div class="table-badge" id="group-count">Top groups</div>
+        </div>
+        <table id="groups-table">
+          <thead><tr><th>Group</th><th>Requests</th><th>Share</th></tr></thead>
+          <tbody id="groups-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- LIVE RIDES -->
+    <div>
+      <div class="sec-hdr"><div class="sec-label">Live Driver Rides</div><div class="sec-line"></div></div>
+      <div class="rides-grid" id="rides-grid">
+        <div style="color:var(--text-muted);font-size:12px;padding:10px 0">Loading rides…</div>
+      </div>
+    </div>
+
+    <!-- PASSENGERS + TELEGRAM USERS -->
+    <div class="two-col">
+      <!-- Recent passenger bookings -->
+      <div class="table-card">
+        <div class="table-hdr">
+          <div class="table-title">Passenger Bookings (Web)</div>
+          <div class="table-badge" id="bookings-badge">loading</div>
+        </div>
+        <table>
+          <thead><tr><th>Name</th><th>Pickup</th><th>Dropoff</th><th>Status</th></tr></thead>
+          <tbody id="bookings-body"><tr><td colspan="4" style="color:var(--text-muted);text-align:center;padding:20px">Loading…</td></tr></tbody>
+        </table>
+      </div>
+      <!-- Telegram users -->
+      <div class="table-card">
+        <div class="table-hdr">
+          <div class="table-title">Telegram Bot Users</div>
+          <div class="table-badge" id="tg-badge">7 users</div>
+        </div>
+        <table>
+          <thead><tr><th>Name</th><th>Username</th><th>WhatsApp</th><th>Joined</th></tr></thead>
+          <tbody id="tg-body"><tr><td colspan="4" style="color:var(--text-muted);text-align:center;padding:20px">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- IMPORTANT RIDES -->
+    <div>
+      <div class="sec-hdr"><div class="sec-label">Urgent & Special Requests Breakdown</div><div class="sec-line"></div></div>
+      <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr)">
+        <div class="kpi-card amber">
+          <div class="kpi-label">Urgent</div>
+          <div class="kpi-val amber">2,089</div>
+          <div class="kpi-sub">15.1% of all requests</div>
+        </div>
+        <div class="kpi-card purple">
+          <div class="kpi-label">Airport Rides</div>
+          <div class="kpi-val purple">48</div>
+          <div class="kpi-sub">High-value trips</div>
+        </div>
+        <div class="kpi-card cyan">
+          <div class="kpi-label">Daily / Regular</div>
+          <div class="kpi-val cyan">28</div>
+          <div class="kpi-sub">Recurring commuters</div>
+        </div>
+        <div class="kpi-card green">
+          <div class="kpi-label">Geo-Coded</div>
+          <div class="kpi-val green" id="kpi-geocoded">—</div>
+          <div class="kpi-sub">Has lat/lng coordinates</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+
+  <div class="dash-footer">
+    <div>Pathfynder Founder HQ · Private · Do not share</div>
+    <div id="last-refresh" style="color:var(--text-muted)">Last refreshed: —</div>
+  </div>
+
+</div><!-- /dashboard -->
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+// ════════════════════════════════════════
+// CONFIG
+// ════════════════════════════════════════
+var SUPABASE_URL  = 'https://omussxfyrztjahbdrrpi.supabase.co';
+var SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9tdXNzeGZ5cnp0amFoYmRycnBpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MjI1NjAsImV4cCI6MjA5NTk5ODU2MH0.ySigym7uOaFIQm01nErPfn4kE6j4MOVKoNntt_Mosak';
+
+
+// To change: update this hash with sha256 of your new password
+var PASS_HASH = '5b7eb8e3613957b5ffbf41589cffba6aacc4782a8214afdf2a84f9788c5bd710';
+
+var db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+// ════════════════════════════════════════
+// AUTH
+// ════════════════════════════════════════
+async function sha256(str) {
+  var buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(function(b){ return b.toString(16).padStart(2,'0'); }).join('');
+}
+
+var authPw  = document.getElementById('auth-pw');
+var authBtn = document.getElementById('auth-btn');
+var authErr = document.getElementById('auth-err');
+
+function tryAuth() {
+  authBtn.textContent = '…';
+  sha256(authPw.value.trim()).then(function(h) {
+    if (h === PASS_HASH) {
+      sessionStorage.setItem('pf_hq', '1');
+      document.getElementById('auth-screen').style.display = 'none';
+      document.getElementById('dashboard').style.display = '';
+      init();
+    } else {
+      authErr.style.display = 'block';
+      authBtn.textContent = 'Access Dashboard →';
+      authPw.value = '';
+      authPw.focus();
+    }
+  });
+}
+authBtn.addEventListener('click', tryAuth);
+authPw.addEventListener('keydown', function(e){ if(e.key==='Enter') tryAuth(); });
+
+// Auto-login if session exists
+if (sessionStorage.getItem('pf_hq') === '1') {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('dashboard').style.display = '';
+}
+
+// ════════════════════════════════════════
+// HELPERS
+// ════════════════════════════════════════
+function fmt(n) { return n != null ? Number(n).toLocaleString() : '—'; }
+function fmtTime(t) {
+  if (!t) return '—';
+  var h = parseInt(t.slice(0,2),10), m = parseInt(t.slice(3,5),10);
+  var ap = h >= 12 ? 'PM' : 'AM', h12 = h % 12 || 12;
+  return h12 + ':' + (m < 10 ? '0' : '') + m + ' ' + ap;
+}
+function fmtDate(d) {
+  if (!d) return '—';
+  var r = new Date(d + 'T00:00:00');
+  return r.toLocaleDateString('en-CA',{weekday:'short',month:'short',day:'numeric'});
+}
+function timeAgo(iso) {
+  if (!iso) return '—';
+  var diff = Date.now() - new Date(iso).getTime();
+  var mins = Math.floor(diff/60000), hours = Math.floor(mins/60), days = Math.floor(hours/24);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return mins + 'm ago';
+  if (hours < 24) return hours + 'h ago';
+  return days + 'd ago';
+}
+function statusPill(s) {
+  var cls = s === 'open' ? 'pill-open' : s === 'started' ? 'pill-started' : 'pill-ended';
+  return '<span class="pill ' + cls + '"><span class="pill-dot"></span>' + s + '</span>';
+}
+function shortLabel(lbl) {
+  if (!lbl) return '—';
+  return lbl.replace(', Ontario, Canada','').replace(', ON, Canada','').replace(', Canada','');
+}
+
+// ════════════════════════════════════════
+// CLOCK
+// ════════════════════════════════════════
+function updateClock() {
+  var d = new Date();
+  document.getElementById('hdr-clock').textContent =
+    d.toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit',hour12:true}) +
+    ' · ' + d.toLocaleDateString('en-CA',{weekday:'short',month:'short',day:'numeric'});
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ════════════════════════════════════════
+// EMBEDDED STATIC DATA (fallback)
+// ════════════════════════════════════════
+var STATIC = {
+  activity: [
+    {d:'Jun 21',n:545},{d:'Jun 22',n:579},{d:'Jun 23',n:448},{d:'Jun 24',n:488},
+    {d:'Jun 25',n:393},{d:'Jun 26',n:198},{d:'Jun 27',n:584},{d:'Jun 28',n:680},
+    {d:'Jun 29',n:601},{d:'Jun 30',n:619},{d:'Jul 1',n:617},{d:'Jul 2',n:733},
+    {d:'Jul 3',n:751},{d:'Jul 4',n:657},{d:'Jul 5',n:64}
+  ],
+  type: [{label:'Passenger',val:12410,color:'rgba(79,142,247,.8)'},{label:'Driver',val:1357,color:'rgba(34,197,94,.8)'}],
+  hours: [609,848,937,575,259,96,50,37,67,296,540,561,649,623,566,585,697,928,945,888,868,770,760,627],
+  corridors: [
+    {f:'Brampton',t:'Kitchener',n:220},{f:'Niagara Falls',t:'St. Catharines',n:190},
+    {f:'Brampton',t:'Niagara Falls',n:171},{f:'Kitchener',t:'Brampton',n:170},
+    {f:'St. Catharines',t:'Niagara Falls',n:164},{f:'Niagara Falls',t:'Welland',n:144},
+    {f:'Niagara Falls',t:'Brampton',n:141},{f:'Welland',t:'Niagara Falls',n:137},
+    {f:'Brampton',t:'Kitchener (full)',n:134},{f:'Brampton',t:'Niagara',n:97}
+  ],
+  groups: [
+    {g:'NIAGARA RIDES',n:2212},{g:'RIDE SERVICES NIAGARA',n:1986},{g:'Niagara Local rides',n:1098},
+    {g:'ROAD REBELS NIAGARA',n:923},{g:'Perfect Rides',n:713},{g:'DoraRide Carpool',n:679},
+    {g:'Brampton 2@25',n:664},{g:'Niagara Regional Rides',n:548}
+  ]
+};
+
+// ════════════════════════════════════════
+// CHARTS
+// ════════════════════════════════════════
+var chartActivity, chartType;
+
+function buildActivityChart(data) {
+  var ctx = document.getElementById('chart-activity').getContext('2d');
+  if (chartActivity) chartActivity.destroy();
+  chartActivity = new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels: data.map(function(d){ return d.d; }),
+      datasets:[{
+        label:'Requests',
+        data: data.map(function(d){ return d.n; }),
+        backgroundColor:'rgba(79,142,247,.45)',
+        borderColor:'rgba(79,142,247,.8)',
+        borderWidth:1,borderRadius:3,borderSkipped:false
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return ' '+c.parsed.y+' requests';}}}},
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#4e5a6e',font:{size:9}}},
+        y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#4e5a6e',font:{size:9}},beginAtZero:true}
+      }
+    }
+  });
+}
+
+function buildTypeChart(data) {
+  var ctx = document.getElementById('chart-type').getContext('2d');
+  if (chartType) chartType.destroy();
+  chartType = new Chart(ctx, {
+    type:'doughnut',
+    data:{
+      labels: data.map(function(d){ return d.label; }),
+      datasets:[{
+        data: data.map(function(d){ return d.val; }),
+        backgroundColor: data.map(function(d){ return d.color; }),
+        borderColor:'var(--surface)',borderWidth:3,hoverOffset:6
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,cutout:'68%',
+      plugins:{
+        legend:{position:'bottom',labels:{color:'#8a95a8',font:{size:10},padding:10,boxWidth:10}},
+        tooltip:{callbacks:{label:function(c){var t=c.parsed;var tot=c.dataset.data.reduce(function(a,b){return a+b;},0);return ' '+c.label+': '+t.toLocaleString()+' ('+(100*t/tot).toFixed(1)+'%)';}}}
+      }
+    }
+  });
+}
+
+function buildHourBars(hours) {
+  var max = Math.max.apply(null, hours);
+  var barsEl = document.getElementById('hour-bars');
+  var lblEl  = document.getElementById('hour-labels');
+  barsEl.innerHTML = '';
+  lblEl.innerHTML = '';
+  hours.forEach(function(n, i) {
+    var pct = Math.max(5, Math.round((n/max)*100));
+    var hot = n > max*0.8;
+    var bar = document.createElement('div');
+    bar.className = 'hour-bar';
+    bar.style.height = pct + '%';
+    bar.style.background = hot ? 'rgba(245,158,11,.75)' : 'rgba(79,142,247,.45)';
+    bar.setAttribute('data-tip', i+'h: '+n+' msgs');
+    barsEl.appendChild(bar);
+    if (i % 4 === 0) {
+      var lbl = document.createElement('div');
+      lbl.className = 'hour-lbl';
+      lbl.textContent = i+'h';
+      lbl.style.flex = '4';
+      lblEl.appendChild(lbl);
+    }
+  });
+}
+
+function buildCorridors(data) {
+  var max = data[0] ? data[0].n : 1;
+  var el = document.getElementById('corridor-rows');
+  el.innerHTML = data.map(function(c){
+    var pct = Math.round((c.n/max)*100);
+    return '<div class="corridor-row">' +
+      '<div class="corridor-meta"><span class="corridor-label">' + c.f + ' → ' + c.t + '</span><span class="corridor-count">' + c.n + '</span></div>' +
+      '<div class="corridor-track"><div class="corridor-fill" style="width:' + pct + '%"></div></div>' +
+    '</div>';
+  }).join('');
+}
+
+function buildGroups(data) {
+  var total = data.reduce(function(s,g){ return s+g.n; }, 0);
+  var tbody = document.getElementById('groups-body');
+  tbody.innerHTML = data.map(function(g){
+    var pct = (100*g.n/total).toFixed(1);
+    return '<tr><td class="name">' + g.g + '</td><td class="num">' + g.n.toLocaleString() + '</td>' +
+           '<td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:4px;background:var(--surface3);border-radius:2px;overflow:hidden"><div style="width:' + (g.n/data[0].n*100).toFixed(0) + '%;height:100%;background:var(--accent);border-radius:2px"></div></div><span style="font-size:10px;color:var(--text-muted)">' + pct + '%</span></div></td></tr>';
+  }).join('');
+  document.getElementById('group-count').textContent = data.length + ' groups';
+}
+
+// ════════════════════════════════════════
+// LIVE DATA FETCH
+// ════════════════════════════════════════
+async function fetchAndRender() {
+  // Rides
+  try {
+    var r = await db.from('driver_routines').select('*').order('created_at',{ascending:false});
+    if (r.data) renderRides(r.data);
+  } catch(e){}
+
+  // Passenger bookings
+  try {
+    var pb = await db.from('passenger_requests').select('*').order('created_at',{ascending:false}).limit(20);
+    if (pb.data) renderBookings(pb.data);
+  } catch(e){}
+
+  // Telegram users
+  try {
+    var tu = await db.from('telegram_users').select('*').order('created_at',{ascending:false});
+    if (tu.data) renderTgUsers(tu.data);
+  } catch(e){}
+
+  // Geo-coded count
+  try {
+    var gc = await db.from('extracted_data_01').select('id',{count:'exact',head:true}).not('pickup_lat','is',null);
+    if (gc.count != null) document.getElementById('kpi-geocoded').textContent = fmt(gc.count);
+  } catch(e){}
+
+  document.getElementById('last-refresh').textContent = 'Last refreshed: ' + new Date().toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+
+function renderRides(rides) {
+  document.getElementById('kpi-drivers').textContent = fmt(rides.length);
+  var active = rides.filter(function(r){ return r.ride_status === 'open'; }).length;
+  var started = rides.filter(function(r){ return r.ride_status === 'started'; }).length;
+  document.getElementById('kpi-active-rides').textContent = active;
+  document.getElementById('kpi-started').textContent = started;
+
+  var el = document.getElementById('rides-grid');
+  if (!rides.length) { el.innerHTML = '<div style="color:var(--text-muted);font-size:12px">No rides found.</div>'; return; }
+  el.innerHTML = rides.map(function(r){
+    return '<div class="ride-mini">' +
+      '<div class="ride-mini-top">' +
+        '<div class="ride-mini-name">' + (r.driver_name||'Driver') + '</div>' +
+        statusPill(r.ride_status||'open') +
+      '</div>' +
+      '<div class="ride-mini-route">' +
+        '<div class="ride-mini-stop"><div class="ride-mini-dot dot-from"></div>' + shortLabel(r.pickup_label) + '</div>' +
+        '<div class="ride-mini-stop"><div class="ride-mini-dot dot-to"></div>' + shortLabel(r.dropoff_label) + '</div>' +
+      '</div>' +
+      '<div class="ride-mini-meta">' +
+        '<div class="ride-mini-chip">⏱ <span>' + fmtTime(r.departure_time) + '</span></div>' +
+        '<div class="ride-mini-chip">📅 <span>' + fmtDate(r.dates) + '</span></div>' +
+        '<div class="ride-mini-chip">💺 <span>' + (r.available_seats||'—') + '</span></div>' +
+        '<div class="ride-mini-chip">📱 <span>' + (r.platform||'—') + '</span></div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function renderBookings(rows) {
+  document.getElementById('bookings-badge').textContent = rows.length + ' bookings';
+  var tbody = document.getElementById('bookings-body');
+  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="4" style="color:var(--text-muted);text-align:center;padding:20px">No bookings yet</td></tr>'; return; }
+  tbody.innerHTML = rows.map(function(p){
+    var name = p.passenger_name_web || p.passenger_name || '—';
+    var st = p.status || 'pending';
+    var stCls = st === 'picked_up' ? 'green' : st === 'confirmed' ? 'accent' : '';
+    return '<tr>' +
+      '<td class="name">' + name + '</td>' +
+      '<td>' + shortLabel(p.pickup_label) + '</td>' +
+      '<td>' + shortLabel(p.dropoff_label) + '</td>' +
+      '<td class="' + stCls + '">' + st + '</td>' +
+    '</tr>';
+  }).join('');
+}
+
+function renderTgUsers(users) {
+  document.getElementById('kpi-tg').textContent = fmt(users.length);
+  document.getElementById('tg-badge').textContent = users.length + ' users';
+  var tbody = document.getElementById('tg-body');
+  tbody.innerHTML = users.map(function(u){
+    return '<tr>' +
+      '<td class="name">' + (u.name||'—') + '</td>' +
+      '<td>@' + (u.telegram_username||'—') + '</td>' +
+      '<td style="font-size:11px">' + (u.whatsapp_number||'—') + '</td>' +
+      '<td>' + timeAgo(u.created_at) + '</td>' +
+    '</tr>';
+  }).join('');
+}
+
+// ════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════
+function init() {
+  // Build static charts immediately
+  buildActivityChart(STATIC.activity);
+  buildTypeChart(STATIC.type);
+  buildHourBars(STATIC.hours);
+  buildCorridors(STATIC.corridors);
+  buildGroups(STATIC.groups);
+
+  // Fetch live data
+  fetchAndRender();
+}
+
+// Refresh button
+document.getElementById('refresh-btn').addEventListener('click', function() {
+  if (document.getElementById('dashboard').style.display !== 'none') fetchAndRender();
+});
+
+// Auto-init if already authed
+if (sessionStorage.getItem('pf_hq') === '1') init();
+</script>
+</body>
+</html>
