@@ -205,6 +205,85 @@ footer{background:var(--bg);border-top:1px solid var(--border);padding:50px 40px
   .reveal{opacity:1;transform:none}
   *{animation-duration:.01ms!important;transition-duration:.01ms!important}
 }
+
+/* ── PATHFYNDER PHONE ANIMATION (pf- prefixed) ── */
+.pf-phone-frame{width:375px;min-height:660px;background:#0d0d1a;border-radius:44px;border:8px solid #1e1e2e;overflow:hidden;position:relative;margin:0 auto;box-shadow:0 0 0 1px #2a2a3e,0 32px 64px rgba(0,0,0,0.6)}
+.pf-notch{width:120px;height:28px;background:#0d0d1a;border-radius:0 0 20px 20px;margin:0 auto;position:relative;z-index:10}
+.pf-screen{padding:0 0 24px;position:relative;min-height:600px}
+.pf-slide{display:none;flex-direction:column;align-items:center;padding:0 24px 24px;min-height:580px}
+.pf-slide.pf-active{display:flex}
+.pf-scene-badge{margin:20px auto 24px;display:inline-flex;align-items:center;gap:8px;background:rgba(79,70,229,0.15);border:1px solid rgba(79,70,229,0.4);border-radius:100px;padding:8px 20px;font-size:13px;font-weight:700;letter-spacing:.5px;color:#a5b4fc;text-align:center}
+.pf-dot{width:7px;height:7px;border-radius:50%;background:#6366f1;flex-shrink:0}
+.pf-progress-dots{display:flex;gap:6px;margin:0 auto;justify-content:center;padding-top:8px}
+.pf-pdot{width:6px;height:6px;border-radius:50%;background:#1e2040;transition:all .3s;cursor:pointer}
+.pf-pdot.pf-on{background:#4f46e5;width:20px;border-radius:10px}
+/* slide 1 */
+.pf-chat-window{background:#1a1a2e;border-radius:16px;padding:16px;width:100%}
+.pf-chat-header{display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid #2a2a40}
+.pf-chat-avatar{width:32px;height:32px;border-radius:50%;background:#25d366;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.pf-chat-name{font-size:12px;font-weight:700;color:#fff}
+.pf-chat-sub{font-size:10px;color:#64748b}
+.pf-msg{margin-bottom:10px;animation:pfSlideUp .4s ease forwards;opacity:0;overflow:hidden}
+.pf-bubble{background:#2a2a40;border-radius:12px 12px 12px 3px;padding:9px 12px;display:inline-block;max-width:88%}
+.pf-bubble.pf-sent{background:#25d366;border-radius:12px 12px 3px 12px;float:right}
+.pf-msg-text{font-size:11px;color:#e2e8f0;line-height:1.5}
+.pf-msg-time{font-size:9px;color:#64748b;margin-top:3px}
+.pf-msg1{animation-delay:.3s}.pf-msg2{animation-delay:.9s}.pf-msg3{animation-delay:1.5s}.pf-msg4{animation-delay:2.1s}
+.pf-chaos-label{font-size:13px;color:#ef4444;font-weight:700;margin-top:16px;opacity:0;animation:pfFadeIn .5s ease 2.8s forwards;text-align:center}
+@keyframes pfSlideUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pfFadeIn{from{opacity:0}to{opacity:1}}
+/* slide 2 */
+.pf-scan-wrap{display:flex;flex-direction:column;align-items:center;gap:20px;width:100%}
+.pf-bot-icon{width:72px;height:72px;background:#4f46e5;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:34px;position:relative}
+.pf-ring1{position:absolute;inset:-10px;border-radius:28px;border:2px solid #4f46e5;animation:pfPulse 1.5s ease-out infinite}
+.pf-ring2{position:absolute;inset:-20px;border-radius:36px;border:1px solid #4f46e5;opacity:.4;animation:pfPulse 1.5s ease-out .5s infinite}
+@keyframes pfPulse{0%{transform:scale(.9);opacity:.8}100%{transform:scale(1.2);opacity:0}}
+.pf-scan-groups{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.pf-gpill{background:#161626;border:1px solid #1e2040;border-radius:100px;padding:7px 14px;font-size:11px;color:#64748b;animation:pfPopIn .4s ease forwards;opacity:0;display:flex;align-items:center;gap:6px}
+.pf-gpill.pf-found{border-color:#22c55e;color:#4ade80;background:rgba(34,197,94,.08)}
+.pf-gp1{animation-delay:.2s}.pf-gp2{animation-delay:.5s}.pf-gp3{animation-delay:.8s}.pf-gp4{animation-delay:1.1s}.pf-gp5{animation-delay:1.4s}.pf-gp6{animation-delay:1.7s}
+.pf-scan-status{font-size:12px;color:#64748b;opacity:0;animation:pfFadeIn .5s ease .3s forwards}
+.pf-scan-found{font-size:14px;font-weight:700;color:#4ade80;opacity:0;animation:pfFadeIn .5s ease 2.2s forwards;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.25);border-radius:12px;padding:12px 16px;width:100%;text-align:center}
+@keyframes pfPopIn{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
+/* slide 3 */
+.pf-notif-card{background:#161626;border-radius:16px;padding:16px;border-left:4px solid #4f46e5;width:100%;opacity:0;transform:translateY(-12px);animation:pfSlideDown .5s ease .6s forwards}
+.pf-notif-app{font-size:10px;color:#6366f1;font-weight:700;margin-bottom:6px;letter-spacing:.5px}
+.pf-notif-title{font-size:15px;font-weight:800;color:#fff;margin-bottom:4px}
+.pf-notif-body{font-size:12px;color:#64748b;line-height:1.6}
+.pf-notif-actions{display:flex;gap:10px;margin-top:14px}
+.pf-notif-btn{flex:1;padding:10px;border-radius:10px;font-size:12px;font-weight:700;text-align:center;opacity:0;animation:pfFadeIn .4s ease 1.4s forwards}
+.pf-notif-btn.pf-accept{background:#4f46e5;color:#fff}
+.pf-notif-btn.pf-skip{background:#1e2040;color:#64748b}
+.pf-vibe-text{font-size:13px;color:#a5b4fc;margin-top:20px;text-align:center;opacity:0;animation:pfFadeIn .5s ease 2s forwards;font-weight:600;line-height:1.5}
+@keyframes pfSlideDown{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}
+/* slide 4 */
+.pf-map-card{background:#161626;border-radius:16px;padding:16px;border:1px solid #1e2040;width:100%}
+.pf-map-title{font-size:11px;font-weight:700;color:#4ade80;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.pf-map-title::before{content:'';display:inline-block;width:8px;height:8px;background:#4ade80;border-radius:50%}
+.pf-stop{display:flex;align-items:center;gap:10px;margin-bottom:10px;opacity:0;animation:pfSlideUp .4s ease forwards}
+.pf-sdot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+.pf-sline{width:1px;height:14px;background:#2a2a40;margin-left:5px;margin-bottom:-6px}
+.pf-sinfo{flex:1}
+.pf-sname{font-size:11px;font-weight:700;color:#f1f5f9}
+.pf-sdet{font-size:10px;color:#64748b}
+.pf-sbadge{font-size:9px;font-weight:700;padding:3px 8px;border-radius:10px}
+.pf-s1d{animation-delay:.3s}.pf-s2d{animation-delay:.8s}.pf-s3d{animation-delay:1.3s}.pf-s4d{animation-delay:1.8s}
+.pf-eta-bar{display:flex;justify-content:space-between;margin-top:14px;padding-top:14px;border-top:1px solid #1e2040;opacity:0;animation:pfFadeIn .5s ease 2.3s forwards}
+.pf-eta-item{text-align:center;flex:1}
+.pf-eta-val{font-size:16px;font-weight:800;color:#fff}
+.pf-eta-key{font-size:9px;color:#64748b;margin-top:2px}
+/* slide 5 */
+.pf-end-logo{width:64px;height:64px;background:#4f46e5;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:30px;margin:8px auto 20px}
+.pf-end-h{font-size:22px;font-weight:900;color:#fff;margin-bottom:10px;line-height:1.3;text-align:center}
+.pf-end-sub{font-size:13px;color:#64748b;line-height:1.7;margin-bottom:24px;text-align:center}
+.pf-end-pills{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.pf-end-pill{background:#161626;border:1px solid #1e2040;border-radius:100px;padding:8px 16px;font-size:11px;color:#a5b4fc;font-weight:600}
+/* controls */
+.pf-ctrl-row{display:flex;align-items:center;justify-content:space-between;padding:12px 24px 16px}
+.pf-ctrl-btn{background:#1e2040;border:none;border-radius:10px;padding:10px 18px;font-size:12px;font-weight:700;color:#a5b4fc;cursor:pointer;transition:background .2s}
+.pf-ctrl-btn:hover{background:#2a2a50}
+.pf-ctrl-btn.pf-play{background:#4f46e5;color:#fff;padding:10px 22px}
+.pf-ctrl-btn:disabled{opacity:.3;cursor:default}
 </style>
 </head>
 <body>
@@ -398,8 +477,129 @@ footer{background:var(--bg);border-top:1px solid var(--border);padding:50px 40px
   </div>
 </div>
 
+<!-- WHY PATHFYNDER — animated slides -->
+<section class="section why-section" id="why-section">
+  <div class="section-inner" style="display:flex;flex-direction:column;align-items:center;gap:48px">
+    <div class="reveal" style="text-align:center">
+      <div class="section-tag">Why Pathfynder</div>
+      <h2 class="section-title">See exactly how it works</h2>
+      <p class="section-sub">From chaotic group chats to a matched ride in seconds.</p>
+    </div>
+
+    <!-- phone frame animation -->
+    <div class="pf-phone-frame" id="pfPhone">
+      <div class="pf-notch"></div>
+      <div class="pf-screen">
+        <div class="pf-progress-dots" id="pfDots"></div>
+
+        <!-- SLIDE 1 -->
+        <div class="pf-slide pf-active" id="pfSl1">
+          <div class="pf-scene-badge"><span class="pf-dot"></span>The Problem</div>
+          <div class="pf-chat-window">
+            <div class="pf-chat-header">
+              <div class="pf-chat-avatar">💬</div>
+              <div><div class="pf-chat-name">Brampton Community 🇨🇦</div><div class="pf-chat-sub">847 members</div></div>
+            </div>
+            <div class="pf-msg pf-msg1"><div class="pf-bubble"><div class="pf-msg-text">Anyone going Toronto Friday? Need ride 🙏</div><div class="pf-msg-time">Ahmed · 9:12 AM</div></div></div>
+            <div class="pf-msg pf-msg2"><div class="pf-bubble pf-sent"><div class="pf-msg-text">I'm going Saturday only sorry</div><div class="pf-msg-time">9:14 AM</div></div></div>
+            <div class="pf-msg pf-msg3"><div class="pf-bubble"><div class="pf-msg-text">Try the other group bro, someone posted there</div><div class="pf-msg-time">Priya · 9:18 AM</div></div></div>
+            <div class="pf-msg pf-msg4"><div class="pf-bubble"><div class="pf-msg-text">Which group?? There's like 6 😭</div><div class="pf-msg-time">Ahmed · 9:19 AM</div></div></div>
+          </div>
+          <div class="pf-chaos-label">❌ Endless scrolling. Missed rides.</div>
+        </div>
+
+        <!-- SLIDE 2 -->
+        <div class="pf-slide" id="pfSl2">
+          <div class="pf-scene-badge"><span class="pf-dot"></span>Pathfynder Scans 24/7</div>
+          <div class="pf-scan-wrap">
+            <div class="pf-scan-status">Scanning your community groups...</div>
+            <div class="pf-bot-icon">🤖<div class="pf-ring1"></div><div class="pf-ring2"></div></div>
+            <div class="pf-scan-groups">
+              <div class="pf-gpill pf-gp1">💬 Brampton Comm.</div>
+              <div class="pf-gpill pf-gp2">💬 Toronto Rides</div>
+              <div class="pf-gpill pf-gp3">💬 Niagara Group</div>
+              <div class="pf-gpill pf-gp4 pf-found">✅ Match found!</div>
+              <div class="pf-gpill pf-gp5">💬 GTA Community</div>
+              <div class="pf-gpill pf-gp6">💬 Mississauga</div>
+            </div>
+            <div class="pf-scan-found">🎯 Ahmed needs a ride — your route!</div>
+          </div>
+        </div>
+
+        <!-- SLIDE 3 -->
+        <div class="pf-slide" id="pfSl3">
+          <div class="pf-scene-badge"><span class="pf-dot"></span>Instant Match Notification</div>
+          <div class="pf-notif-card">
+            <div class="pf-notif-app">🚗 PATHFYNDER</div>
+            <div class="pf-notif-title">New passenger match!</div>
+            <div class="pf-notif-body">Ahmed · Brampton → Toronto<br>Fri 8:00 AM · Route overlap 96%</div>
+            <div class="pf-notif-actions">
+              <div class="pf-notif-btn pf-accept">✓ Accept</div>
+              <div class="pf-notif-btn pf-skip">Skip</div>
+            </div>
+          </div>
+          <div class="pf-vibe-text">You get pinged.<br>No hunting required.</div>
+        </div>
+
+        <!-- SLIDE 4 -->
+        <div class="pf-slide" id="pfSl4">
+          <div class="pf-scene-badge"><span class="pf-dot"></span>One Tap → Route Ready</div>
+          <div class="pf-map-card">
+            <div class="pf-map-title">Route sorted automatically</div>
+            <div class="pf-stop pf-s1d">
+              <div style="display:flex;flex-direction:column;align-items:center"><div class="pf-sdot" style="background:#4f46e5"></div><div class="pf-sline"></div></div>
+              <div class="pf-sinfo"><div class="pf-sname">Your home · Brampton</div><div class="pf-sdet">Start here</div></div>
+              <span class="pf-sbadge" style="background:rgba(79,70,229,0.15);color:#818cf8">You</span>
+            </div>
+            <div class="pf-stop pf-s2d">
+              <div style="display:flex;flex-direction:column;align-items:center"><div class="pf-sdot" style="background:#0891b2"></div><div class="pf-sline"></div></div>
+              <div class="pf-sinfo"><div class="pf-sname">Pick up Ahmed</div><div class="pf-sdet">Queen St · +4 min detour</div></div>
+              <span class="pf-sbadge" style="background:rgba(8,145,178,0.15);color:#22d3ee">Pickup</span>
+            </div>
+            <div class="pf-stop pf-s3d">
+              <div style="display:flex;flex-direction:column;align-items:center"><div class="pf-sdot" style="background:#f59e0b"></div><div class="pf-sline"></div></div>
+              <div class="pf-sinfo"><div class="pf-sname">Drop Ahmed · Union Station</div><div class="pf-sdet">Toronto downtown</div></div>
+              <span class="pf-sbadge" style="background:rgba(245,158,11,0.15);color:#fbbf24">Drop</span>
+            </div>
+            <div class="pf-stop pf-s4d">
+              <div style="display:flex;flex-direction:column;align-items:center"><div class="pf-sdot" style="background:#16a34a"></div></div>
+              <div class="pf-sinfo"><div class="pf-sname">Your destination · North York</div><div class="pf-sdet">You're there</div></div>
+              <span class="pf-sbadge" style="background:rgba(22,163,74,0.15);color:#4ade80">Done</span>
+            </div>
+            <div class="pf-eta-bar">
+              <div class="pf-eta-item"><div class="pf-eta-val">1h 12m</div><div class="pf-eta-key">Total time</div></div>
+              <div class="pf-eta-item"><div class="pf-eta-val">$8</div><div class="pf-eta-key">Split fare</div></div>
+              <div class="pf-eta-item"><div class="pf-eta-val">96%</div><div class="pf-eta-key">Route match</div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SLIDE 5 -->
+        <div class="pf-slide" id="pfSl5">
+          <div class="pf-scene-badge"><span class="pf-dot"></span>The Solution</div>
+          <div class="pf-end-logo">🚗</div>
+          <div class="pf-end-h">Your next ride is already<br>in the group chat.</div>
+          <div class="pf-end-sub">Set your route. We find the passengers.<br>One tap and you're on the road.</div>
+          <div class="pf-end-pills">
+            <div class="pf-end-pill">Free to use</div>
+            <div class="pf-end-pill">No app needed</div>
+            <div class="pf-end-pill">Just Telegram</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div class="pf-ctrl-row">
+        <button class="pf-ctrl-btn" id="pfPrev" onclick="pfChangeSlide(-1)">‹ Back</button>
+        <button class="pf-ctrl-btn pf-play" id="pfPlay" onclick="pfTogglePlay()">▶ Play</button>
+        <button class="pf-ctrl-btn" id="pfNext" onclick="pfChangeSlide(1)">Next ›</button>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- HOW IT WORKS -->
-<section class="section">
+<section class="section" id="how-section">
   <div class="section-inner">
     <div class="reveal">
       <div class="section-tag">How It Works</div>
@@ -423,43 +623,6 @@ footer{background:var(--bg);border-top:1px solid var(--border);padding:50px 40px
         <div class="how-icon">🗺️</div>
         <h3 class="how-h">One tap → your route is ready</h3>
         <p class="how-p">Click Open in Map — passengers, pickup and drop-off order sorted automatically.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- WHY PATHFYNDER -->
-<section class="section why-section">
-  <div class="section-inner">
-    <div class="reveal">
-      <div class="section-tag">Why Pathfynder</div>
-      <h2 class="section-title">Built for communities,<br>not corporations</h2>
-      <p class="section-sub">Uber is for strangers. Pathfynder is for neighbours.</p>
-    </div>
-    <div class="why-grid">
-      <div class="why-card reveal reveal-delay-1">
-        <div class="why-icon">🛡️</div>
-        <h3 class="why-h">Community-verified riders</h3>
-        <p class="why-p">Every driver and passenger on Pathfynder comes from the same community networks you already trust. No anonymous strangers — real people, verified through Telegram.</p>
-        <span class="why-tag">Safety first</span>
-      </div>
-      <div class="why-card reveal reveal-delay-2">
-        <div class="why-icon">🛣️</div>
-        <h3 class="why-h">Ontario corridor expertise</h3>
-        <p class="why-p">We know the routes. Windsor to Toronto. Brampton to Niagara. Mississauga to St. Catharines. Built specifically for the corridors Ontario's communities actually travel.</p>
-        <span class="why-tag">Local knowledge</span>
-      </div>
-      <div class="why-card reveal reveal-delay-3">
-        <div class="why-icon">💬</div>
-        <h3 class="why-h">Telegram-native, no extra app</h3>
-        <p class="why-p">Already on Telegram? You're already on Pathfynder. No app download, no new account. Just open the bot and start matching — available 24/7, works on any phone.</p>
-        <span class="why-tag">Zero friction</span>
-      </div>
-      <div class="why-card reveal reveal-delay-4">
-        <div class="why-icon">⚡</div>
-        <h3 class="why-h">Real-time smart matching</h3>
-        <p class="why-p">Our matching engine scores by time proximity, pickup distance, and route overlap — so every match actually makes sense for everyone in the car.</p>
-        <span class="why-tag">Intelligent routing</span>
       </div>
     </div>
   </div>
@@ -663,5 +826,108 @@ const statObserver = new IntersectionObserver((entries) => {
 }, { threshold: 0.5 });
 document.querySelectorAll('.stat-item').forEach(el => statObserver.observe(el));
 </script>
+
+<script>
+(function(){
+  var PF_SLIDES=['pfSl1','pfSl2','pfSl3','pfSl4','pfSl5'];
+  var PF_DUR=[4500,5000,4500,5500,4000];
+  var pfCur=0,pfPlaying=false,pfTimer=null,pfStarted=false;
+
+  // build dots
+  var dotsEl=document.getElementById('pfDots');
+  if(dotsEl){
+    PF_SLIDES.forEach(function(_,i){
+      var d=document.createElement('div');
+      d.className='pf-pdot'+(i===0?' pf-on':'');
+      d.onclick=function(){pfGoTo(i);};
+      dotsEl.appendChild(d);
+    });
+  }
+
+  function pfGoTo(idx){
+    var prev=document.getElementById(PF_SLIDES[pfCur]);
+    if(prev)prev.classList.remove('pf-active');
+    pfCur=Math.max(0,Math.min(PF_SLIDES.length-1,idx));
+    var el=document.getElementById(PF_SLIDES[pfCur]);
+    if(el){
+      var clone=el.cloneNode(true);
+      clone.id=el.id;
+      el.parentNode.replaceChild(clone,el);
+      clone.classList.add('pf-active');
+    }
+    document.querySelectorAll('.pf-pdot').forEach(function(d,i){
+      d.className='pf-pdot'+(i===pfCur?' pf-on':'');
+      d.onclick=function(){pfGoTo(i);};
+    });
+    var prevBtn=document.getElementById('pfPrev');
+    var nextBtn=document.getElementById('pfNext');
+    if(prevBtn)prevBtn.disabled=pfCur===0;
+    if(nextBtn)nextBtn.disabled=pfCur===PF_SLIDES.length-1;
+    if(pfPlaying)pfScheduleNext();
+  }
+
+  function pfScheduleNext(){
+    clearTimeout(pfTimer);
+    pfTimer=setTimeout(function(){
+      if(pfCur<PF_SLIDES.length-1){
+        pfGoTo(pfCur+1);
+        pfScheduleNext();
+      } else {
+        pfStop();
+        // scroll to how-it-works after animation finishes
+        setTimeout(function(){
+          var how=document.getElementById('how-section');
+          if(how)how.scrollIntoView({behavior:'smooth',block:'start'});
+        },600);
+      }
+    },PF_DUR[pfCur]);
+  }
+
+  function pfStop(){
+    pfPlaying=false;
+    clearTimeout(pfTimer);
+    var btn=document.getElementById('pfPlay');
+    if(btn)btn.textContent='▶ Play';
+  }
+
+  window.pfTogglePlay=function(){
+    pfPlaying=!pfPlaying;
+    var btn=document.getElementById('pfPlay');
+    if(btn)btn.textContent=pfPlaying?'⏸ Pause':'▶ Play';
+    if(pfPlaying){if(pfCur>=PF_SLIDES.length-1)pfGoTo(0);pfScheduleNext();}
+    else clearTimeout(pfTimer);
+  };
+
+  window.pfChangeSlide=function(dir){
+    clearTimeout(pfTimer);
+    pfGoTo(pfCur+dir);
+    if(pfPlaying&&pfCur<PF_SLIDES.length-1)pfScheduleNext();
+    else if(pfCur>=PF_SLIDES.length-1)pfStop();
+  };
+
+  // auto-play when section scrolls into view (once only)
+  var section=document.getElementById('why-section');
+  if(section && 'IntersectionObserver' in window){
+    var obs=new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if(e.isIntersecting&&!pfStarted){
+          pfStarted=true;
+          pfPlaying=true;
+          var btn=document.getElementById('pfPlay');
+          if(btn)btn.textContent='⏸ Pause';
+          pfGoTo(0);
+          pfScheduleNext();
+          obs.disconnect();
+        }
+      });
+    },{threshold:0.4});
+    obs.observe(section);
+  }
+
+  var prevBtn=document.getElementById('pfPrev');
+  if(prevBtn)prevBtn.disabled=true;
+})();
+</script>
+
 </body>
 </html>
