@@ -7,12 +7,11 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap');
-
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
   --bg:#080c14;--surface:#0f1420;--surface2:#161d2e;--surface3:#1e2740;
   --border:#222d44;--border2:#2a3a58;
-  --accent:#4f8ef7;--accent-dim:rgba(79,142,247,.12);--accent-glow:rgba(79,142,247,.25);
+  --accent:#4f8ef7;--accent-dim:rgba(79,142,247,.12);
   --green:#22c55e;--green-dim:rgba(34,197,94,.10);
   --amber:#f59e0b;--amber-dim:rgba(245,158,11,.10);
   --red:#ef4444;--red-dim:rgba(239,68,68,.10);
@@ -20,190 +19,139 @@
   --cyan:#06b6d4;--cyan-dim:rgba(6,182,212,.10);
   --text:#e8edf5;--text-dim:#8a95a8;--text-muted:#4e5a6e;
   --font-display:'Space Grotesk',sans-serif;--font-body:'Inter',sans-serif;
-  --radius:12px;
 }
 html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:14px}
 
-/* ── AUTH SCREEN ── */
-#auth-screen{
-  min-height:100vh;display:flex;align-items:center;justify-content:center;
-  background:radial-gradient(ellipse at 50% 40%, rgba(79,142,247,.08) 0%, transparent 70%);
-}
-.auth-box{
-  background:var(--surface);border:1px solid var(--border2);border-radius:20px;
-  padding:44px 40px;width:360px;text-align:center;
-  box-shadow:0 0 60px rgba(79,142,247,.06);
-}
-.auth-logo{
-  width:52px;height:52px;background:var(--accent);border-radius:14px;
-  display:flex;align-items:center;justify-content:center;margin:0 auto 18px;
-}
+/* AUTH */
+#auth-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 40%,rgba(79,142,247,.08),transparent 70%)}
+.auth-box{background:var(--surface);border:1px solid var(--border2);border-radius:20px;padding:44px 40px;width:340px;text-align:center;box-shadow:0 0 60px rgba(79,142,247,.06)}
+.auth-logo{width:52px;height:52px;background:var(--accent);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 18px}
 .auth-logo svg{width:26px;height:26px}
 .auth-title{font-family:var(--font-display);font-size:22px;font-weight:700;margin-bottom:4px}
 .auth-sub{font-size:12px;color:var(--text-muted);margin-bottom:28px}
-.auth-input{
-  width:100%;padding:13px 16px;background:var(--surface2);border:1px solid var(--border2);
-  border-radius:10px;color:var(--text);font-family:var(--font-body);font-size:15px;
-  outline:none;transition:border-color .15s;text-align:center;letter-spacing:3px;margin-bottom:14px;
-}
+.auth-input{width:100%;padding:13px 16px;background:var(--surface2);border:1px solid var(--border2);border-radius:10px;color:var(--text);font-family:var(--font-body);font-size:15px;outline:none;text-align:center;letter-spacing:3px;margin-bottom:14px;-webkit-appearance:none}
 .auth-input:focus{border-color:var(--accent)}
 .auth-input::placeholder{letter-spacing:0;color:var(--text-muted)}
-.auth-btn{
-  width:100%;height:46px;background:var(--accent);border:none;border-radius:10px;
-  color:#fff;font-family:var(--font-display);font-size:15px;font-weight:600;
-  cursor:pointer;transition:opacity .15s;
-}
-.auth-btn:hover{opacity:.9}
-.auth-err{color:var(--red);font-size:12px;margin-top:10px;display:none}
+.auth-btn{width:100%;height:46px;background:var(--accent);border:none;border-radius:10px;color:#fff;font-family:var(--font-display);font-size:15px;font-weight:600;cursor:pointer}
+.auth-btn:active{opacity:.85}
+.auth-err{color:var(--red);font-size:12px;margin-top:10px}
 
-/* ── DASHBOARD ── */
-#dashboard{display:none;min-height:100vh}
+/* DASHBOARD — hidden by default, shown via JS */
+#dashboard{display:none;min-height:100vh;flex-direction:column}
 
 /* HEADER */
-.hdr{
-  background:var(--surface);border-bottom:1px solid var(--border);
-  padding:0 28px;height:58px;display:flex;align-items:center;gap:14px;
-  position:sticky;top:0;z-index:100;
-}
-.hdr-logo{width:36px;height:36px;background:var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.hdr-logo svg{width:20px;height:20px}
-.hdr-brand{font-family:var(--font-display);font-size:18px;font-weight:700}
+.hdr{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;height:56px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100;flex-shrink:0}
+.hdr-logo{width:34px;height:34px;background:var(--accent);border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.hdr-logo svg{width:18px;height:18px}
+.hdr-brand{font-family:var(--font-display);font-size:17px;font-weight:700}
 .hdr-brand span{color:var(--accent)}
-.hdr-sep{width:1px;height:22px;background:var(--border);margin:0 4px}
-.hdr-tag{font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em}
-.hdr-right{margin-left:auto;display:flex;align-items:center;gap:16px}
-.hdr-clock{font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--text-dim)}
-.hdr-refresh{
-  display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-muted);
-  background:var(--surface2);border:1px solid var(--border);border-radius:7px;
-  padding:5px 10px;cursor:pointer;transition:border-color .15s;
-}
-.hdr-refresh:hover{border-color:var(--accent);color:var(--accent)}
-.hdr-refresh svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.hdr-dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);flex-shrink:0}
+.hdr-divider{width:1px;height:20px;background:var(--border)}
+.hdr-tag{font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.1em}
+.hdr-right{margin-left:auto;display:flex;align-items:center;gap:14px}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green)}
+.hdr-clock{font-family:var(--font-display);font-size:12px;font-weight:600;color:var(--text-dim)}
+.refresh-btn{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-muted);background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:5px 10px;cursor:pointer}
+.refresh-btn:hover{border-color:var(--accent);color:var(--accent)}
+.refresh-btn svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 
 /* MAIN */
-.main{padding:24px 28px;max-width:1600px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+.main{padding:20px 24px;display:flex;flex-direction:column;gap:20px;max-width:1600px;width:100%;margin:0 auto}
 
-/* SECTION LABEL */
-.sec-hdr{display:flex;align-items:center;gap:8px;margin-bottom:2px}
-.sec-label{font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.1em}
+/* ALERT */
+.alert{background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.2);border-radius:10px;padding:11px 16px;display:flex;align-items:center;gap:10px;font-size:13px;color:var(--amber)}
+.alert b{font-weight:600}
+
+/* SECTION */
+.sec-hdr{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.sec-label{font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.1em;white-space:nowrap}
 .sec-line{flex:1;height:1px;background:var(--border)}
 
-/* KPI GRID */
-.kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
-.kpi-card{
-  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
-  padding:18px 20px;position:relative;overflow:hidden;
-}
-.kpi-card::before{content:'';position:absolute;inset:0;opacity:0;border-radius:var(--radius);transition:opacity .2s}
-.kpi-card.accent::before{background:radial-gradient(ellipse at top left,var(--accent-dim),transparent 70%);opacity:1}
-.kpi-card.green::before{background:radial-gradient(ellipse at top left,var(--green-dim),transparent 70%);opacity:1}
-.kpi-card.amber::before{background:radial-gradient(ellipse at top left,var(--amber-dim),transparent 70%);opacity:1}
-.kpi-card.purple::before{background:radial-gradient(ellipse at top left,var(--purple-dim),transparent 70%);opacity:1}
-.kpi-card.cyan::before{background:radial-gradient(ellipse at top left,var(--cyan-dim),transparent 70%);opacity:1}
+/* KPI */
+.kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px;position:relative;overflow:hidden}
+.kpi-glow{position:absolute;top:0;left:0;width:100%;height:100%;border-radius:12px;pointer-events:none}
 .kpi-label{font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;position:relative}
-.kpi-val{font-family:var(--font-display);font-size:32px;font-weight:700;line-height:1;position:relative}
-.kpi-val.accent{color:var(--accent)}
-.kpi-val.green{color:var(--green)}
-.kpi-val.amber{color:var(--amber)}
-.kpi-val.purple{color:var(--purple)}
-.kpi-val.cyan{color:var(--cyan)}
-.kpi-sub{font-size:11px;color:var(--text-muted);margin-top:6px;position:relative}
-.kpi-trend{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;padding:1px 6px;border-radius:5px;margin-left:4px}
-.trend-up{background:var(--green-dim);color:var(--green)}
-.trend-dn{background:var(--red-dim);color:var(--red)}
+.kpi-val{font-family:var(--font-display);font-size:30px;font-weight:700;line-height:1;position:relative}
+.kpi-sub{font-size:11px;color:var(--text-muted);margin-top:5px;position:relative}
 
-/* CHARTS ROW */
-.charts-row{display:grid;grid-template-columns:1.6fr 0.7fr 0.7fr;gap:14px}
-.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px}
-.chart-title{font-family:var(--font-display);font-size:14px;font-weight:600;margin-bottom:16px;color:var(--text)}
-.chart-wrap{position:relative}
+/* CHARTS */
+.charts-row{display:grid;grid-template-columns:1.7fr 0.65fr 0.65fr;gap:12px}
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px}
+.chart-title{font-family:var(--font-display);font-size:13px;font-weight:600;margin-bottom:14px}
+.chart-wrap{position:relative;height:190px}
 
-/* TWO-COL */
-.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.three-col{display:grid;grid-template-columns:1.2fr 1fr 0.8fr;gap:14px}
+/* HOUR BARS */
+.hour-bars{display:flex;align-items:flex-end;gap:2px;height:110px}
+.hour-bar{flex:1;border-radius:2px 2px 0 0;position:relative;cursor:default}
+.hour-bar:hover .hour-tip{display:block}
+.hour-tip{display:none;position:absolute;bottom:calc(100% + 5px);left:50%;transform:translateX(-50%);background:var(--surface3);border:1px solid var(--border2);border-radius:5px;padding:3px 7px;font-size:9px;white-space:nowrap;color:var(--text);z-index:10}
+.hour-xlabels{display:flex;gap:2px;margin-top:3px}
+.hour-xlbl{flex:1;text-align:center;font-size:8px;color:var(--text-muted)}
 
-/* TABLE CARD */
-.table-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
-.table-hdr{padding:16px 18px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
-.table-title{font-family:var(--font-display);font-size:14px;font-weight:600}
-.table-badge{font-size:10px;font-weight:600;padding:2px 8px;border-radius:8px;background:var(--accent-dim);color:var(--accent);border:1px solid rgba(79,142,247,.2)}
+/* TWO COL */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* TABLE */
+.tbl-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.tbl-hdr{padding:14px 16px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.tbl-title{font-family:var(--font-display);font-size:13px;font-weight:600}
+.tbl-badge{font-size:10px;font-weight:600;padding:2px 8px;border-radius:8px;background:var(--accent-dim);color:var(--accent);border:1px solid rgba(79,142,247,.2)}
 table{width:100%;border-collapse:collapse}
-th{font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;padding:8px 18px;text-align:left;background:var(--surface2);border-bottom:1px solid var(--border)}
-td{padding:10px 18px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text-dim);vertical-align:middle}
+th{font-size:9px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;padding:7px 16px;text-align:left;background:var(--surface2)}
+td{padding:9px 16px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text-dim);vertical-align:middle}
 tr:last-child td{border-bottom:none}
-tr:hover td{background:rgba(255,255,255,.02)}
-td.name{color:var(--text);font-weight:500}
-td.num{font-family:var(--font-display);font-weight:600;color:var(--text)}
-td.accent{color:var(--accent);font-weight:600}
+tr:hover td{background:rgba(255,255,255,.015)}
+.td-name{color:var(--text);font-weight:500}
+.td-num{font-family:var(--font-display);font-weight:600;color:var(--text)}
+.td-accent{color:var(--accent);font-weight:600}
+.td-green{color:var(--green);font-weight:600}
 
-/* STATUS PILLS */
-.pill{display:inline-flex;align-items:center;gap:4px;font-size:9px;font-weight:600;padding:2px 8px;border-radius:20px;text-transform:uppercase;letter-spacing:.04em}
+/* PILL */
+.pill{display:inline-flex;align-items:center;gap:3px;font-size:9px;font-weight:600;padding:2px 8px;border-radius:20px;text-transform:uppercase}
 .pill-open{background:var(--green-dim);color:var(--green);border:1px solid rgba(34,197,94,.2)}
 .pill-started{background:var(--accent-dim);color:var(--accent);border:1px solid rgba(79,142,247,.2)}
 .pill-ended{background:var(--surface2);color:var(--text-muted);border:1px solid var(--border)}
-.pill-dot{width:5px;height:5px;border-radius:50%;background:currentColor}
+.pill-dot{width:4px;height:4px;border-radius:50%;background:currentColor}
 
-/* RIDE CARDS */
-.rides-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-.ride-mini{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
-.ride-mini-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
-.ride-mini-name{font-family:var(--font-display);font-size:13px;font-weight:600}
-.ride-mini-route{display:flex;flex-direction:column;gap:5px}
-.ride-mini-stop{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text-dim)}
-.ride-mini-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-.dot-from{border:1.5px solid var(--text-muted)}
-.dot-to{background:var(--accent)}
-.ride-mini-meta{display:flex;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
-.ride-mini-chip{font-size:10px;color:var(--text-muted)}
-.ride-mini-chip span{color:var(--text-dim);font-weight:500}
+/* RIDES GRID */
+.rides-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.ride-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px}
+.ride-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.ride-name{font-family:var(--font-display);font-size:13px;font-weight:600}
+.ride-route{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}
+.ride-stop{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text-dim)}
+.stop-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.ride-chips{display:flex;flex-wrap:wrap;gap:6px;padding-top:10px;border-top:1px solid var(--border)}
+.chip{font-size:10px;color:var(--text-muted)}
+.chip span{color:var(--text-dim);font-weight:500}
 
-/* HOUR BARS */
-.hour-bars{display:flex;align-items:flex-end;gap:2px;height:80px;padding-top:8px}
-.hour-bar{flex:1;border-radius:2px 2px 0 0;transition:opacity .2s;cursor:default;position:relative}
-.hour-bar:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--surface3);border:1px solid var(--border2);border-radius:5px;padding:3px 7px;font-size:10px;white-space:nowrap;color:var(--text);pointer-events:none;z-index:10}
-.hour-labels{display:flex;gap:2px;margin-top:4px}
-.hour-lbl{flex:1;text-align:center;font-size:8px;color:var(--text-muted)}
+/* CORRIDOR */
+.corridor-rows{display:flex;flex-direction:column;gap:9px}
+.corridor-row{}
+.corridor-meta{display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px}
+.corridor-from{color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:80%}
+.corridor-n{color:var(--text-muted);flex-shrink:0}
+.corridor-track{height:4px;background:var(--surface3);border-radius:3px;overflow:hidden}
+.corridor-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--accent),rgba(79,142,247,.4))}
 
-/* CORRIDOR BARS */
-.corridor-rows{display:flex;flex-direction:column;gap:8px}
-.corridor-row{display:flex;flex-direction:column;gap:4px}
-.corridor-meta{display:flex;justify-content:space-between;font-size:11px}
-.corridor-label{color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:78%}
-.corridor-count{color:var(--text-muted);flex-shrink:0}
-.corridor-track{height:5px;background:var(--surface3);border-radius:3px;overflow:hidden}
-.corridor-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--accent),rgba(79,142,247,.5))}
-
-/* ALERT BANNER */
-.alert-banner{
-  background:linear-gradient(90deg,rgba(245,158,11,.08),rgba(245,158,11,.03));
-  border:1px solid rgba(245,158,11,.2);border-radius:var(--radius);
-  padding:12px 18px;display:flex;align-items:center;gap:10px;font-size:13px;
-}
-.alert-icon{font-size:16px;flex-shrink:0}
-.alert-text{color:var(--amber)}
-.alert-text b{font-weight:600}
+/* BOTTOM KPI */
+.kpi-grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
 
 /* FOOTER */
-.dash-footer{padding:16px 28px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--text-muted)}
+.dash-footer{border-top:1px solid var(--border);padding:14px 24px;display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted)}
 
-/* SPINNER */
-.spin{display:inline-block;width:12px;height:12px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-
-@media(max-width:1200px){.kpi-grid{grid-template-columns:repeat(3,1fr)}.charts-row{grid-template-columns:1fr 1fr}.three-col{grid-template-columns:1fr 1fr}}
-@media(max-width:800px){.kpi-grid{grid-template-columns:1fr 1fr}.two-col,.three-col,.charts-row{grid-template-columns:1fr}.rides-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:1100px){.kpi-grid{grid-template-columns:repeat(3,1fr)}.charts-row{grid-template-columns:1fr 1fr}.rides-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:700px){.kpi-grid,.kpi-grid-4{grid-template-columns:repeat(2,1fr)}.two-col,.charts-row{grid-template-columns:1fr}.rides-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 
-<!-- ══ AUTH SCREEN ══ -->
+<!-- AUTH -->
 <div id="auth-screen">
   <div class="auth-box">
     <div class="auth-logo">
       <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="rgba(255,255,255,0.15)"/>
+        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="rgba(255,255,255,.15)"/>
         <circle cx="12" cy="9" r="2.5" fill="#fff" stroke="none"/>
       </svg>
     </div>
@@ -211,28 +159,27 @@ td.accent{color:var(--accent);font-weight:600}
     <div class="auth-sub">Pathfynder — Private dashboard</div>
     <input class="auth-input" type="password" id="auth-pw" placeholder="Enter passphrase" autocomplete="off">
     <button class="auth-btn" id="auth-btn">Access Dashboard →</button>
-    <div class="auth-err" id="auth-err">Incorrect passphrase</div>
+    <div class="auth-err" id="auth-err" style="display:none">Incorrect passphrase</div>
   </div>
 </div>
 
-<!-- ══ DASHBOARD ══ -->
+<!-- DASHBOARD -->
 <div id="dashboard">
 
-  <!-- HEADER -->
   <header class="hdr">
     <div class="hdr-logo">
       <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="rgba(255,255,255,0.15)"/>
+        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="rgba(255,255,255,.15)"/>
         <circle cx="12" cy="9" r="2.5" fill="#fff" stroke="none"/>
       </svg>
     </div>
     <div class="hdr-brand">Path<span>fynder</span></div>
-    <div class="hdr-sep"></div>
+    <div class="hdr-divider"></div>
     <div class="hdr-tag">Founder HQ</div>
     <div class="hdr-right">
-      <div class="hdr-dot"></div>
-      <div class="hdr-clock" id="hdr-clock">--:--</div>
-      <div class="hdr-refresh" id="refresh-btn">
+      <div class="live-dot"></div>
+      <div class="hdr-clock" id="hdr-clock"></div>
+      <div class="refresh-btn" id="refresh-btn">
         <svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.36"/></svg>
         Refresh
       </div>
@@ -241,95 +188,79 @@ td.accent{color:var(--accent);font-weight:600}
 
   <div class="main">
 
-    <!-- ALERT: supply/demand gap -->
-    <div class="alert-banner">
-      <div class="alert-icon">📊</div>
-      <div class="alert-text"><b>Supply gap:</b> ~91% of requests are passengers seeking rides. You have 6 drivers on platform. This is your #1 growth lever.</div>
+    <div class="alert">
+      <span style="font-size:16px">📊</span>
+      <span><b>Supply gap:</b> 91% of requests are passengers, only 6 drivers on platform. Recruiting drivers is your #1 growth lever.</span>
     </div>
 
     <!-- KPIs -->
     <div>
       <div class="sec-hdr"><div class="sec-label">Platform Overview</div><div class="sec-line"></div></div>
       <div class="kpi-grid">
-        <div class="kpi-card accent">
-          <div class="kpi-label">Total Ride Requests</div>
-          <div class="kpi-val accent" id="kpi-total">13,793</div>
-          <div class="kpi-sub">All time in database</div>
+        <div class="kpi-card">
+          <div class="kpi-glow" style="background:radial-gradient(ellipse at top left,rgba(79,142,247,.1),transparent 70%)"></div>
+          <div class="kpi-label">Total Requests</div>
+          <div class="kpi-val" style="color:var(--accent)" id="k-total">13,793</div>
+          <div class="kpi-sub">All-time in DB</div>
         </div>
-        <div class="kpi-card green">
+        <div class="kpi-card">
+          <div class="kpi-glow" style="background:radial-gradient(ellipse at top left,rgba(34,197,94,.1),transparent 70%)"></div>
           <div class="kpi-label">Unique Passengers</div>
-          <div class="kpi-val green" id="kpi-pax">1,837</div>
+          <div class="kpi-val" style="color:var(--green)" id="k-pax">1,837</div>
           <div class="kpi-sub">Distinct phone numbers</div>
         </div>
-        <div class="kpi-card amber">
-          <div class="kpi-label">Requests (Last 7d)</div>
-          <div class="kpi-val amber" id="kpi-7d">4,747</div>
-          <div class="kpi-sub">~<span id="kpi-daily">678</span>/day avg</div>
+        <div class="kpi-card">
+          <div class="kpi-glow" style="background:radial-gradient(ellipse at top left,rgba(245,158,11,.1),transparent 70%)"></div>
+          <div class="kpi-label">Requests — Last 7d</div>
+          <div class="kpi-val" style="color:var(--amber)" id="k-7d">4,747</div>
+          <div class="kpi-sub">~678 / day avg</div>
         </div>
-        <div class="kpi-card purple">
+        <div class="kpi-card">
+          <div class="kpi-glow" style="background:radial-gradient(ellipse at top left,rgba(168,85,247,.1),transparent 70%)"></div>
           <div class="kpi-label">Drivers on Platform</div>
-          <div class="kpi-val purple" id="kpi-drivers">6</div>
-          <div class="kpi-sub"><span id="kpi-active-rides">4</span> active · <span id="kpi-started">1</span> in progress</div>
+          <div class="kpi-val" style="color:var(--purple)" id="k-drivers">6</div>
+          <div class="kpi-sub"><span id="k-active">4</span> active · <span id="k-started">1</span> in progress</div>
         </div>
-        <div class="kpi-card cyan">
-          <div class="kpi-label">Telegram Bot Users</div>
-          <div class="kpi-val cyan" id="kpi-tg">7</div>
+        <div class="kpi-card">
+          <div class="kpi-glow" style="background:radial-gradient(ellipse at top left,rgba(6,182,212,.1),transparent 70%)"></div>
+          <div class="kpi-label">Telegram Users</div>
+          <div class="kpi-val" style="color:var(--cyan)" id="k-tg">7</div>
           <div class="kpi-sub">Registered with bot</div>
         </div>
       </div>
     </div>
 
-    <!-- CHARTS ROW -->
+    <!-- CHARTS -->
     <div class="charts-row">
-      <!-- Activity chart -->
       <div class="chart-card">
         <div class="chart-title">Ride Requests — Last 14 Days</div>
-        <div class="chart-wrap" style="height:200px">
-          <canvas id="chart-activity"></canvas>
-        </div>
+        <div class="chart-wrap"><canvas id="chart-activity"></canvas></div>
       </div>
-      <!-- Passenger vs Driver donut -->
       <div class="chart-card">
         <div class="chart-title">Request Type Split</div>
-        <div class="chart-wrap" style="height:200px;display:flex;align-items:center;justify-content:center">
-          <canvas id="chart-type" style="max-width:200px;max-height:200px"></canvas>
+        <div class="chart-wrap" style="display:flex;align-items:center;justify-content:center">
+          <canvas id="chart-type" style="max-width:190px;max-height:190px"></canvas>
         </div>
       </div>
-      <!-- Peak hours -->
       <div class="chart-card">
-        <div class="chart-title">Peak Hours (message volume)</div>
-        <div id="hour-bars-wrap">
-          <div class="hour-bars" id="hour-bars"></div>
-          <div class="hour-labels" id="hour-labels"></div>
-        </div>
-        <div style="margin-top:12px;display:flex;gap:12px;font-size:10px;color:var(--text-muted)">
-          <div>🔥 Peak: <span style="color:var(--amber);font-weight:600">6–7 PM & 1–2 AM</span></div>
-          <div>Shift workers pattern</div>
-        </div>
+        <div class="chart-title">Activity by Hour of Day</div>
+        <div class="hour-bars" id="hour-bars"></div>
+        <div class="hour-xlabels" id="hour-xlabels"></div>
+        <div style="margin-top:10px;font-size:10px;color:var(--text-muted)">🔥 Peak: <span style="color:var(--amber);font-weight:600">1–2 AM & 6–7 PM</span> — shift worker pattern</div>
       </div>
     </div>
 
     <!-- CORRIDORS + GROUPS -->
     <div class="two-col">
-      <!-- Top corridors -->
-      <div class="table-card">
-        <div class="table-hdr">
-          <div class="table-title">Top Corridors</div>
-          <div class="table-badge" id="corridor-count">15 routes</div>
-        </div>
-        <div style="padding:16px 18px" id="corridor-bars-wrap">
-          <div class="corridor-rows" id="corridor-rows"></div>
-        </div>
+      <div class="tbl-card">
+        <div class="tbl-hdr"><div class="tbl-title">Top Corridors</div><div class="tbl-badge">by volume</div></div>
+        <div style="padding:14px 16px"><div class="corridor-rows" id="corridor-rows"></div></div>
       </div>
-      <!-- WhatsApp groups -->
-      <div class="table-card">
-        <div class="table-hdr">
-          <div class="table-title">WhatsApp Group Sources</div>
-          <div class="table-badge" id="group-count">Top groups</div>
-        </div>
-        <table id="groups-table">
-          <thead><tr><th>Group</th><th>Requests</th><th>Share</th></tr></thead>
-          <tbody id="groups-body"></tbody>
+      <div class="tbl-card">
+        <div class="tbl-hdr"><div class="tbl-title">WhatsApp Group Sources</div><div class="tbl-badge" id="g-badge">—</div></div>
+        <table>
+          <thead><tr><th>Group</th><th>Requests</th><th>%</th></tr></thead>
+          <tbody id="groups-tbody"></tbody>
         </table>
       </div>
     </div>
@@ -338,59 +269,55 @@ td.accent{color:var(--accent);font-weight:600}
     <div>
       <div class="sec-hdr"><div class="sec-label">Live Driver Rides</div><div class="sec-line"></div></div>
       <div class="rides-grid" id="rides-grid">
-        <div style="color:var(--text-muted);font-size:12px;padding:10px 0">Loading rides…</div>
+        <div style="color:var(--text-muted);font-size:12px;padding:4px">Loading…</div>
       </div>
     </div>
 
-    <!-- PASSENGERS + TELEGRAM USERS -->
+    <!-- BOOKINGS + TG USERS -->
     <div class="two-col">
-      <!-- Recent passenger bookings -->
-      <div class="table-card">
-        <div class="table-hdr">
-          <div class="table-title">Passenger Bookings (Web)</div>
-          <div class="table-badge" id="bookings-badge">loading</div>
-        </div>
+      <div class="tbl-card">
+        <div class="tbl-hdr"><div class="tbl-title">Web Bookings</div><div class="tbl-badge" id="book-badge">—</div></div>
         <table>
           <thead><tr><th>Name</th><th>Pickup</th><th>Dropoff</th><th>Status</th></tr></thead>
-          <tbody id="bookings-body"><tr><td colspan="4" style="color:var(--text-muted);text-align:center;padding:20px">Loading…</td></tr></tbody>
+          <tbody id="book-tbody"><tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:16px">Loading…</td></tr></tbody>
         </table>
       </div>
-      <!-- Telegram users -->
-      <div class="table-card">
-        <div class="table-hdr">
-          <div class="table-title">Telegram Bot Users</div>
-          <div class="table-badge" id="tg-badge">7 users</div>
-        </div>
+      <div class="tbl-card">
+        <div class="tbl-hdr"><div class="tbl-title">Telegram Bot Users</div><div class="tbl-badge" id="tg-badge">—</div></div>
         <table>
           <thead><tr><th>Name</th><th>Username</th><th>WhatsApp</th><th>Joined</th></tr></thead>
-          <tbody id="tg-body"><tr><td colspan="4" style="color:var(--text-muted);text-align:center;padding:20px">Loading…</td></tr></tbody>
+          <tbody id="tg-tbody"><tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:16px">Loading…</td></tr></tbody>
         </table>
       </div>
     </div>
 
-    <!-- IMPORTANT RIDES -->
+    <!-- BOTTOM KPIs -->
     <div>
-      <div class="sec-hdr"><div class="sec-label">Urgent & Special Requests Breakdown</div><div class="sec-line"></div></div>
-      <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr)">
-        <div class="kpi-card amber">
-          <div class="kpi-label">Urgent</div>
-          <div class="kpi-val amber">2,089</div>
+      <div class="sec-hdr"><div class="sec-label">Demand Signals</div><div class="sec-line"></div></div>
+      <div class="kpi-grid-4">
+        <div class="kpi-card">
+          <div class="kpi-glow" style="background:radial-gradient(ellipse at top left,rgba(245,158,11,.1),transparent 70%)"></div>
+          <div class="kpi-label">Urgent Requests</div>
+          <div class="kpi-val" style="color:var(--amber)">2,089</div>
           <div class="kpi-sub">15.1% of all requests</div>
         </div>
-        <div class="kpi-card purple">
+        <div class="kpi-card">
+          <div class="kpi-glow" style="background:radial-gradient(ellipse at top left,rgba(168,85,247,.1),transparent 70%)"></div>
           <div class="kpi-label">Airport Rides</div>
-          <div class="kpi-val purple">48</div>
+          <div class="kpi-val" style="color:var(--purple)">48</div>
           <div class="kpi-sub">High-value trips</div>
         </div>
-        <div class="kpi-card cyan">
-          <div class="kpi-label">Daily / Regular</div>
-          <div class="kpi-val cyan">28</div>
-          <div class="kpi-sub">Recurring commuters</div>
+        <div class="kpi-card">
+          <div class="kpi-glow" style="background:radial-gradient(ellipse at top left,rgba(6,182,212,.1),transparent 70%)"></div>
+          <div class="kpi-label">Daily / Recurring</div>
+          <div class="kpi-val" style="color:var(--cyan)">28</div>
+          <div class="kpi-sub">Regular commuters</div>
         </div>
-        <div class="kpi-card green">
-          <div class="kpi-label">Geo-Coded</div>
-          <div class="kpi-val green" id="kpi-geocoded">—</div>
-          <div class="kpi-sub">Has lat/lng coordinates</div>
+        <div class="kpi-card">
+          <div class="kpi-glow" style="background:radial-gradient(ellipse at top left,rgba(34,197,94,.1),transparent 70%)"></div>
+          <div class="kpi-label">Geo-Coded Requests</div>
+          <div class="kpi-val" style="color:var(--green)" id="k-geo">—</div>
+          <div class="kpi-sub">Have lat/lng coords</div>
         </div>
       </div>
     </div>
@@ -398,172 +325,184 @@ td.accent{color:var(--accent);font-weight:600}
   </div><!-- /main -->
 
   <div class="dash-footer">
-    <div>Pathfynder Founder HQ · Private · Do not share</div>
-    <div id="last-refresh" style="color:var(--text-muted)">Last refreshed: —</div>
+    <span>Pathfynder Founder HQ · Private</span>
+    <span id="last-refresh">—</span>
   </div>
 
 </div><!-- /dashboard -->
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
-// ════════════════════════════════════════
+// ═══════════════════════════════════
 // CONFIG
-// ════════════════════════════════════════
+// ═══════════════════════════════════
 var SUPABASE_URL  = 'https://omussxfyrztjahbdrrpi.supabase.co';
 var SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9tdXNzeGZ5cnp0amFoYmRycnBpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MjI1NjAsImV4cCI6MjA5NTk5ODU2MH0.ySigym7uOaFIQm01nErPfn4kE6j4MOVKoNntt_Mosak';
 
-// ── PASSPHRASE: SHA-256 of "pf@founder2026"
-// To change: update this hash with sha256 of your new password
+// SHA-256 of "pf@founder2026"
 var PASS_HASH = '5b7eb8e3613957b5ffbf41589cffba6aacc4782a8214afdf2a84f9788c5bd710';
 
-var _noopStorage = {
-  getItem:    function() { return null; },
-  setItem:    function() {},
-  removeItem: function() {}
+// No-op storage — prevents Supabase from touching localStorage/cookies
+// which gets blocked by Edge tracking prevention
+var noopStorage = {
+  getItem:    function(){ return null; },
+  setItem:    function(){},
+  removeItem: function(){}
 };
-var db = null;
+
+var db;
 try {
   db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
-    auth: {
-      storage: _noopStorage,
-      persistSession: false,
-      autoRefreshToken: false,
-      detectSessionInUrl: false
-    }
+    auth: { storage: noopStorage, persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
   });
-} catch(e) { console.warn('Supabase init failed:', e); }
+} catch(e) { console.warn('Supabase failed:', e); }
 
-// ════════════════════════════════════════
+// ═══════════════════════════════════
 // AUTH
-// ════════════════════════════════════════
+// ═══════════════════════════════════
 async function sha256(str) {
-  var buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  var enc = new TextEncoder().encode(str);
+  var buf = await crypto.subtle.digest('SHA-256', enc);
   return Array.from(new Uint8Array(buf)).map(function(b){ return b.toString(16).padStart(2,'0'); }).join('');
 }
 
-var authPw  = document.getElementById('auth-pw');
-var authBtn = document.getElementById('auth-btn');
-var authErr = document.getElementById('auth-err');
+var authPwEl  = document.getElementById('auth-pw');
+var authBtnEl = document.getElementById('auth-btn');
+var authErrEl = document.getElementById('auth-err');
+
+function showDashboard() {
+  document.getElementById('auth-screen').style.display = 'none';
+  // KEY FIX: must use 'flex' not '' because CSS sets display:none
+  document.getElementById('dashboard').style.display = 'flex';
+  document.getElementById('dashboard').style.flexDirection = 'column';
+  initDashboard();
+}
 
 function tryAuth() {
-  authBtn.textContent = '…';
-  sha256(authPw.value.trim()).then(function(h) {
+  var pw = authPwEl.value.trim();
+  if (!pw) return;
+  authBtnEl.textContent = '…';
+  authErrEl.style.display = 'none';
+  sha256(pw).then(function(h) {
     if (h === PASS_HASH) {
-      window._pfAuthed = true;
-      document.getElementById('auth-screen').style.display = 'none';
-      document.getElementById('dashboard').style.display = '';
-      init();
+      showDashboard();
     } else {
-      authErr.style.display = 'block';
-      authBtn.textContent = 'Access Dashboard →';
-      authPw.value = '';
-      authPw.focus();
+      authErrEl.style.display = 'block';
+      authBtnEl.textContent = 'Access Dashboard →';
+      authPwEl.value = '';
+      authPwEl.focus();
     }
+  }).catch(function(e) {
+    // crypto.subtle unavailable (HTTP) — fallback: compare plain (dev only)
+    authErrEl.textContent = 'Secure context required (use HTTPS)';
+    authErrEl.style.display = 'block';
+    authBtnEl.textContent = 'Access Dashboard →';
   });
 }
-authBtn.addEventListener('click', tryAuth);
-authPw.addEventListener('keydown', function(e){ if(e.key==='Enter') tryAuth(); });
 
-// Auto-login if session exists
-if (window._pfAuthed) {
-  document.getElementById('auth-screen').style.display = 'none';
-  document.getElementById('dashboard').style.display = '';
-}
+authBtnEl.addEventListener('click', tryAuth);
+authPwEl.addEventListener('keydown', function(e){ if(e.key==='Enter') tryAuth(); });
 
-// ════════════════════════════════════════
+// ═══════════════════════════════════
 // HELPERS
-// ════════════════════════════════════════
+// ═══════════════════════════════════
 function fmt(n) { return n != null ? Number(n).toLocaleString() : '—'; }
+
 function fmtTime(t) {
   if (!t) return '—';
-  var h = parseInt(t.slice(0,2),10), m = parseInt(t.slice(3,5),10);
-  var ap = h >= 12 ? 'PM' : 'AM', h12 = h % 12 || 12;
-  return h12 + ':' + (m < 10 ? '0' : '') + m + ' ' + ap;
+  var parts = t.split(':');
+  var h = parseInt(parts[0],10), m = parseInt(parts[1],10);
+  var ap = h>=12?'PM':'AM', h12 = h%12||12;
+  return h12+':'+(m<10?'0':'')+m+' '+ap;
 }
+
 function fmtDate(d) {
   if (!d) return '—';
-  var r = new Date(d + 'T00:00:00');
-  return r.toLocaleDateString('en-CA',{weekday:'short',month:'short',day:'numeric'});
+  var dt = new Date(d+'T00:00:00');
+  return dt.toLocaleDateString('en-CA',{weekday:'short',month:'short',day:'numeric'});
 }
+
 function timeAgo(iso) {
   if (!iso) return '—';
   var diff = Date.now() - new Date(iso).getTime();
-  var mins = Math.floor(diff/60000), hours = Math.floor(mins/60), days = Math.floor(hours/24);
-  if (mins < 1) return 'just now';
-  if (mins < 60) return mins + 'm ago';
-  if (hours < 24) return hours + 'h ago';
-  return days + 'd ago';
-}
-function statusPill(s) {
-  var cls = s === 'open' ? 'pill-open' : s === 'started' ? 'pill-started' : 'pill-ended';
-  return '<span class="pill ' + cls + '"><span class="pill-dot"></span>' + s + '</span>';
-}
-function shortLabel(lbl) {
-  if (!lbl) return '—';
-  return lbl.replace(', Ontario, Canada','').replace(', ON, Canada','').replace(', Canada','');
+  var m = Math.floor(diff/60000), h = Math.floor(m/60), d = Math.floor(h/24);
+  if (m<1) return 'just now';
+  if (m<60) return m+'m ago';
+  if (h<24) return h+'h ago';
+  return d+'d ago';
 }
 
-// ════════════════════════════════════════
+function shortLbl(s) {
+  if (!s) return '—';
+  return s.replace(/, Ontario, Canada/g,'').replace(/, ON, Canada/g,'').replace(/, Canada/g,'');
+}
+
+function pillHTML(st) {
+  var c = st==='open'?'pill-open':st==='started'?'pill-started':'pill-ended';
+  return '<span class="pill '+c+'"><span class="pill-dot"></span>'+st+'</span>';
+}
+
+// ═══════════════════════════════════
 // CLOCK
-// ════════════════════════════════════════
-function updateClock() {
+// ═══════════════════════════════════
+function tickClock() {
   var d = new Date();
   document.getElementById('hdr-clock').textContent =
-    d.toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit',hour12:true}) +
-    ' · ' + d.toLocaleDateString('en-CA',{weekday:'short',month:'short',day:'numeric'});
+    d.toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit',hour12:true})+
+    ' · '+d.toLocaleDateString('en-CA',{weekday:'short',month:'short',day:'numeric'});
 }
-setInterval(updateClock, 1000);
-updateClock();
+setInterval(tickClock, 1000);
+tickClock();
 
-// ════════════════════════════════════════
-// EMBEDDED STATIC DATA (fallback)
-// ════════════════════════════════════════
-var STATIC = {
-  activity: [
-    {d:'Jun 21',n:545},{d:'Jun 22',n:579},{d:'Jun 23',n:448},{d:'Jun 24',n:488},
-    {d:'Jun 25',n:393},{d:'Jun 26',n:198},{d:'Jun 27',n:584},{d:'Jun 28',n:680},
-    {d:'Jun 29',n:601},{d:'Jun 30',n:619},{d:'Jul 1',n:617},{d:'Jul 2',n:733},
-    {d:'Jul 3',n:751},{d:'Jul 4',n:657},{d:'Jul 5',n:64}
-  ],
-  type: [{label:'Passenger',val:12410,color:'rgba(79,142,247,.8)'},{label:'Driver',val:1357,color:'rgba(34,197,94,.8)'}],
-  hours: [609,848,937,575,259,96,50,37,67,296,540,561,649,623,566,585,697,928,945,888,868,770,760,627],
-  corridors: [
-    {f:'Brampton',t:'Kitchener',n:220},{f:'Niagara Falls',t:'St. Catharines',n:190},
-    {f:'Brampton',t:'Niagara Falls',n:171},{f:'Kitchener',t:'Brampton',n:170},
-    {f:'St. Catharines',t:'Niagara Falls',n:164},{f:'Niagara Falls',t:'Welland',n:144},
-    {f:'Niagara Falls',t:'Brampton',n:141},{f:'Welland',t:'Niagara Falls',n:137},
-    {f:'Brampton',t:'Kitchener (full)',n:134},{f:'Brampton',t:'Niagara',n:97}
-  ],
-  groups: [
-    {g:'NIAGARA RIDES',n:2212},{g:'RIDE SERVICES NIAGARA',n:1986},{g:'Niagara Local rides',n:1098},
-    {g:'ROAD REBELS NIAGARA',n:923},{g:'Perfect Rides',n:713},{g:'DoraRide Carpool',n:679},
-    {g:'Brampton 2@25',n:664},{g:'Niagara Regional Rides',n:548}
-  ]
-};
+// ═══════════════════════════════════
+// STATIC DATA (embedded — always renders even if Supabase blocked)
+// ═══════════════════════════════════
+var S_ACTIVITY = [
+  {d:'Jun 21',n:545},{d:'Jun 22',n:579},{d:'Jun 23',n:448},{d:'Jun 24',n:488},
+  {d:'Jun 25',n:393},{d:'Jun 26',n:198},{d:'Jun 27',n:584},{d:'Jun 28',n:680},
+  {d:'Jun 29',n:601},{d:'Jun 30',n:619},{d:'Jul 1',n:617},{d:'Jul 2',n:733},
+  {d:'Jul 3',n:751},{d:'Jul 4',n:657},{d:'Jul 5',n:64}
+];
+var S_TYPE = [
+  {label:'Passenger',val:12410,color:'rgba(79,142,247,.75)'},
+  {label:'Driver',val:1357,color:'rgba(34,197,94,.75)'}
+];
+var S_HOURS = [609,848,937,575,259,96,50,37,67,296,540,561,649,623,566,585,697,928,945,888,868,770,760,627];
+var S_CORRIDORS = [
+  {f:'Brampton',t:'Kitchener',n:220},{f:'Niagara Falls',t:'St. Catharines',n:190},
+  {f:'Brampton',t:'Niagara Falls',n:171},{f:'Kitchener',t:'Brampton',n:170},
+  {f:'St. Catharines',t:'Niagara Falls',n:164},{f:'Niagara Falls',t:'Welland',n:144},
+  {f:'Niagara Falls',t:'Brampton',n:141},{f:'Welland',t:'Niagara Falls',n:137},
+  {f:'Brampton',t:'Kitchener (geo)',n:134},{f:'Brampton',t:'Niagara',n:97}
+];
+var S_GROUPS = [
+  {g:'NIAGARA RIDES',n:2212},{g:'RIDE SERVICES NIAGARA',n:1986},
+  {g:'Niagara Local rides',n:1098},{g:'ROAD REBELS NIAGARA',n:923},
+  {g:'Perfect Rides',n:713},{g:'DoraRide Carpool',n:679},
+  {g:'Brampton 2@25',n:664},{g:'Niagara Regional Rides',n:548}
+];
 
-// ════════════════════════════════════════
-// CHARTS
-// ════════════════════════════════════════
-var chartActivity, chartType;
+// ═══════════════════════════════════
+// BUILD CHARTS
+// ═══════════════════════════════════
+var _chartA, _chartT;
 
-function buildActivityChart(data) {
+function buildActivity(data) {
   var ctx = document.getElementById('chart-activity').getContext('2d');
-  if (chartActivity) chartActivity.destroy();
-  chartActivity = new Chart(ctx, {
+  if (_chartA) _chartA.destroy();
+  _chartA = new Chart(ctx, {
     type:'bar',
     data:{
-      labels: data.map(function(d){ return d.d; }),
+      labels:data.map(function(d){return d.d;}),
       datasets:[{
-        label:'Requests',
-        data: data.map(function(d){ return d.n; }),
-        backgroundColor:'rgba(79,142,247,.45)',
-        borderColor:'rgba(79,142,247,.8)',
-        borderWidth:1,borderRadius:3,borderSkipped:false
+        label:'Requests',data:data.map(function(d){return d.n;}),
+        backgroundColor:'rgba(79,142,247,.4)',borderColor:'rgba(79,142,247,.8)',
+        borderWidth:1,borderRadius:3
       }]
     },
     options:{
       responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return ' '+c.parsed.y+' requests';}}}},
+      plugins:{legend:{display:false}},
       scales:{
         x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#4e5a6e',font:{size:9}}},
         y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#4e5a6e',font:{size:9}},beginAtZero:true}
@@ -572,191 +511,161 @@ function buildActivityChart(data) {
   });
 }
 
-function buildTypeChart(data) {
+function buildType(data) {
   var ctx = document.getElementById('chart-type').getContext('2d');
-  if (chartType) chartType.destroy();
-  chartType = new Chart(ctx, {
+  if (_chartT) _chartT.destroy();
+  _chartT = new Chart(ctx, {
     type:'doughnut',
     data:{
-      labels: data.map(function(d){ return d.label; }),
-      datasets:[{
-        data: data.map(function(d){ return d.val; }),
-        backgroundColor: data.map(function(d){ return d.color; }),
-        borderColor:'var(--surface)',borderWidth:3,hoverOffset:6
-      }]
+      labels:data.map(function(d){return d.label;}),
+      datasets:[{data:data.map(function(d){return d.val;}),backgroundColor:data.map(function(d){return d.color;}),borderColor:'#0f1420',borderWidth:3}]
     },
     options:{
-      responsive:true,maintainAspectRatio:false,cutout:'68%',
-      plugins:{
-        legend:{position:'bottom',labels:{color:'#8a95a8',font:{size:10},padding:10,boxWidth:10}},
-        tooltip:{callbacks:{label:function(c){var t=c.parsed;var tot=c.dataset.data.reduce(function(a,b){return a+b;},0);return ' '+c.label+': '+t.toLocaleString()+' ('+(100*t/tot).toFixed(1)+'%)';}}}
-      }
+      responsive:true,maintainAspectRatio:false,cutout:'65%',
+      plugins:{legend:{position:'bottom',labels:{color:'#8a95a8',font:{size:10},padding:8,boxWidth:10}}}
     }
   });
 }
 
-function buildHourBars(hours) {
+function buildHours(hours) {
   var max = Math.max.apply(null, hours);
   var barsEl = document.getElementById('hour-bars');
-  var lblEl  = document.getElementById('hour-labels');
+  var lblEl  = document.getElementById('hour-xlabels');
   barsEl.innerHTML = '';
-  lblEl.innerHTML = '';
+  lblEl.innerHTML  = '';
   hours.forEach(function(n, i) {
-    var pct = Math.max(5, Math.round((n/max)*100));
-    var hot = n > max*0.8;
+    var pct = Math.max(4, Math.round(n/max*100));
+    var hot = n > max * 0.75;
     var bar = document.createElement('div');
     bar.className = 'hour-bar';
-    bar.style.height = pct + '%';
-    bar.style.background = hot ? 'rgba(245,158,11,.75)' : 'rgba(79,142,247,.45)';
-    bar.setAttribute('data-tip', i+'h: '+n+' msgs');
+    bar.style.cssText = 'height:'+pct+'%;background:'+(hot?'rgba(245,158,11,.7)':'rgba(79,142,247,.4)')+';border-radius:2px 2px 0 0';
+    var tip = document.createElement('div');
+    tip.className = 'hour-tip';
+    tip.textContent = i+'h: '+n;
+    bar.appendChild(tip);
     barsEl.appendChild(bar);
-    if (i % 4 === 0) {
-      var lbl = document.createElement('div');
-      lbl.className = 'hour-lbl';
-      lbl.textContent = i+'h';
-      lbl.style.flex = '4';
-      lblEl.appendChild(lbl);
-    }
+
+    var lbl = document.createElement('div');
+    lbl.className = 'hour-xlbl';
+    lbl.textContent = i%6===0 ? i+'h' : '';
+    lblEl.appendChild(lbl);
   });
 }
 
 function buildCorridors(data) {
-  var max = data[0] ? data[0].n : 1;
-  var el = document.getElementById('corridor-rows');
-  el.innerHTML = data.map(function(c){
-    var pct = Math.round((c.n/max)*100);
-    return '<div class="corridor-row">' +
-      '<div class="corridor-meta"><span class="corridor-label">' + c.f + ' → ' + c.t + '</span><span class="corridor-count">' + c.n + '</span></div>' +
-      '<div class="corridor-track"><div class="corridor-fill" style="width:' + pct + '%"></div></div>' +
+  var max = data[0].n;
+  document.getElementById('corridor-rows').innerHTML = data.map(function(c){
+    return '<div class="corridor-row">'+
+      '<div class="corridor-meta"><span class="corridor-from">'+c.f+' → '+c.t+'</span><span class="corridor-n">'+c.n+'</span></div>'+
+      '<div class="corridor-track"><div class="corridor-fill" style="width:'+Math.round(c.n/max*100)+'%"></div></div>'+
     '</div>';
   }).join('');
 }
 
 function buildGroups(data) {
-  var total = data.reduce(function(s,g){ return s+g.n; }, 0);
-  var tbody = document.getElementById('groups-body');
-  tbody.innerHTML = data.map(function(g){
-    var pct = (100*g.n/total).toFixed(1);
-    return '<tr><td class="name">' + g.g + '</td><td class="num">' + g.n.toLocaleString() + '</td>' +
-           '<td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:4px;background:var(--surface3);border-radius:2px;overflow:hidden"><div style="width:' + (g.n/data[0].n*100).toFixed(0) + '%;height:100%;background:var(--accent);border-radius:2px"></div></div><span style="font-size:10px;color:var(--text-muted)">' + pct + '%</span></div></td></tr>';
+  var tot = data.reduce(function(s,g){return s+g.n;},0);
+  document.getElementById('g-badge').textContent = data.length+' groups';
+  document.getElementById('groups-tbody').innerHTML = data.map(function(g){
+    var pct = (g.n/tot*100).toFixed(1);
+    var barW = Math.round(g.n/data[0].n*60);
+    return '<tr><td class="td-name" style="font-size:11px">'+g.g+'</td>'+
+           '<td class="td-num">'+g.n.toLocaleString()+'</td>'+
+           '<td><div style="display:flex;align-items:center;gap:5px">'+
+           '<div style="width:'+barW+'px;height:3px;background:var(--accent);border-radius:2px;opacity:.7"></div>'+
+           '<span style="font-size:10px;color:var(--text-muted)">'+pct+'%</span></div></td></tr>';
   }).join('');
-  document.getElementById('group-count').textContent = data.length + ' groups';
 }
 
-// ════════════════════════════════════════
-// LIVE DATA FETCH
-// ════════════════════════════════════════
-async function fetchAndRender() {
-  if (!db) { console.warn('No db'); return; }
+// ═══════════════════════════════════
+// LIVE DATA
+// ═══════════════════════════════════
+async function fetchLive() {
+  if (!db) return;
+
   // Rides
   try {
     var r = await db.from('driver_routines').select('*').order('created_at',{ascending:false});
-    if (r.data) renderRides(r.data);
-  } catch(e){}
+    if (r.data && r.data.length) {
+      document.getElementById('k-drivers').textContent = r.data.length;
+      document.getElementById('k-active').textContent  = r.data.filter(function(x){return x.ride_status==='open';}).length;
+      document.getElementById('k-started').textContent = r.data.filter(function(x){return x.ride_status==='started';}).length;
+      var grid = document.getElementById('rides-grid');
+      grid.innerHTML = r.data.map(function(ride){
+        return '<div class="ride-card">'+
+          '<div class="ride-top"><span class="ride-name">'+(ride.driver_name||'Driver')+'</span>'+pillHTML(ride.ride_status||'open')+'</div>'+
+          '<div class="ride-route">'+
+            '<div class="ride-stop"><div class="stop-dot" style="border:1.5px solid var(--text-muted)"></div>'+shortLbl(ride.pickup_label)+'</div>'+
+            '<div class="ride-stop"><div class="stop-dot" style="background:var(--accent)"></div>'+shortLbl(ride.dropoff_label)+'</div>'+
+          '</div>'+
+          '<div class="ride-chips">'+
+            '<div class="chip">⏱ <span>'+fmtTime(ride.departure_time)+'</span></div>'+
+            '<div class="chip">📅 <span>'+fmtDate(ride.dates)+'</span></div>'+
+            '<div class="chip">💺 <span>'+(ride.available_seats||'—')+'</span></div>'+
+            '<div class="chip">📱 <span>'+(ride.platform||'—')+'</span></div>'+
+          '</div>'+
+        '</div>';
+      }).join('');
+    }
+  } catch(e){ console.warn('rides:', e); }
 
-  // Passenger bookings
+  // Bookings
   try {
     var pb = await db.from('passenger_requests').select('*').order('created_at',{ascending:false}).limit(20);
-    if (pb.data) renderBookings(pb.data);
-  } catch(e){}
+    if (pb.data) {
+      document.getElementById('book-badge').textContent = pb.data.length+' bookings';
+      document.getElementById('book-tbody').innerHTML = pb.data.length
+        ? pb.data.map(function(p){
+            var nm = p.passenger_name_web||p.passenger_name||'—';
+            var st = p.status||'pending';
+            var sc = st==='picked_up'?'td-green':st==='confirmed'?'td-accent':'';
+            return '<tr><td class="td-name">'+nm+'</td><td>'+shortLbl(p.pickup_label)+'</td><td>'+shortLbl(p.dropoff_label)+'</td><td class="'+sc+'">'+st+'</td></tr>';
+          }).join('')
+        : '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:16px">No bookings yet</td></tr>';
+    }
+  } catch(e){ console.warn('bookings:', e); }
 
   // Telegram users
   try {
     var tu = await db.from('telegram_users').select('*').order('created_at',{ascending:false});
-    if (tu.data) renderTgUsers(tu.data);
-  } catch(e){}
+    if (tu.data) {
+      document.getElementById('k-tg').textContent = tu.data.length;
+      document.getElementById('tg-badge').textContent = tu.data.length+' users';
+      document.getElementById('tg-tbody').innerHTML = tu.data.map(function(u){
+        return '<tr><td class="td-name">'+(u.name||'—')+'</td><td style="color:var(--accent)">@'+(u.telegram_username||'—')+'</td>'+
+               '<td style="font-size:11px">'+(u.whatsapp_number||'—')+'</td><td>'+timeAgo(u.created_at)+'</td></tr>';
+      }).join('');
+    }
+  } catch(e){ console.warn('tg users:', e); }
 
-  // Geo-coded count
+  // Geo count
   try {
     var gc = await db.from('extracted_data_01').select('id',{count:'exact',head:true}).not('pickup_lat','is',null);
-    if (gc.count != null) document.getElementById('kpi-geocoded').textContent = fmt(gc.count);
-  } catch(e){}
+    if (gc.count != null) document.getElementById('k-geo').textContent = fmt(gc.count);
+  } catch(e){ console.warn('geo:', e); }
 
-  document.getElementById('last-refresh').textContent = 'Last refreshed: ' + new Date().toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  document.getElementById('last-refresh').textContent =
+    'Refreshed '+new Date().toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
 }
 
-function renderRides(rides) {
-  document.getElementById('kpi-drivers').textContent = fmt(rides.length);
-  var active = rides.filter(function(r){ return r.ride_status === 'open'; }).length;
-  var started = rides.filter(function(r){ return r.ride_status === 'started'; }).length;
-  document.getElementById('kpi-active-rides').textContent = active;
-  document.getElementById('kpi-started').textContent = started;
-
-  var el = document.getElementById('rides-grid');
-  if (!rides.length) { el.innerHTML = '<div style="color:var(--text-muted);font-size:12px">No rides found.</div>'; return; }
-  el.innerHTML = rides.map(function(r){
-    return '<div class="ride-mini">' +
-      '<div class="ride-mini-top">' +
-        '<div class="ride-mini-name">' + (r.driver_name||'Driver') + '</div>' +
-        statusPill(r.ride_status||'open') +
-      '</div>' +
-      '<div class="ride-mini-route">' +
-        '<div class="ride-mini-stop"><div class="ride-mini-dot dot-from"></div>' + shortLabel(r.pickup_label) + '</div>' +
-        '<div class="ride-mini-stop"><div class="ride-mini-dot dot-to"></div>' + shortLabel(r.dropoff_label) + '</div>' +
-      '</div>' +
-      '<div class="ride-mini-meta">' +
-        '<div class="ride-mini-chip">⏱ <span>' + fmtTime(r.departure_time) + '</span></div>' +
-        '<div class="ride-mini-chip">📅 <span>' + fmtDate(r.dates) + '</span></div>' +
-        '<div class="ride-mini-chip">💺 <span>' + (r.available_seats||'—') + '</span></div>' +
-        '<div class="ride-mini-chip">📱 <span>' + (r.platform||'—') + '</span></div>' +
-      '</div>' +
-    '</div>';
-  }).join('');
-}
-
-function renderBookings(rows) {
-  document.getElementById('bookings-badge').textContent = rows.length + ' bookings';
-  var tbody = document.getElementById('bookings-body');
-  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="4" style="color:var(--text-muted);text-align:center;padding:20px">No bookings yet</td></tr>'; return; }
-  tbody.innerHTML = rows.map(function(p){
-    var name = p.passenger_name_web || p.passenger_name || '—';
-    var st = p.status || 'pending';
-    var stCls = st === 'picked_up' ? 'green' : st === 'confirmed' ? 'accent' : '';
-    return '<tr>' +
-      '<td class="name">' + name + '</td>' +
-      '<td>' + shortLabel(p.pickup_label) + '</td>' +
-      '<td>' + shortLabel(p.dropoff_label) + '</td>' +
-      '<td class="' + stCls + '">' + st + '</td>' +
-    '</tr>';
-  }).join('');
-}
-
-function renderTgUsers(users) {
-  document.getElementById('kpi-tg').textContent = fmt(users.length);
-  document.getElementById('tg-badge').textContent = users.length + ' users';
-  var tbody = document.getElementById('tg-body');
-  tbody.innerHTML = users.map(function(u){
-    return '<tr>' +
-      '<td class="name">' + (u.name||'—') + '</td>' +
-      '<td>@' + (u.telegram_username||'—') + '</td>' +
-      '<td style="font-size:11px">' + (u.whatsapp_number||'—') + '</td>' +
-      '<td>' + timeAgo(u.created_at) + '</td>' +
-    '</tr>';
-  }).join('');
-}
-
-// ════════════════════════════════════════
+// ═══════════════════════════════════
 // INIT
-// ════════════════════════════════════════
-function init() {
-  // Build static charts immediately
-  try { buildActivityChart(STATIC.activity); } catch(e) { console.warn('actChart',e); }
-  try { buildTypeChart(STATIC.type); } catch(e) { console.warn('typeChart',e); }
-  try { buildHourBars(STATIC.hours); } catch(e) { console.warn('hourBars',e); }
-  try { buildCorridors(STATIC.corridors); } catch(e) { console.warn('corridors',e); }
-  try { buildGroups(STATIC.groups); } catch(e) { console.warn('groups',e); }
+// ═══════════════════════════════════
+function initDashboard() {
+  // Static charts — always works, no network needed
+  try { buildActivity(S_ACTIVITY); } catch(e){ console.warn(e); }
+  try { buildType(S_TYPE); }         catch(e){ console.warn(e); }
+  try { buildHours(S_HOURS); }       catch(e){ console.warn(e); }
+  try { buildCorridors(S_CORRIDORS); } catch(e){ console.warn(e); }
+  try { buildGroups(S_GROUPS); }     catch(e){ console.warn(e); }
 
-  // Fetch live data
-  fetchAndRender();
+  // Live fetch
+  fetchLive();
 }
 
-// Refresh button
-document.getElementById('refresh-btn').addEventListener('click', function() {
-  if (document.getElementById('dashboard').style.display !== 'none') fetchAndRender();
+document.getElementById('refresh-btn').addEventListener('click', function(){
+  var dash = document.getElementById('dashboard');
+  if (dash.style.display !== 'none') fetchLive();
 });
-
-// Auto-init if already authed
-// auto-init handled after auth gate
 </script>
 </body>
 </html>
