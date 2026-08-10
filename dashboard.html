@@ -225,7 +225,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
         <div class="kpi-card">
           <div class="kpi-glow" style="background:radial-gradient(ellipse at top left,rgba(34,197,94,.1),transparent 70%)"></div>
           <div class="kpi-label">Unique Passengers</div>
-          <div class="kpi-val" style="color:var(--green)" id="k-pax">1,837</div>
+          <div class="kpi-val" style="color:var(--green)" id="k-pax">—</div>
           <div class="kpi-sub">Distinct phone numbers</div>
         </div>
         <div class="kpi-card">
@@ -265,7 +265,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
         <div class="chart-title">Activity by Hour of Day</div>
         <div class="hour-bars" id="hour-bars"></div>
         <div class="hour-xlabels" id="hour-xlabels"></div>
-        <div style="margin-top:10px;font-size:10px;color:var(--text-muted)">🔥 Peak: <span style="color:var(--amber);font-weight:600">1–2 AM & 6–7 PM</span> — shift worker pattern</div>
+        <div style="margin-top:10px;font-size:10px;color:var(--text-muted)">🔥 Peak: <span style="color:var(--amber);font-weight:600" id="hour-peak-lbl">—</span> <span id="hour-peak-note"></span></div>
       </div>
     </div>
 
@@ -317,19 +317,19 @@ tr:hover td{background:rgba(255,255,255,.015)}
         <div class="kpi-card">
           <div class="kpi-glow" style="background:radial-gradient(ellipse at top left,rgba(245,158,11,.1),transparent 70%)"></div>
           <div class="kpi-label">Urgent Requests</div>
-          <div class="kpi-val" style="color:var(--amber)">2,089</div>
-          <div class="kpi-sub">15.1% of all requests</div>
+          <div class="kpi-val" style="color:var(--amber)" id="k-urgent">—</div>
+          <div class="kpi-sub"><span id="k-urgent-pct">—</span>% of all requests</div>
         </div>
         <div class="kpi-card">
           <div class="kpi-glow" style="background:radial-gradient(ellipse at top left,rgba(168,85,247,.1),transparent 70%)"></div>
           <div class="kpi-label">Airport Rides</div>
-          <div class="kpi-val" style="color:var(--purple)">48</div>
+          <div class="kpi-val" style="color:var(--purple)" id="k-airport">—</div>
           <div class="kpi-sub">High-value trips</div>
         </div>
         <div class="kpi-card">
           <div class="kpi-glow" style="background:radial-gradient(ellipse at top left,rgba(6,182,212,.1),transparent 70%)"></div>
           <div class="kpi-label">Daily / Recurring</div>
-          <div class="kpi-val" style="color:var(--cyan)">28</div>
+          <div class="kpi-val" style="color:var(--cyan)" id="k-daily">—</div>
           <div class="kpi-sub">Regular commuters</div>
         </div>
         <div class="kpi-card">
@@ -569,6 +569,46 @@ function buildHours(hours) {
     lbl.textContent = i%6===0 ? i+'h' : '';
     lblEl.appendChild(lbl);
   });
+
+  updatePeakLabel(hours);
+}
+
+function ap(x){ return x>=12 ? 'PM' : 'AM'; }
+function h12(x){ return (x%12)||12; }
+
+// Formats an hour-block range like [1,2] (meaning hours 1:00–2:59) as "1–3 AM"
+function fmtHourRange(startHour, endHour) {
+  var startLabel = h12(startHour), startAp = ap(startHour);
+  var endClock = (endHour+1) % 24, endLabel = h12(endClock), endAp = ap(endClock);
+  if (startAp === endAp) return startLabel+'–'+endLabel+' '+endAp;
+  return startLabel+' '+startAp+'–'+endLabel+' '+endAp;
+}
+
+function updatePeakLabel(hours) {
+  var lblEl = document.getElementById('hour-peak-lbl');
+  var noteEl = document.getElementById('hour-peak-note');
+  if (!lblEl) return;
+  var max = Math.max.apply(null, hours);
+  if (!max) { lblEl.textContent = '—'; if (noteEl) noteEl.textContent = ''; return; }
+
+  // Group contiguous hours within 90% of peak into ranges (handles e.g. 1-2AM & 6-7PM as two bands)
+  var hot = hours.map(function(n){ return n >= max * 0.9; });
+  var ranges = [];
+  var start = null;
+  for (var i = 0; i < 24; i++) {
+    if (hot[i] && start === null) start = i;
+    if (!hot[i] && start !== null) { ranges.push([start, i-1]); start = null; }
+  }
+  if (start !== null) ranges.push([start, 23]);
+
+  var text = ranges.map(function(r){ return fmtHourRange(r[0], r[1]); }).join(' & ');
+
+  lblEl.textContent = text || '—';
+
+  // Late-night + evening commute pattern check → keep the descriptive note only when it still fits
+  var isNightHeavy = ranges.some(function(r){ return r[0] <= 2 || r[1] >= 22; });
+  var isEveningHeavy = ranges.some(function(r){ return r[0] >= 16 && r[0] <= 19; });
+  if (noteEl) noteEl.textContent = (isNightHeavy && isEveningHeavy) ? '— shift worker pattern' : '';
 }
 
 function buildCorridors(data) {
@@ -710,7 +750,46 @@ async function fetchLive() {
     }
   } catch(e){ console.warn('tg users:', e); }
 
-  // Note: Corridors and Groups use pre-computed SQL values (accurate, stable historical data)
+  // ── Hourly activity, Corridors, Groups: live via Postgres RPC (server-side GROUP BY) ──
+  try {
+    var hr = await db.rpc('get_hourly_activity');
+    if (hr.data && hr.data.length) {
+      var byHour = new Array(24).fill(0);
+      hr.data.forEach(function(row){ byHour[row.hour] = row.n; });
+      buildHours(byHour);
+    }
+  } catch(e){ console.warn('hourly activity:', e); }
+
+  try {
+    var cor = await db.rpc('get_top_corridors', {lim: 10});
+    if (cor.data && cor.data.length) {
+      buildCorridors(cor.data.map(function(row){
+        return {f: shortLbl(row.pickup), t: shortLbl(row.dropoff), n: row.n};
+      }));
+    }
+  } catch(e){ console.warn('corridors:', e); }
+
+  try {
+    var grp = await db.rpc('get_top_groups', {lim: 8});
+    if (grp.data && grp.data.length) {
+      buildGroups(grp.data.map(function(row){
+        return {g: row.group_name, n: row.n};
+      }));
+    }
+  } catch(e){ console.warn('groups:', e); }
+
+  // ── Unique passengers, Urgent/Airport/Daily demand signals ──
+  try {
+    var sig = await db.rpc('get_demand_signals');
+    if (sig.data && sig.data.length) {
+      var s = sig.data[0];
+      document.getElementById('k-pax').textContent = fmt(s.unique_passengers);
+      document.getElementById('k-urgent').textContent = fmt(s.urgent_count);
+      document.getElementById('k-urgent-pct').textContent = s.urgent_pct;
+      document.getElementById('k-airport').textContent = fmt(s.airport_count);
+      document.getElementById('k-daily').textContent = fmt(s.daily_count);
+    }
+  } catch(e){ console.warn('demand signals:', e); }
 
   document.getElementById('last-refresh').textContent =
     'Refreshed ' + new Date().toLocaleTimeString('en-CA', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
@@ -720,14 +799,14 @@ async function fetchLive() {
 // INIT
 // ═══════════════════════════════════
 function initDashboard() {
-  // Static charts — always works, no network needed
+  // Static charts — instant paint fallback, overwritten by fetchLive() below
   try { buildActivity(S_ACTIVITY); } catch(e){ console.warn(e); }
   try { buildType(S_TYPE); }         catch(e){ console.warn(e); }
   try { buildHours(S_HOURS); }       catch(e){ console.warn(e); }
   try { buildCorridors(S_CORRIDORS); } catch(e){ console.warn(e); }
   try { buildGroups(S_GROUPS); }     catch(e){ console.warn(e); }
 
-  // Live fetch
+  // Live fetch — replaces every static value above with real Supabase data
   fetchLive();
 }
 
