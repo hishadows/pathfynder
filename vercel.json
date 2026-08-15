@@ -1,0 +1,5 @@
+{
+  "installCommand": "echo skip-root-install",
+  "buildCommand": "cd pathfynder-hq && npm install && npm run build && cd .. && rm -rf public && mkdir -p public && cp -r pathfynder-hq/dist/* public/ && cp index.html dashboard.html logo.png qeurf7dcykqjs81ozsx2ll6h0fowru.html public/",
+  "outputDirectory": "public"
+}
