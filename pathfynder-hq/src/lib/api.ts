@@ -100,3 +100,38 @@ export async function fetchDailySeries(startDay: string, endDay: string): Promis
     day: d.day, total: Number(d.total), passengers: Number(d.passengers), drivers: Number(d.drivers),
   }))
 }
+
+export interface PowerUser {
+  sender_number: number | null
+  sender_name: string | null
+  msg_count: number
+  passenger_count: number
+  driver_count: number
+  last_seen: string | null
+  top_pickup: string | null
+  top_dropoff: string | null
+}
+
+/** Top senders by message count for a Toronto day-range, split by role. */
+export async function fetchPowerUsers(
+  startDay: string, endDay: string, type: FeedType, limit: number,
+): Promise<PowerUser[]> {
+  const { startUtc, endUtc } = torontoRangeToUtc(startDay, endDay)
+  const { data, error } = await supabase.rpc('get_power_users', {
+    p_start: startUtc,
+    p_end: endUtc,
+    p_type: typeArg(type),
+    p_limit: limit,
+  })
+  if (error) throw error
+  return (data ?? []).map((d: any) => ({
+    sender_number: d.sender_number,
+    sender_name: d.sender_name,
+    msg_count: Number(d.msg_count),
+    passenger_count: Number(d.passenger_count),
+    driver_count: Number(d.driver_count),
+    last_seen: d.last_seen,
+    top_pickup: d.top_pickup,
+    top_dropoff: d.top_dropoff,
+  }))
+}

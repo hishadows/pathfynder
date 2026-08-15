@@ -5,6 +5,7 @@ import DateFilter, { PRESETS, type Range } from './components/DateFilter'
 import KpiStrip from './components/KpiStrip'
 import Feed from './components/Feed'
 import Insights from './components/Insights'
+import PowerUsers from './components/PowerUsers'
 import { fetchWindowStats, type WindowStats } from './lib/api'
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
@@ -63,6 +64,8 @@ export default function App() {
         </div>
 
         <Insights range={range} key={`ins-${nonce}`} />
+
+        <PowerUsers range={range} key={`pu-${nonce}`} />
 
         <footer className="text-center text-[10px] text-txt-muted pt-4">
           Pathfynder Founder HQ · times shown in America/Toronto · data stored UTC
