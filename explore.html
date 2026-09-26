@@ -394,6 +394,32 @@ body.no-scroll{overflow:hidden}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(12px);z-index:30;background:var(--text);color:var(--bg);font-size:13.5px;font-weight:500;padding:10px 18px;border-radius:999px;opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;max-width:calc(100vw - 32px);text-align:center}
 .toast.is-on{opacity:1;transform:translateX(-50%) translateY(0)}
 
+/* Group link card (Option B) */
+.group-card{background:var(--card);border-radius:12px;padding:16px 14px;border:1.5px dashed var(--primary);display:flex;flex-direction:column;gap:12px}
+.group-card__head{display:flex;gap:12px;align-items:flex-start}
+.group-card__ico{width:44px;height:44px;border-radius:50%;background:var(--chip-soft);color:var(--chip-soft-text);display:grid;place-items:center;flex:none}
+.group-card__ico .i{width:20px;height:20px}
+.group-card__title{margin:0;font-size:16.5px;font-weight:600}
+.group-card__text{margin:3px 0 0;font-size:13.5px;color:var(--text-2)}
+.group-card__stats{display:flex;flex-wrap:wrap;gap:6px}
+.group-card__stat{font-size:12px;font-weight:600;padding:3px 8px;border-radius:6px;background:var(--surface);color:var(--text-2)}
+.group-card__field{display:flex;gap:8px}
+.group-card__field input{flex:1;min-width:0;height:44px;border-radius:10px;border:1px solid var(--line-strong);background:var(--surface);padding:0 12px;font-size:16px;color:var(--text);outline:none}
+.group-card__field input:focus{border-color:var(--primary)}
+.group-card__paste{height:44px;padding:0 14px;border-radius:10px;border:1px solid var(--line-strong);background:var(--card);color:var(--text);font-size:14px;font-weight:600;flex:none;cursor:pointer}
+.group-card__btn{width:100%;height:44px;border-radius:22px;border:0;background:var(--primary);color:var(--on-primary);font-size:15px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer}
+.group-card__btn .i{width:18px;height:18px}
+.group-card__btn[disabled]{opacity:.6;cursor:default}
+.group-card__result{margin:0;font-size:13px}
+.group-card__result--ok{color:var(--primary)}
+.group-card__result--bad{background:var(--notice-bg);color:var(--notice-fg);padding:8px 10px;border-radius:8px}
+.group-card__steps{margin:0;padding:10px 12px;border-radius:8px;background:var(--surface);font-size:12.5px;color:var(--text-2);display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.group-card__steps b{color:var(--text);font-weight:600}
+.group-card__steps .i{width:14px;height:14px}
+.group-card--done{padding:14px}
+.group-card__done{display:flex;align-items:center;gap:8px;font-size:14.5px}
+.group-card__done .i{color:var(--primary);width:20px;height:20px}
+
 /* Footer */
 .app-footer{padding:18px 16px 28px;text-align:center;font-size:13px;color:var(--text-2)}
 .app-footer p{margin:0 0 4px}
@@ -538,6 +564,7 @@ function defaultFilters() {
 }
 function parseUrl() {
   var p = new URLSearchParams(location.search);
+  var src = p.get('src'), tod = p.get('tod'), rt = (p.get('rt') || '').split(',').filter(Boolean);
   return {
     mode: p.get('type') === 'passenger' ? 'passenger' : 'driver',
     from: p.get('from') || '',
@@ -545,6 +572,18 @@ function parseUrl() {
     date: p.get('date') || null,
     time: p.get('time') || null,
     flex: p.get('flex') ? Number(p.get('flex')) : null,
+    sort: p.get('sort') || 'best',
+    filters: {
+      sources: src ? src.split(',').filter(Boolean) : defaultFilters().sources,
+      match: p.get('match') === 'direct' ? 'direct' : null,
+      time_of_day: tod ? tod.split(',').filter(Boolean) : [],
+      urgent: rt.indexOf('urgent') > -1,
+      airport: rt.indexOf('airport') > -1,
+      daily: rt.indexOf('daily') > -1,
+      verified_only: p.get('v') === '1',
+      hide_business: p.get('nb') === '1',
+      luggage_ok: p.get('lug') === '1',
+    },
   };
 }
 var initial_ = parseUrl();
@@ -554,8 +593,8 @@ var state = {
   fromPlace: null, toPlace: null,
   date: initial_.date, dateChip: initial_.date ? 'Pick' : 'Today',
   time: initial_.time, flex: initial_.flex,
-  filters: defaultFilters(),
-  sort: 'best',
+  filters: initial_.filters,
+  sort: initial_.sort,
   rows: [], loading: false, error: false,
   editing: !(initial_.from && initial_.to),
   sheet: null, sheetRow: null,
@@ -723,7 +762,7 @@ function runSearch(opts) {
     dbg('explore_search (matched) rows:', rows.length);
     if (seq !== searchSeq) return rows;
     state.rows = rows; state.loading = false; state.error = false; state.pendingRows = null;
-    if (!opts.silent) { render(); syncUrl(); loadNearby(); }
+    if (!opts.silent) { render(); loadNearby(); }
     return rows;
   }).catch(function (err) {
     if (seq !== searchSeq) return;
@@ -754,12 +793,40 @@ function loadNearby() {
 function syncUrl() {
   var p = new URLSearchParams();
   p.set('type', state.mode);
-  if (state.from) p.set('from', state.from);
-  if (state.to) p.set('to', state.to);
-  if (state.date) p.set('date', state.date);
-  if (state.time) p.set('time', state.time);
-  if (state.flex != null) p.set('flex', state.flex);
+  var matched = !!(state.fromPlace && state.toPlace);
+  if (matched) {
+    if (state.from) p.set('from', state.from);
+    if (state.to) p.set('to', state.to);
+    if (state.date) p.set('date', state.date);
+    if (state.time) p.set('time', state.time);
+    if (state.flex != null) p.set('flex', state.flex);
+  } else if (state.landingEnabled && state.landingMode === 'near' && state.loc.status === 'granted' && state.loc.coords) {
+    p.set('near', '1');
+  }
+  if (state.sort && state.sort !== 'best') p.set('sort', state.sort);
+  var f = state.filters;
+  var defSrc = defaultFilters().sources;
+  var srcIsDefault = f.sources.length === defSrc.length && defSrc.every(function (s) { return f.sources.indexOf(s) > -1; });
+  if (!srcIsDefault) p.set('src', f.sources.join(','));
+  if (f.match) p.set('match', f.match);
+  if (f.time_of_day && f.time_of_day.length) p.set('tod', f.time_of_day.join(','));
+  var rt = [f.urgent && 'urgent', f.airport && 'airport', f.daily && 'daily'].filter(Boolean);
+  if (rt.length) p.set('rt', rt.join(','));
+  if (f.verified_only) p.set('v', '1');
+  if (f.hide_business) p.set('nb', '1');
+  if (f.luggage_ok) p.set('lug', '1');
   history.replaceState(null, '', location.pathname + '?' + p.toString());
+}
+function savePlacesCache() {
+  try {
+    sessionStorage.setItem('pf_explore_places', JSON.stringify({ from: state.fromPlace, to: state.toPlace }));
+  } catch (e) {}
+}
+function loadPlacesCache() {
+  try {
+    var raw = sessionStorage.getItem('pf_explore_places');
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) { return null; }
 }
 
 /* ---------- Landing (no from/to in URL): NEAR ME / BROWSE ----------
@@ -948,52 +1015,46 @@ function getLocation() {
     state.loc.status = 'granted';
     closeSheetLayer();
     resolveNearestPlace().then(function () { refreshLanding(); });
-  }, function () {
-    state.loc.status = 'denied';
-    closeSheetLayer();
-    render();
+  }, function (err) {
+    if (err && err.code === 1) {
+      state.loc.status = 'denied';
+      render();
+      openLocationSheet('denied');
+    } else {
+      state.loc.status = 'prompt';
+      render();
+      toast('Couldn’t get your location — try again or pick From/To');
+    }
   }, { enableHighAccuracy: false, timeout: 8000, maximumAge: 600000 });
 }
-function sessionFlag(key) { try { return sessionStorage.getItem(key) === '1'; } catch (e) { return false; } }
-function setSessionFlag(key) { try { sessionStorage.setItem(key, '1'); } catch (e) {} }
 function checkGeoPermission() {
+  /* Never opens a sheet on its own — only sets state.loc.status so the
+     small "Use my location" entry point can appear. Sheets only open in
+     direct response to that button (see getLocation()'s error handling). */
   if (!('geolocation' in navigator)) { state.loc.status = 'unsupported'; render(); return; }
   if (navigator.permissions && navigator.permissions.query) {
     navigator.permissions.query({ name: 'geolocation' }).then(function (st) {
       if (st.state === 'granted') { getLocation(); return; }
-      if (st.state === 'denied') {
-        state.loc.status = 'denied'; render();
-        if (state.landingEnabled && !sessionFlag('pf_loc_denied_seen')) { setSessionFlag('pf_loc_denied_seen'); openLocationSheet('denied'); }
-        return;
-      }
-      state.loc.status = 'prompt'; render();
-      if (state.landingEnabled && !sessionFlag('pf_loc_prompt_dismissed')) openLocationSheet('prompt');
+      state.loc.status = st.state === 'denied' ? 'denied' : 'prompt';
+      render();
     }).catch(function () {
       state.loc.status = 'prompt'; render();
-      if (state.landingEnabled && !sessionFlag('pf_loc_prompt_dismissed')) openLocationSheet('prompt');
     });
   } else {
     state.loc.status = 'prompt'; render();
-    if (state.landingEnabled && !sessionFlag('pf_loc_prompt_dismissed')) openLocationSheet('prompt');
   }
 }
 function locationSheetHTML(kind) {
-  if (kind === 'denied') {
-    return '<div class="sheet__grabber"></div><div class="sheet__body">' +
-      '<div class="sheet__head">' + icon('pin') + '<button type="button" class="icon-btn js-close-sheet" aria-label="Close">' + icon('x') + '</button></div>' +
-      '<div><h2 class="sheet__title">Location is blocked</h2>' +
-      '<p class="sheet__subtitle">iPhone (Safari): tap aA → Website Settings → Location → Allow.<br><br>Android (Chrome): tap the lock icon → Permissions → Location → Allow.</p></div></div>' +
-      '<div class="sheet__cta"><button type="button" class="btn btn--primary js-loc-retry">Try again</button><button type="button" class="btn btn--ghost js-loc-not-now">Not now</button></div>';
-  }
   return '<div class="sheet__grabber"></div><div class="sheet__body">' +
     '<div class="sheet__head">' + icon('pin') + '<button type="button" class="icon-btn js-close-sheet" aria-label="Close">' + icon('x') + '</button></div>' +
-    '<div><h2 class="sheet__title">See rides near you</h2>' +
-    '<p class="sheet__subtitle">We use your location once to show rides starting near you. It’s never saved.</p></div></div>' +
-    '<div class="sheet__cta"><button type="button" class="btn btn--primary js-loc-allow">Allow location</button><button type="button" class="btn btn--ghost js-loc-not-now">Not now</button></div>';
+    '<div><h2 class="sheet__title">Location is blocked</h2>' +
+    '<p class="sheet__subtitle">iPhone (Safari): tap aA → Website Settings → Location → Allow.<br><br>' +
+    'In WhatsApp/Instagram: tap ⋯ → Open in Safari/Chrome, then allow location.<br><br>' +
+    'Android (Chrome): tap the lock icon → Permissions → Location → Allow.</p></div></div>' +
+    '<div class="sheet__cta"><button type="button" class="btn btn--primary js-loc-retry">Try again</button><button type="button" class="btn btn--ghost js-loc-not-now">Not now</button></div>';
 }
 function openLocationSheet(kind) {
   document.getElementById('sheetBody').innerHTML = locationSheetHTML(kind);
-  document.getElementById('sheetBody').setAttribute('data-loc-kind', kind);
   openSheetLayer();
 }
 function bootLanding() {
@@ -1052,20 +1113,24 @@ function shouldShowGroupCard(rows) {
 function groupLinkCard() {
   var gc = state.groupCard;
   if (gc.collapsed) {
-    return '<article class="ride-card"><p style="margin:0;font-size:14.5px">' + esc(gc.message || 'Thanks! We’ll take a look and add it soon.') + '</p></article>';
+    return '<article class="group-card group-card--done"><div class="group-card__done">' + icon('check') + esc(gc.message) + '</div></article>';
   }
+  var hasRoute = !!(state.fromPlace && state.toPlace);
+  var textLine = hasRoute
+    ? 'No WhatsApp rides for this route yet. Share a group’s invite link and its rides show up here.'
+    : 'Know a WhatsApp ride group? Share its invite link and its rides show up here.';
   var resultLine = gc.message
-    ? '<p style="margin:0;font-size:13px;color:' + ((gc.messageKind === 'ok' || gc.messageKind === 'duplicate') ? 'var(--primary)' : 'var(--notice-fg)') + '">' + esc(gc.message) + '</p>'
+    ? '<p class="group-card__result ' + ((gc.messageKind === 'ok' || gc.messageKind === 'duplicate') ? 'group-card__result--ok' : 'group-card__result--bad') + '">' + esc(gc.message) + '</p>'
     : '';
-  var pasteBtn = (navigator.clipboard && navigator.clipboard.readText) ? '<button type="button" class="chip js-group-paste">Paste</button>' : '';
-  return '<article class="ride-card">' +
-    '<span class="tag" style="width:fit-content">' + icon('groups') + 'Help grow this list</span>' +
-    '<h3 style="margin:0;font-size:16.5px;font-weight:600;line-height:1.3">Know a WhatsApp ride group for this route?</h3>' +
-    '<p style="margin:0;font-size:14px;color:var(--text-2)">Share the group’s invite link — we’ll add its rides here so everyone can find them.</p>' +
-    '<div class="route-input"><input class="js-group-url" placeholder="chat.whatsapp.com/…" autocomplete="off" style="flex:1;min-width:0;border:0;background:transparent;font:inherit;font-size:15.5px;color:var(--text);outline:none;padding:8px 4px">' + pasteBtn + '</div>' +
+  var pasteBtn = (navigator.clipboard && navigator.clipboard.readText) ? '<button type="button" class="group-card__paste js-group-paste">Paste</button>' : '';
+  return '<article class="group-card">' +
+    '<div class="group-card__head"><span class="group-card__ico">' + icon('groups') + '</span>' +
+    '<div><h3 class="group-card__title">Add a WhatsApp group</h3><p class="group-card__text">' + textLine + '</p></div></div>' +
+    '<div class="group-card__stats"><span class="group-card__stat">Takes 10 seconds</span><span class="group-card__stat">We only read ride posts</span></div>' +
+    '<div class="group-card__field"><input class="js-group-url" placeholder="Paste invite link" autocomplete="off">' + pasteBtn + '</div>' +
+    '<button type="button" class="group-card__btn js-group-submit"' + (gc.submitting ? ' disabled' : '') + '>' + icon('plus') + (gc.submitting ? 'Adding…' : 'Add group') + '</button>' +
     resultLine +
-    '<button type="button" class="btn btn--wa js-group-submit"' + (gc.submitting ? ' disabled' : '') + '>' + icon('chat') + (gc.submitting ? 'Sharing…' : 'Share group link') + '</button>' +
-    '<p style="margin:0;font-size:12px;color:var(--text-2)">In WhatsApp: open the group → group name → Invite via link → Copy link</p>' +
+    '<p class="group-card__steps">In WhatsApp: <b>group</b>' + icon('chev-r') + '<b>group name</b>' + icon('chev-r') + '<b>Invite via link</b>' + icon('chev-r') + '<b>Copy link</b></p>' +
     '</article>';
 }
 function submitGroupLink() {
@@ -1088,7 +1153,7 @@ function submitGroupLink() {
     state.groupCard.submitting = false;
     if (status === 'ok' || status === 'duplicate') {
       state.groupCard.collapsed = true;
-      state.groupCard.message = message || 'Thanks! We’ll take a look and add it soon.';
+      state.groupCard.message = message || (status === 'duplicate' ? 'Thanks! We already have this group' : 'Thanks! We’ll add rides from this group soon');
       markGroupCardDone();
     } else {
       state.groupCard.messageKind = status;
@@ -1275,8 +1340,10 @@ function searchPanel() {
     (c.unresolved.from ? '<p style="margin:0;padding:0 2px;font-size:12.5px;color:var(--text-2)">Couldn’t find “' + esc(c.unresolved.from) + '” — pick it from the list</p>' : '') +
     (c.unresolved.to ? '<p style="margin:0;padding:0 2px;font-size:12.5px;color:var(--text-2)">Couldn’t find “' + esc(c.unresolved.to) + '” — pick it from the list</p>' : '') +
     '<div class="search-row"><div class="chip-group" data-filter="date">' + dc('Today', 'Today') + dc('Tomorrow', 'Tomorrow') +
-    '<button type="button" class="chip js-date-pick' + (c.dateChip === 'Pick' ? '' : ' chip--icon') + '">' + icon('calendar') + esc(pickLabel) + '</button>' +
-    '<input type="date" id="datePicker" style="position:absolute;opacity:0;width:1px;height:1px;pointer-events:none">' +
+    '<span style="position:relative;display:inline-flex;flex:none">' +
+    '<button type="button" class="chip' + (c.dateChip === 'Pick' ? '' : ' chip--icon') + '" tabindex="-1" aria-hidden="true" style="pointer-events:none">' + icon('calendar') + esc(pickLabel) + '</button>' +
+    '<input type="date" id="datePicker" aria-label="Pick a date" style="position:absolute;inset:0;opacity:0;font-size:16px;cursor:pointer;z-index:1;border:0;background:transparent;padding:0">' +
+    '</span>' +
     '<button type="button" class="chip js-open-time' + (c.time ? '' : ' chip--icon') + '" aria-label="Pick an exact time">' + icon('clock') + (c.time ? (fmtTime(c.time) + (c.flex ? (' ±' + (c.flex / 60 >= 1 ? (c.flex / 60) + 'h' : c.flex + 'm')) : '')) : '') + '</button></div>' +
     '<button type="button" class="filter-btn js-open-filters">' + icon('sliders') + 'Filters' + (active.length ? '<span class="filter-btn__count">' + active.length + '</span>' : '') + '</button></div>' +
     activeHTML + '</section>';
@@ -1404,6 +1471,8 @@ function renderLanding() {
   restoreSwipe();
 }
 function render() {
+  syncUrl();
+  savePlacesCache();
   if (state.landingEnabled && !(state.fromPlace && state.toPlace)) { renderLanding(); return; }
   var app = document.getElementById('app');
   var foot = '<footer class="app-footer"><p><strong>Rideshare you know, now organized.</strong></p><a href="https://pathfynder.ca">pathfynder.ca</a></footer>';
@@ -1698,11 +1767,14 @@ function wireApp() {
   if (picker) {
     picker.min = torontoTodayStr(0);
     if (state.date) picker.value = state.date;
-    picker.addEventListener('change', function () {
-      if (!picker.value) return;
+    var onPickerDate = function () {
+      if (!picker.value || picker.value === state.date) return;
       state.date = picker.value; state.dateChip = 'Pick';
+      dbg('date chip: calendar tap -> p_date', state.date);
       searchOrRender();
-    });
+    };
+    picker.addEventListener('change', onPickerDate);
+    picker.addEventListener('input', onPickerDate);
   }
 }
 document.addEventListener('click', function (e) {
@@ -1737,29 +1809,21 @@ document.addEventListener('click', function (e) {
   }
 
   var useLoc = t.closest('.js-use-location');
-  if (useLoc) { openLocationSheet(state.loc.status === 'denied' ? 'denied' : 'prompt'); return; }
+  if (useLoc) { getLocation(); return; }
 
-  var locAllow = t.closest('.js-loc-allow');
-  if (locAllow) { getLocation(); return; }
   var locRetry = t.closest('.js-loc-retry');
   if (locRetry) { getLocation(); return; }
   var locNotNow = t.closest('.js-loc-not-now');
-  if (locNotNow) {
-    var kind = document.getElementById('sheetBody').getAttribute('data-loc-kind');
-    setSessionFlag(kind === 'denied' ? 'pf_loc_denied_seen' : 'pf_loc_prompt_dismissed');
-    closeSheetLayer();
-    return;
-  }
+  if (locNotNow) { closeSheetLayer(); return; }
 
   var dateChip = t.closest('.js-date');
   if (dateChip) {
     var v = dateChip.getAttribute('data-value');
     state.dateChip = v; state.date = v === 'Today' ? todayStr(0) : todayStr(1);
+    dbg('date chip: ' + v + ' tap -> p_date', state.date);
     searchOrRender();
     return;
   }
-  var datePick = t.closest('.js-date-pick');
-  if (datePick) { document.getElementById('datePicker').showPicker ? document.getElementById('datePicker').showPicker() : document.getElementById('datePicker').click(); return; }
 
   var edit = t.closest('.js-edit');
   if (edit) { state.editing = true; render(); return; }
@@ -1778,32 +1842,65 @@ document.addEventListener('click', function (e) {
   if (clearF) { state.filters = defaultFilters(); state.time = null; state.flex = null; searchOrRender(); return; }
 
   var fMatch = t.closest('.js-f-match');
-  if (fMatch) { pendingFilters.match = fMatch.getAttribute('data-value') || null; document.getElementById('sheetBody').innerHTML = renderFiltersSheet(); updateFiltersCount(); return; }
+  if (fMatch) {
+    pendingFilters.match = fMatch.getAttribute('data-value') || null;
+    var radios = fMatch.closest('.js-radios');
+    if (radios) radios.querySelectorAll('.radio').forEach(function (r) { r.classList.remove('is-on'); });
+    var radioEl = fMatch.querySelector('.radio'); if (radioEl) radioEl.classList.add('is-on');
+    updateFiltersCount();
+    return;
+  }
   var fMulti = t.closest('.js-f-multi');
   if (fMulti) {
     var group = fMulti.getAttribute('data-group'), val = fMulti.getAttribute('data-value');
+    var isOn;
     if (group === 'sources') {
       var key = val.toLowerCase();
       var i = pendingFilters.sources.indexOf(key);
-      if (i > -1) pendingFilters.sources.splice(i, 1); else pendingFilters.sources.push(key);
+      if (i > -1) { pendingFilters.sources.splice(i, 1); isOn = false; } else { pendingFilters.sources.push(key); isOn = true; }
     } else if (group === 'ride_type') {
       var rtField = val.toLowerCase();
       pendingFilters[rtField] = !pendingFilters[rtField];
+      isOn = pendingFilters[rtField];
     } else {
       var j = pendingFilters.time_of_day.indexOf(val.toLowerCase());
-      if (j > -1) pendingFilters.time_of_day.splice(j, 1); else pendingFilters.time_of_day.push(val.toLowerCase());
+      if (j > -1) { pendingFilters.time_of_day.splice(j, 1); isOn = false; } else { pendingFilters.time_of_day.push(val.toLowerCase()); isOn = true; }
     }
-    document.getElementById('sheetBody').innerHTML = renderFiltersSheet(); updateFiltersCount(); return;
+    fMulti.style.cssText = isOn ? 'background:var(--chip-soft);color:var(--chip-soft-text);font-weight:600' : '';
+    updateFiltersCount();
+    return;
   }
   var fToggle = t.closest('.js-f-toggle');
-  if (fToggle) { var field = fToggle.getAttribute('data-field'); pendingFilters[field] = !pendingFilters[field]; document.getElementById('sheetBody').innerHTML = renderFiltersSheet(); updateFiltersCount(); return; }
+  if (fToggle) {
+    var field = fToggle.getAttribute('data-field');
+    pendingFilters[field] = !pendingFilters[field];
+    fToggle.setAttribute('aria-checked', String(pendingFilters[field]));
+    updateFiltersCount();
+    return;
+  }
   var resetF = t.closest('.js-reset-filters, .js-clear-pending');
-  if (resetF) { pendingFilters = defaultFilters(); document.getElementById('sheetBody').innerHTML = renderFiltersSheet(); updateFiltersCount(); return; }
+  if (resetF) {
+    pendingFilters = defaultFilters();
+    var fSb = document.querySelector('#sheetBody .sheet__body');
+    var fScrollTop = fSb ? fSb.scrollTop : 0;
+    document.getElementById('sheetBody').innerHTML = renderFiltersSheet();
+    var fSb2 = document.querySelector('#sheetBody .sheet__body'); if (fSb2) fSb2.scrollTop = fScrollTop;
+    updateFiltersCount();
+    return;
+  }
   var applyF = t.closest('.js-apply-filters');
   if (applyF) { state.filters = pendingFilters; closeSheetLayer(); searchOrRender(); return; }
 
   var flexChip = t.closest('.js-flex');
-  if (flexChip) { pendingTime.flexMin = Number(flexChip.getAttribute('data-value')); document.getElementById('sheetBody').innerHTML = renderTimeSheet(); wireTimeWheels(); return; }
+  if (flexChip) {
+    pendingTime.flexMin = Number(flexChip.getAttribute('data-value'));
+    flexChip.parentElement.querySelectorAll('.js-flex').forEach(function (c) { c.style.cssText = ''; });
+    flexChip.style.cssText = 'background:var(--chip-soft);color:var(--chip-soft-text);font-weight:600';
+    var sumB = document.querySelector('.time-summary b'); if (sumB) sumB.textContent = timeSummary();
+    var setBtn = document.querySelector('.js-set-time');
+    if (setBtn) setBtn.textContent = 'Set ' + timeSummary().split(' – ')[0] + (pendingTime.flexMin ? (' ± ' + (pendingTime.flexMin >= 60 ? (pendingTime.flexMin / 60) + ' hr' : pendingTime.flexMin + ' min')) : '');
+    return;
+  }
   var clearTime = t.closest('.js-clear-time');
   if (clearTime) { state.time = null; state.flex = null; closeSheetLayer(); searchOrRender(); return; }
   var setTime = t.closest('.js-set-time');
@@ -1843,15 +1940,28 @@ document.addEventListener('change', function (e) {
 function boot() {
   if (state.landingEnabled) { bootLanding(); return; }
   render();
+  var cache = loadPlacesCache();
   var jobs = [];
-  if (state.from) jobs.push(resolvePlace(state.from).then(function (p) {
-    if (p) { state.fromPlace = p; state.from = p.name; state.unresolved.from = null; }
-    else state.unresolved.from = state.from;
-  }));
-  if (state.to) jobs.push(resolvePlace(state.to).then(function (p) {
-    if (p) { state.toPlace = p; state.to = p.name; state.unresolved.to = null; }
-    else state.unresolved.to = state.to;
-  }));
+  if (state.from) {
+    if (cache && cache.from && normPlace(cache.from.name) === normPlace(state.from)) {
+      state.fromPlace = cache.from; state.from = cache.from.name; state.unresolved.from = null;
+    } else {
+      jobs.push(resolvePlace(state.from).then(function (p) {
+        if (p) { state.fromPlace = p; state.from = p.name; state.unresolved.from = null; }
+        else state.unresolved.from = state.from;
+      }));
+    }
+  }
+  if (state.to) {
+    if (cache && cache.to && normPlace(cache.to.name) === normPlace(state.to)) {
+      state.toPlace = cache.to; state.to = cache.to.name; state.unresolved.to = null;
+    } else {
+      jobs.push(resolvePlace(state.to).then(function (p) {
+        if (p) { state.toPlace = p; state.to = p.name; state.unresolved.to = null; }
+        else state.unresolved.to = state.to;
+      }));
+    }
+  }
   Promise.all(jobs).then(function () {
     if (!state.date) state.date = todayStr(0);
     if (state.fromPlace && state.toPlace) { state.editing = false; runSearch(); }
