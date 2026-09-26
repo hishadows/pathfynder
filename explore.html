@@ -484,6 +484,7 @@ try {
     auth: { storage: noopStorage, persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
   });
 } catch (e) { console.warn('Supabase failed to init:', e); }
+var MAPBOX_TOKEN = 'PASTE_PK_TOKEN_HERE';
 
 /* ---------- Helpers (ported from design/explore-mockup.html) ---------- */
 var NOW = new Date();
@@ -516,12 +517,25 @@ function ago(iso) {
   return Math.round(h / 24) + 'd ago';
 }
 function timeText(r) { return r.ride_time ? fmtTime(r.ride_time) : null; }
+function DEBUG() { return new URLSearchParams(location.search).get('debug') === '1'; }
+function dbg() { if (DEBUG()) console.log.apply(console, ['[explore]'].concat(Array.prototype.slice.call(arguments))); }
+function torontoTodayStr(offsetDays) {
+  var parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Toronto', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
+  var y = 0, m = 0, d = 0;
+  parts.forEach(function (p) { if (p.type === 'year') y = Number(p.value); if (p.type === 'month') m = Number(p.value); if (p.type === 'day') d = Number(p.value); });
+  var dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() + (offsetDays || 0));
+  return dt.toISOString().slice(0, 10);
+}
 function avatarClass(name) { var h = 0, i; for (i = 0; i < name.length; i++) h = (h * 31 + name.codePointAt(i)) >>> 0; return 'avatar--' + (h % 5 + 1); }
 function initial(name) { var m = (name || '').match(/\p{L}/u); return m ? m[0].toUpperCase() : '•'; }
 function cityOf(label) { return String(label || '').split(',')[0].trim(); }
 function normPlace(s) { return String(s || '').toLowerCase().replace(/\./g, '').replace(/\s+/g, ' ').trim(); }
 
 /* ---------- URL state ---------- */
+function defaultFilters() {
+  return { sources: ['whatsapp', 'poparide', 'facebook'], match: null, time_of_day: [], urgent: false, airport: false, daily: false, verified_only: false, hide_business: false, luggage_ok: false };
+}
 function parseUrl() {
   var p = new URLSearchParams(location.search);
   return {
@@ -540,7 +554,7 @@ var state = {
   fromPlace: null, toPlace: null,
   date: initial_.date, dateChip: initial_.date ? 'Pick' : 'Today',
   time: initial_.time, flex: initial_.flex,
-  filters: { sources: ['whatsapp', 'poparide'], match: null, time_of_day: [], verified_only: false, hide_business: false, luggage_ok: false },
+  filters: defaultFilters(),
   sort: 'best',
   rows: [], loading: false, error: false,
   editing: !(initial_.from && initial_.to),
@@ -550,6 +564,7 @@ var state = {
   landingEnabled: !(initial_.from || initial_.to),
   landingMode: 'browse', landingInfo: null,
   loc: { status: 'checking', coords: null, nearestName: null },
+  groupCard: { collapsed: false, message: null, messageKind: null, submitting: false },
 };
 if (initial_.date) {
   var dd = dayDiff(initial_.date);
@@ -562,7 +577,7 @@ function todayStr(offset) {
 }
 
 /* ---------- Places lookup (resolve from/to to lat/lng) ---------- */
-function resolvePlace(name) {
+function placesLookup(name) {
   if (!db || !name) return Promise.resolve(null);
   var key = normPlace(name);
   return db.from('places').select('name,province,lat,lng').eq('norm_key', key).limit(1)
@@ -574,29 +589,86 @@ function resolvePlace(name) {
     })
     .catch(function () { return null; });
 }
+function resolvePlace(name) {
+  if (!name) return Promise.resolve(null);
+  return placesLookup(name).then(function (place) {
+    if (place) return place;
+    /* places found nothing — try one Mapbox forward call before giving up */
+    return mapboxForward(name, { autocomplete: false, limit: 1 }).then(function (rows) { return rows[0] || null; });
+  });
+}
+
+/* ---------- Mapbox Geocoding v6 (with places-first, silent fallback) ---------- */
+function mapboxForward(query, opts) {
+  opts = opts || {};
+  if (!MAPBOX_TOKEN || typeof fetch !== 'function') return Promise.resolve([]);
+  var params = new URLSearchParams();
+  params.set('q', query);
+  params.set('autocomplete', opts.autocomplete ? 'true' : 'false');
+  params.set('country', 'ca');
+  params.set('language', 'en');
+  params.set('limit', String(opts.limit || 5));
+  params.set('types', 'place,locality,neighborhood,address');
+  params.set('proximity', opts.proximity || 'ip');
+  params.set('access_token', MAPBOX_TOKEN);
+  var fetchOpts = {};
+  if (opts.signal) fetchOpts.signal = opts.signal;
+  return fetch('https://api.mapbox.com/search/geocode/v6/forward?' + params.toString(), fetchOpts)
+    .then(function (res) { return res.ok ? res.json() : { features: [] }; })
+    .then(function (json) {
+      return (json.features || []).map(function (f) {
+        var props = f.properties || {};
+        var coords = (f.geometry && f.geometry.coordinates) || [];
+        return { name: props.name, sub: props.place_formatted, lng: coords[0], lat: coords[1] };
+      }).filter(function (r) { return r.name && r.lat != null && r.lng != null; });
+    })
+    .catch(function () { return []; });
+}
+function mergeAutocompleteResults(placesRows, mapboxRows) {
+  var out = placesRows.slice(0, 3);
+  var seen = {};
+  out.forEach(function (r) { seen[normPlace(r.name)] = true; });
+  mapboxRows.forEach(function (r) {
+    var key = normPlace(r.name);
+    if (seen[key]) return;
+    seen[key] = true;
+    out.push(r);
+  });
+  return out;
+}
 
 /* ---------- Autocomplete ---------- */
 var acTimers = {};
+var acAbort = {};
 function wireAutocomplete(input, listEl, onPick) {
   input.addEventListener('input', function () {
     var q = input.value.trim();
     clearTimeout(acTimers[input.name]);
-    if (q.length < 2) { listEl.classList.remove('is-open'); listEl.innerHTML = ''; return; }
+    if (acAbort[input.name]) { try { acAbort[input.name].abort(); } catch (e) {} acAbort[input.name] = null; }
+    if (q.length < 3) { listEl.classList.remove('is-open'); listEl.innerHTML = ''; return; }
     acTimers[input.name] = setTimeout(function () {
       if (!db) return;
       db.from('places').select('name,province,lat,lng').like('norm_key', normPlace(q) + '%').gte('popularity', 20).order('popularity', { ascending: false }).limit(8)
         .then(function (res) {
-          var rows = res.data || [];
+          var placesRows = res.data || [];
+          var controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+          acAbort[input.name] = controller;
+          var proximity = state.loc.coords ? (state.loc.coords.lng + ',' + state.loc.coords.lat) : 'ip';
+          return mapboxForward(q, { autocomplete: true, limit: 5, proximity: proximity, signal: controller && controller.signal })
+            .then(function (mbRows) { return mergeAutocompleteResults(placesRows, mbRows); });
+        })
+        .then(function (rows) {
           if (!rows.length) { listEl.classList.remove('is-open'); listEl.innerHTML = ''; return; }
           listEl.innerHTML = rows.map(function (r, i) {
-            return '<button type="button" class="ac-item" data-i="' + i + '">' + esc(r.name) + (r.province ? '<small>' + esc(r.province) + '</small>' : '') + '</button>';
+            var sub = r.sub || r.province;
+            return '<button type="button" class="ac-item" data-i="' + i + '">' + esc(r.name) + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</button>';
           }).join('');
           listEl.classList.add('is-open');
           listEl.querySelectorAll('.ac-item').forEach(function (btn, i) {
             btn.addEventListener('click', function () { onPick(rows[i]); listEl.classList.remove('is-open'); listEl.innerHTML = ''; });
           });
         });
-    }, 250);
+    }, 300);
   });
   input.addEventListener('blur', function () { setTimeout(function () { listEl.classList.remove('is-open'); }, 150); });
 }
@@ -612,6 +684,9 @@ function buildFilters(f) {
   if (f.verified_only) out.verified_only = true;
   if (f.hide_business) out.hide_business = true;
   if (f.luggage_ok) out.luggage_ok = true;
+  if (f.urgent) out.urgent = true;
+  if (f.airport) out.airport = true;
+  if (f.daily) out.daily = true;
   if (state.fromPlace) out.from_name = state.fromPlace.name;
   if (state.toPlace) out.to_name = state.toPlace.name;
   return out;
@@ -634,6 +709,7 @@ function runSearch(opts) {
   state.loading = true; state.error = false;
   if (!opts.silent) render();
   var params = rpcParams();
+  dbg('explore_search (matched) params:', params);
   return db.rpc('explore_search', params).then(function (res) {
     if (res.error) throw res.error;
     return res.data || [];
@@ -643,6 +719,7 @@ function runSearch(opts) {
     }
     throw err;
   }).then(function (rows) {
+    dbg('explore_search (matched) rows:', rows.length);
     if (seq !== searchSeq) return rows;
     state.rows = rows; state.loading = false; state.error = false;
     if (!opts.silent) { render(); syncUrl(); loadNearby(); }
@@ -663,7 +740,11 @@ function loadNearby() {
   }).filter(function (d) { return dayDiff(d) >= 0; });
   Promise.all(candidates.map(function (d) {
     var p = rpcParams(); p.p_date = d;
-    return db.rpc('explore_search', p).then(function (res) { return { date: d, n: (res.data || []).length }; }).catch(function () { return { date: d, n: 0 }; });
+    dbg('explore_search (nearby) params:', p);
+    return db.rpc('explore_search', p).then(function (res) {
+      dbg('explore_search (nearby) rows:', (res.data || []).length);
+      return { date: d, n: (res.data || []).length };
+    }).catch(function () { return { date: d, n: 0 }; });
   })).then(function (results) {
     state.nearby = results.filter(function (r) { return r.n > 0; });
     render();
@@ -708,6 +789,7 @@ function performLandingSearch(mode, isFallback) {
     p_date: null,
     p_filters: buildFilters(state.filters),
   };
+  dbg('explore_search (' + mode + ') params:', params);
   db.rpc('explore_search', params).then(function (res) {
     if (res.error) throw res.error;
     return res.data || [];
@@ -717,6 +799,7 @@ function performLandingSearch(mode, isFallback) {
     }
     throw err;
   }).then(function (rows) {
+    dbg('explore_search (' + mode + ') rows:', rows.length);
     if (seq !== searchSeq) return;
     state.loading = false; state.error = false;
     if (mode === 'near' && rows.length === 0) {
@@ -771,22 +854,55 @@ function getLocation() {
   navigator.geolocation.getCurrentPosition(function (pos) {
     state.loc.coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
     state.loc.status = 'granted';
+    closeSheetLayer();
     resolveNearestPlace().then(function () { refreshLanding(); });
   }, function () {
     state.loc.status = 'denied';
+    closeSheetLayer();
     render();
   }, { enableHighAccuracy: false, timeout: 8000, maximumAge: 600000 });
 }
+function sessionFlag(key) { try { return sessionStorage.getItem(key) === '1'; } catch (e) { return false; } }
+function setSessionFlag(key) { try { sessionStorage.setItem(key, '1'); } catch (e) {} }
 function checkGeoPermission() {
   if (!('geolocation' in navigator)) { state.loc.status = 'unsupported'; render(); return; }
   if (navigator.permissions && navigator.permissions.query) {
     navigator.permissions.query({ name: 'geolocation' }).then(function (st) {
-      if (st.state === 'granted') getLocation();
-      else { state.loc.status = 'prompt'; render(); }
-    }).catch(function () { state.loc.status = 'prompt'; render(); });
+      if (st.state === 'granted') { getLocation(); return; }
+      if (st.state === 'denied') {
+        state.loc.status = 'denied'; render();
+        if (state.landingEnabled && !sessionFlag('pf_loc_denied_seen')) { setSessionFlag('pf_loc_denied_seen'); openLocationSheet('denied'); }
+        return;
+      }
+      state.loc.status = 'prompt'; render();
+      if (state.landingEnabled && !sessionFlag('pf_loc_prompt_dismissed')) openLocationSheet('prompt');
+    }).catch(function () {
+      state.loc.status = 'prompt'; render();
+      if (state.landingEnabled && !sessionFlag('pf_loc_prompt_dismissed')) openLocationSheet('prompt');
+    });
   } else {
     state.loc.status = 'prompt'; render();
+    if (state.landingEnabled && !sessionFlag('pf_loc_prompt_dismissed')) openLocationSheet('prompt');
   }
+}
+function locationSheetHTML(kind) {
+  if (kind === 'denied') {
+    return '<div class="sheet__grabber"></div><div class="sheet__body">' +
+      '<div class="sheet__head">' + icon('pin') + '<button type="button" class="icon-btn js-close-sheet" aria-label="Close">' + icon('x') + '</button></div>' +
+      '<div><h2 class="sheet__title">Location is blocked</h2>' +
+      '<p class="sheet__subtitle">iPhone (Safari): tap aA → Website Settings → Location → Allow.<br><br>Android (Chrome): tap the lock icon → Permissions → Location → Allow.</p></div></div>' +
+      '<div class="sheet__cta"><button type="button" class="btn btn--primary js-loc-retry">Try again</button><button type="button" class="btn btn--ghost js-loc-not-now">Not now</button></div>';
+  }
+  return '<div class="sheet__grabber"></div><div class="sheet__body">' +
+    '<div class="sheet__head">' + icon('pin') + '<button type="button" class="icon-btn js-close-sheet" aria-label="Close">' + icon('x') + '</button></div>' +
+    '<div><h2 class="sheet__title">See rides near you</h2>' +
+    '<p class="sheet__subtitle">We use your location once to show rides starting near you. It’s never saved.</p></div></div>' +
+    '<div class="sheet__cta"><button type="button" class="btn btn--primary js-loc-allow">Allow location</button><button type="button" class="btn btn--ghost js-loc-not-now">Not now</button></div>';
+}
+function openLocationSheet(kind) {
+  document.getElementById('sheetBody').innerHTML = locationSheetHTML(kind);
+  document.getElementById('sheetBody').setAttribute('data-loc-kind', kind);
+  openSheetLayer();
 }
 function bootLanding() {
   refreshLanding();
@@ -802,18 +918,97 @@ function toast(msg) {
 }
 function contact(id, btn) {
   if (btn) btn.setAttribute('disabled', 'disabled');
+  var srcRow = state.rows.find(function (r) { return r.id === id; });
+  var isWhatsapp = srcRow && srcRow.source === 'whatsapp';
+  var popup = null;
+  if (!isWhatsapp) {
+    /* mobile browsers block window.open() called after an await — open it
+       synchronously inside this tap handler, then redirect it once we know the URL */
+    try { popup = window.open('about:blank', '_blank'); } catch (e) { popup = null; }
+  }
   db.rpc('explore_contact', { p_id: id }).then(function (res) {
     if (res.error) throw res.error;
     var row = Array.isArray(res.data) ? res.data[0] : res.data;
     if (!row || !row.url) throw new Error('empty');
     if (row.contact_type === 'whatsapp') location.href = row.url;
-    else window.open(row.url, '_blank', 'noopener');
+    else if (popup) popup.location.href = row.url;
+    else location.href = row.url;
   }).catch(function (err) {
+    if (popup) { try { popup.close(); } catch (e2) {} }
     var msg = (err && err.message) || '';
     if (/rate_limited/i.test(msg)) toast('Too many requests — try again in a bit');
     else if (/not_available/i.test(msg)) toast('This ride is no longer available');
     else toast('Something went wrong — try again');
   }).finally(function () { if (btn) btn.removeAttribute('disabled'); });
+}
+
+/* ---------- WhatsApp group-link card ---------- */
+function groupCardDoneRecently() {
+  try {
+    var v = localStorage.getItem('pf_group_card_done');
+    if (!v) return false;
+    return (Date.now() - Number(v)) < 7 * 24 * 60 * 60 * 1000;
+  } catch (e) { return false; }
+}
+function markGroupCardDone() {
+  try { localStorage.setItem('pf_group_card_done', String(Date.now())); } catch (e) {}
+}
+function shouldShowGroupCard(rows) {
+  if (groupCardDoneRecently()) return false;
+  return !rows.some(function (r) { return r.source === 'whatsapp'; });
+}
+function groupLinkCard() {
+  var gc = state.groupCard;
+  if (gc.collapsed) {
+    return '<article class="ride-card"><p style="margin:0;font-size:14.5px">' + esc(gc.message || 'Thanks! We’ll take a look and add it soon.') + '</p></article>';
+  }
+  var resultLine = gc.message
+    ? '<p style="margin:0;font-size:13px;color:' + ((gc.messageKind === 'ok' || gc.messageKind === 'duplicate') ? 'var(--primary)' : 'var(--notice-fg)') + '">' + esc(gc.message) + '</p>'
+    : '';
+  var pasteBtn = (navigator.clipboard && navigator.clipboard.readText) ? '<button type="button" class="chip js-group-paste">Paste</button>' : '';
+  return '<article class="ride-card">' +
+    '<span class="tag" style="width:fit-content">' + icon('groups') + 'Help grow this list</span>' +
+    '<h3 style="margin:0;font-size:16.5px;font-weight:600;line-height:1.3">Know a WhatsApp ride group for this route?</h3>' +
+    '<p style="margin:0;font-size:14px;color:var(--text-2)">Share the group’s invite link — we’ll add its rides here so everyone can find them.</p>' +
+    '<div class="route-input"><input class="js-group-url" placeholder="chat.whatsapp.com/…" autocomplete="off" style="flex:1;min-width:0;border:0;background:transparent;font:inherit;font-size:15.5px;color:var(--text);outline:none;padding:8px 4px">' + pasteBtn + '</div>' +
+    resultLine +
+    '<button type="button" class="btn btn--wa js-group-submit"' + (gc.submitting ? ' disabled' : '') + '>' + icon('chat') + (gc.submitting ? 'Sharing…' : 'Share group link') + '</button>' +
+    '<p style="margin:0;font-size:12px;color:var(--text-2)">In WhatsApp: open the group → group name → Invite via link → Copy link</p>' +
+    '</article>';
+}
+function submitGroupLink() {
+  var input = document.querySelector('.js-group-url');
+  if (!input || !db) return;
+  var url = input.value.trim();
+  if (!url) return;
+  state.groupCard.submitting = true;
+  render();
+  dbg('submit_group_link params:', { p_url: url });
+  db.rpc('submit_group_link', {
+    p_url: url,
+    p_from: state.fromPlace ? state.fromPlace.name : null,
+    p_to: state.toPlace ? state.toPlace.name : null,
+  }).then(function (res) {
+    if (res.error) throw res.error;
+    var data = Array.isArray(res.data) ? res.data[0] : res.data;
+    var status = (data && data.status) || 'invalid';
+    var message = (data && data.message) || '';
+    state.groupCard.submitting = false;
+    if (status === 'ok' || status === 'duplicate') {
+      state.groupCard.collapsed = true;
+      state.groupCard.message = message || 'Thanks! We’ll take a look and add it soon.';
+      markGroupCardDone();
+    } else {
+      state.groupCard.messageKind = status;
+      state.groupCard.message = message || 'That link doesn’t look right — please check and try again.';
+    }
+    render();
+  }).catch(function () {
+    state.groupCard.submitting = false;
+    state.groupCard.messageKind = 'invalid';
+    state.groupCard.message = 'Something went wrong — try again.';
+    render();
+  });
 }
 
 /* ---------- Render pieces (ported from mockup, field names updated to the RPC contract) ---------- */
@@ -835,13 +1030,20 @@ function riderTag(r) {
   if (r.is_coordinator) return '<span class="tag tag--coordinator">' + icon('groups') + 'Ride coordinator</span>';
   return '';
 }
+function rideTypeTags(r) {
+  var out = '';
+  if (r.is_urgent) out += '<span class="tag" style="background:var(--notice-bg);color:var(--notice-fg)">' + icon('info') + 'Urgent</span>';
+  if (r.is_airport) out += '<span class="tag">' + icon('pin') + 'Airport</span>';
+  if (r.is_daily && !(r.recurring_label && /daily/i.test(r.recurring_label))) out += '<span class="tag">' + icon('repeat') + 'Daily</span>';
+  return out;
+}
 function sourceBadge(r) {
   if (r.source === 'whatsapp') return '';
   return '<span class="source-badge source-badge--' + r.source + '">' + SOURCE_LABEL[r.source] + '</span>';
 }
 function whenBlock(r) {
-  var date = (r.recurring_label ? 'Next: ' : '') + dayLabel(r.ride_date);
-  var t = timeText(r);
+  var date = r.ride_date ? ((r.recurring_label ? 'Next: ' : '') + dayLabel(r.ride_date)) : 'Date not given';
+  var t = r.ride_date ? timeText(r) : null;
   var top = t
     ? '<div class="when__time">' + esc(t) + '</div>' + (r.arrive_time ? '<div class="when__arrive">→ ' + fmtTime(r.arrive_time) + '</div>' : '')
     : '<div class="when__flex">' + icon('clock') + 'Time flexible</div>';
@@ -853,7 +1055,7 @@ function ratingHTML(r) {
 function metaList(r) {
   var items = [];
   if (r.seats) items.push('<li class="ride-meta__item">' + icon('seat') + (r.role === 'driver' ? plural(r.seats, 'seat') : 'Needs ' + plural(r.seats, 'seat')) + '</li>');
-  if (r.price) items.push('<li class="ride-meta__item ride-meta__item--price">$' + r.price + '<small>/seat</small></li>');
+  if (r.price_num != null) items.push('<li class="ride-meta__item ride-meta__item--price">$' + r.price_num + '<small>/seat</small></li>');
   if (r.luggage) items.push('<li class="ride-meta__item">' + icon(r.luggage === 'No luggage' ? 'bag-off' : 'bag') + esc(r.luggage) + '</li>');
   if (r.recurring_label) items.push('<li class="ride-meta__item">' + icon('repeat') + esc(r.recurring_label) + '</li>');
   return items.length ? '<ul class="ride-meta">' + items.join('') + '</ul>' : '';
@@ -899,7 +1101,7 @@ function renderRideCard(r, landingOpts) {
   var req = r.role === 'passenger';
   var badge = (landingOpts && landingOpts.hideBadge) ? '' : matchBadge(r);
   var note = (landingOpts && landingOpts.distanceNote) ? landingDistanceNote(r) : matchNote(r);
-  var details = '<div class="ride-card__top"><span class="ride-card__tags">' + badge + (r.is_business ? riderTag(r) : '') + '</span><span class="ride-card__ago">' + (req ? 'Needs ride · ' : '') + 'posted ' + ago(r.posted_at) + '</span></div>' +
+  var details = '<div class="ride-card__top"><span class="ride-card__tags">' + badge + (r.is_business ? riderTag(r) : '') + rideTypeTags(r) + '</span><span class="ride-card__ago">' + (req ? 'Needs ride · ' : '') + 'posted ' + ago(r.posted_at) + '</span></div>' +
     '<div class="ride-card__main"><div class="route">' +
     '<div class="route__stop route__stop--from"><span class="route__dot"></span><span class="route__city">' + esc(cityOf(r.origin_label)) + '</span></div>' +
     '<div class="route__stop route__stop--to"><span class="route__dot"></span><span class="route__city">' + esc(cityOf(r.dest_label)) + '</span></div>' +
@@ -932,11 +1134,14 @@ function skeletonCard() {
 /* ---------- Active filter chips ---------- */
 function activeFilterList() {
   var f = state.filters, list = [];
-  var defaultSources = f.sources.length === 2 && f.sources.indexOf('whatsapp') > -1 && f.sources.indexOf('poparide') > -1;
+  var defaultSources = f.sources.length === 3 && ['whatsapp', 'poparide', 'facebook'].every(function (s) { return f.sources.indexOf(s) > -1; });
   if (!defaultSources) list.push({ key: 'sources', label: f.sources.map(function (s) { return SOURCE_LABEL[s] || s; }).join(' + ') || 'No sources' });
   if (f.match === 'direct') list.push({ key: 'match', label: 'Direct only' });
   (f.time_of_day || []).forEach(function (t) { list.push({ key: 'tod:' + t, label: t }); });
   if (f.time) list.push({ key: 'time', label: fmtTime(f.time) + (f.flexMin ? (' ±' + f.flexMin + 'm') : '') });
+  if (f.urgent) list.push({ key: 'urgent', label: 'Urgent' });
+  if (f.airport) list.push({ key: 'airport', label: 'Airport' });
+  if (f.daily) list.push({ key: 'daily', label: 'Daily' });
   if (f.verified_only) list.push({ key: 'verified_only', label: 'Verified only' });
   if (f.hide_business) list.push({ key: 'hide_business', label: 'No business operators' });
   if (f.luggage_ok) list.push({ key: 'luggage_ok', label: 'Luggage OK' });
@@ -944,12 +1149,12 @@ function activeFilterList() {
 }
 function removeFilter(key) {
   var f = state.filters;
-  if (key === 'sources') f.sources = ['whatsapp', 'poparide'];
+  if (key === 'sources') f.sources = defaultFilters().sources;
   else if (key === 'match') f.match = null;
   else if (key.indexOf('tod:') === 0) f.time_of_day = f.time_of_day.filter(function (t) { return t !== key.slice(4); });
   else if (key === 'time') { f.time = null; f.flexMin = null; }
   else f[key] = false;
-  runSearch();
+  searchOrRender();
 }
 
 /* ---------- Page shell ---------- */
@@ -991,21 +1196,30 @@ function prefillBar() {
     '<span class="prefill__query">' + (c.mode === 'driver' ? 'Drivers' : 'Passengers') + ' · ' + esc(c.from) + ' → ' + esc(c.to) + ' · ' + esc(c.dateChip === 'Pick' && c.date ? dayLabel(c.date) : (c.dateChip || 'Any day')) + '</span></div>' +
     '<button type="button" class="btn-text js-edit">' + icon('pencil') + 'Edit</button></div>';
 }
+function compareSoonest(a, b) {
+  var ad = a.ride_date, bd = b.ride_date;
+  if (ad !== bd) {
+    if (ad == null) return 1;
+    if (bd == null) return -1;
+    return ad < bd ? -1 : 1;
+  }
+  var at = a.ride_time, bt = b.ride_time;
+  if (at === bt) return 0;
+  if (at == null) return 1;
+  if (bt == null) return -1;
+  return at < bt ? -1 : 1;
+}
 function sortedRows() {
   var rows = state.rows.slice();
   if (state.sort === 'soonest') {
-    rows.sort(function (a, b) {
-      var av = a.ride_date && a.ride_time ? (a.ride_date + 'T' + a.ride_time) : null;
-      var bv = b.ride_date && b.ride_time ? (b.ride_date + 'T' + b.ride_time) : null;
-      if (av == null) return bv == null ? 0 : 1;
-      if (bv == null) return -1;
-      return av < bv ? -1 : (av > bv ? 1 : 0);
-    });
+    rows.sort(compareSoonest);
   } else if (state.sort === 'cheapest') {
     rows.sort(function (a, b) {
-      if (a.price == null) return b.price == null ? 0 : 1;
-      if (b.price == null) return -1;
-      return a.price - b.price;
+      if (a.price_num == null && b.price_num == null) return compareSoonest(a, b);
+      if (a.price_num == null) return 1;
+      if (b.price_num == null) return -1;
+      if (a.price_num === b.price_num) return compareSoonest(a, b);
+      return a.price_num - b.price_num;
     });
   }
   return rows;
@@ -1018,7 +1232,7 @@ function resultsHead(rows) {
   if (info) noun = state.mode === 'passenger' ? plural(n, 'passenger') + ' near your route' : plural(n, 'driver') + ' pass' + (n === 1 ? 'es' : '') + ' near your route';
   return '<div class="results-head"><div class="results-bar"><h2 class="results-title"><span>' + noun + '</span><span class="results-title__date">' + esc(state.dateChip === 'Pick' && state.date ? dayLabel(state.date) : (state.dateChip || '')) + '</span></h2>' +
     '<label class="sort"><select class="js-sort" aria-label="Sort"><option value="best"' + (state.sort === 'best' ? ' selected' : '') + '>Best match</option><option value="soonest"' + (state.sort === 'soonest' ? ' selected' : '') + '>Soonest</option><option value="cheapest"' + (state.sort === 'cheapest' ? ' selected' : '') + '>Cheapest</option></select>' + icon('chev') + '</label></div>' +
-    (info ? '<p class="info-line">' + icon('info') + '<span>No direct rides — these drivers pass close to your route</span></p>' : '') + '</div>';
+    (info ? '<p class="info-line">' + icon('info') + '<span>' + (state.mode === 'passenger' ? 'No direct passengers — these passengers are close to your route' : 'No direct rides — these drivers pass close to your route') + '</span></p>' : '') + '</div>';
 }
 function listHTML(rows, landingOpts) {
   var main = rows.filter(function (r) { return r.parsed; }).map(function (r) { return renderRideCard(r, landingOpts); }).join('');
@@ -1048,11 +1262,9 @@ function errorCard() {
 }
 function locationCard() {
   if (state.loc.status === 'unsupported' || state.loc.status === 'granted' || state.loc.status === 'locating' || state.loc.status === 'checking') return '';
-  if (state.loc.status === 'denied' || state.loc.status === 'error') {
-    return '<p style="margin:0 2px;padding:0;font-size:13px;color:var(--text-2)">Location off — pick From and To to find rides on your route</p>';
-  }
+  var eyebrow = state.loc.status === 'denied' ? 'Location is blocked' : 'See rides near you';
   return '<div class="prefill">' + icon('pin') +
-    '<div class="prefill__text"><span class="prefill__eyebrow">See rides near you</span>' +
+    '<div class="prefill__text"><span class="prefill__eyebrow">' + eyebrow + '</span>' +
     '<span class="prefill__query" style="font-size:13px;font-weight:400;color:var(--text-2)">Uses your location once — never saved</span></div>' +
     '<button type="button" class="btn-text js-use-location">' + icon('search') + 'Use my location</button></div>';
 }
@@ -1089,11 +1301,11 @@ function renderLanding() {
   } else if (state.error) {
     app.innerHTML = appBar('—') + '<div class="app__col">' + top + card + '<div class="ride-list" style="padding-top:12px">' + errorCard() + '</div>' + foot + '</div>';
   } else if (!state.rows.length) {
-    app.innerHTML = appBar('0 rides') + '<div class="app__col">' + top + card + '<div class="ride-list" style="padding-top:12px">' + landingEmpty() + '</div>' + foot + '</div>';
+    app.innerHTML = appBar('0 rides') + '<div class="app__col">' + top + card + '<div class="ride-list" style="padding-top:12px">' + (shouldShowGroupCard(state.rows) ? groupLinkCard() : '') + landingEmpty() + '</div>' + foot + '</div>';
   } else {
     var rows = sortedRows();
     var landingOpts = { hideBadge: true, distanceNote: state.landingMode === 'near' };
-    app.innerHTML = appBar(plural(state.rows.length, 'ride')) + '<div class="app__col">' + top + card + landingResultsHead(rows) + '<div class="ride-list">' + listHTML(rows, landingOpts) + '</div>' + foot + '</div>';
+    app.innerHTML = appBar(plural(state.rows.length, 'ride')) + '<div class="app__col">' + top + card + landingResultsHead(rows) + '<div class="ride-list">' + (shouldShowGroupCard(state.rows) ? groupLinkCard() : '') + listHTML(rows, landingOpts) + '</div>' + foot + '</div>';
   }
   wireApp();
   checkClamps();
@@ -1115,10 +1327,10 @@ function render() {
   } else if (state.error) {
     app.innerHTML = appBar('—') + '<div class="app__col">' + top + '<div class="ride-list" style="padding-top:12px">' + errorCard() + '</div>' + foot + '</div>';
   } else if (!state.rows.length) {
-    app.innerHTML = appBar('0 rides') + '<div class="app__col">' + top + '<div class="ride-list" style="padding-top:12px">' + emptyState() + '</div>' + foot + '</div>';
+    app.innerHTML = appBar('0 rides') + '<div class="app__col">' + top + '<div class="ride-list" style="padding-top:12px">' + (shouldShowGroupCard(state.rows) ? groupLinkCard() : '') + emptyState() + '</div>' + foot + '</div>';
   } else {
     var rows = sortedRows();
-    app.innerHTML = appBar(plural(state.rows.length, 'ride')) + '<div class="app__col">' + top + resultsHead(rows) + '<div class="ride-list">' + listHTML(rows) + '</div>' + foot + '</div>';
+    app.innerHTML = appBar(plural(state.rows.length, 'ride')) + '<div class="app__col">' + top + resultsHead(rows) + '<div class="ride-list">' + (shouldShowGroupCard(state.rows) ? groupLinkCard() : '') + listHTML(rows) + '</div>' + foot + '</div>';
   }
   wireApp();
   checkClamps();
@@ -1151,6 +1363,7 @@ function renderFiltersSheet() {
     '</div></section>' +
     '<section class="fs-section"><h3 class="fs-title">Time of day</h3><div class="chip-group chip-group--wrap">' + chips([['Morning','5–12','time_of_day'],['Afternoon','12–5','time_of_day'],['Evening','5–9','time_of_day'],['Night','9–5','time_of_day']], f.time_of_day) + '</div>' +
     '<button type="button" class="exact-row js-open-time-from-filters">' + icon('clock') + '<span class="exact-row__text"><strong>Exact time</strong><small>Leave around a set time, ± how flexible you are</small></span><span class="exact-row__val">' + (f.time ? fmtTime(f.time) : 'Set') + '</span>' + icon('chev-r') + '</button></section>' +
+    '<section class="fs-section"><h3 class="fs-title">Ride type</h3><div class="chip-group chip-group--wrap">' + chips([['Urgent','','ride_type'],['Airport','','ride_type'],['Daily','','ride_type']], [f.urgent && 'Urgent', f.airport && 'Airport', f.daily && 'Daily'].filter(Boolean)) + '</div></section>' +
     '<section class="fs-section"><h3 class="fs-title">Source</h3><div class="chip-group chip-group--wrap">' + chips([['WhatsApp','','sources'],['Poparide','','sources'],['Facebook','','sources']].map(function (p) { return [p[0].toLowerCase() === 'whatsapp' ? 'WhatsApp' : p[0], p[1], p[2]]; }), f.sources.map(function (s) { return s === 'whatsapp' ? 'WhatsApp' : (s.charAt(0).toUpperCase() + s.slice(1)); })) + '</div></section>' +
     '<section class="fs-section"><h3 class="fs-title">More</h3>' +
     toggle('Verified only', 'Poparide ID-verified drivers', f.verified_only, 'verified_only') +
@@ -1162,9 +1375,23 @@ function renderFiltersSheet() {
 function updateFiltersCount() {
   clearTimeout(filtersCountTimer);
   filtersCountTimer = setTimeout(function () {
-    if (!db || !state.fromPlace || !state.toPlace) return;
-    db.rpc('explore_search', rpcParams(pendingFilters)).then(function (res) {
+    if (!db) return;
+    var params;
+    if (state.fromPlace && state.toPlace) {
+      params = rpcParams(pendingFilters);
+    } else if (state.landingEnabled) {
+      var coords = (state.landingMode === 'near' && state.loc.coords) ? state.loc.coords : null;
+      params = {
+        p_mode: state.mode === 'passenger' ? 'passengers' : 'drivers',
+        p_o_lat: coords ? coords.lat : null, p_o_lng: coords ? coords.lng : null,
+        p_d_lat: null, p_d_lng: null, p_date: null,
+        p_filters: buildFilters(pendingFilters),
+      };
+    } else return;
+    dbg('explore_search (filters count) params:', params);
+    db.rpc('explore_search', params).then(function (res) {
       var n = res.error ? 0 : (res.data || []).length;
+      dbg('explore_search (filters count) rows:', n);
       var el = document.querySelector('.js-count'); if (el) el.textContent = n;
     }).catch(function () {});
   }, 300);
@@ -1252,12 +1479,12 @@ function routeStrip(r) {
     '<div class="route-strip__legend"><span><i class="lg lg--driver"></i>Driver\'s route</span><span><i class="lg lg--you"></i>Your part of the trip</span></div></div>';
 }
 function renderRideDetail(r) {
-  var t = timeText(r);
+  var t = r.ride_date ? timeText(r) : null;
   var grid = [
     ['Departs', t || 'Flexible'],
     r.arrive_time ? ['Arrives', fmtTime(r.arrive_time)] : null,
     r.seats ? [r.role === 'driver' ? 'Seats left' : 'Seats needed', r.seats] : null,
-    r.price ? ['Price', '$' + r.price + ' per seat'] : null,
+    r.price_num != null ? ['Price', '$' + r.price_num + ' per seat'] : null,
     r.luggage ? ['Luggage', r.luggage] : null,
     r.recurring_label ? ['Repeats', r.recurring_label] : null,
   ].filter(Boolean).map(function (kv) { return '<div><dt>' + kv[0] + '</dt><dd>' + esc(kv[1]) + '</dd></div>'; }).join('');
@@ -1285,7 +1512,7 @@ function renderRideDetail(r) {
   return '<div class="sheet__grabber"></div><div class="sheet__body">' +
     '<div class="sheet__head">' + matchBadge(r) + '<button type="button" class="icon-btn js-close-sheet" aria-label="Close">' + icon('x') + '</button></div>' +
     '<div><h2 class="sheet__title">' + esc(cityOf(r.origin_label)) + ' → ' + esc(cityOf(r.dest_label)) + '</h2>' +
-    '<p class="sheet__subtitle">' + esc(dayLabel(r.ride_date, true)) + ' · ' + (t ? esc(t) : 'Time flexible') + (r.arrive_time ? (' → ' + fmtTime(r.arrive_time)) : '') + '</p>' + matchNote(r) + '</div>' +
+    '<p class="sheet__subtitle">' + esc(r.ride_date ? dayLabel(r.ride_date, true) : 'Date not given') + ' · ' + (t ? esc(t) : 'Time flexible') + (r.arrive_time ? (' → ' + fmtTime(r.arrive_time)) : '') + '</p>' + matchNote(r) + '</div>' +
     strip + '<section class="sheet-block"><dl class="detail-grid">' + grid + '</dl></section>' + description +
     '<section class="sheet-block"><h3 class="sheet-block__label">' + (r.role === 'driver' ? 'Driver' : 'Rider') + '</h3>' + poster(r, 'poster--top') + (trust ? ('<ul class="trust-list">' + trust + '</ul>') : '') + '</section>' +
     groups + bubble + '</div><div class="sheet__cta">' + ctaHTML + '</div>';
@@ -1376,11 +1603,15 @@ function maybeSearch() {
 function wireApp() {
   setSearchInputs();
   var picker = document.getElementById('datePicker');
-  if (picker) picker.addEventListener('change', function () {
-    if (!picker.value) return;
-    state.date = picker.value; state.dateChip = 'Pick';
-    searchOrRender();
-  });
+  if (picker) {
+    picker.min = torontoTodayStr(0);
+    if (state.date) picker.value = state.date;
+    picker.addEventListener('change', function () {
+      if (!picker.value) return;
+      state.date = picker.value; state.dateChip = 'Pick';
+      searchOrRender();
+    });
+  }
 }
 document.addEventListener('click', function (e) {
   var t = e.target;
@@ -1411,7 +1642,19 @@ document.addEventListener('click', function (e) {
   }
 
   var useLoc = t.closest('.js-use-location');
-  if (useLoc) { getLocation(); return; }
+  if (useLoc) { openLocationSheet(state.loc.status === 'denied' ? 'denied' : 'prompt'); return; }
+
+  var locAllow = t.closest('.js-loc-allow');
+  if (locAllow) { getLocation(); return; }
+  var locRetry = t.closest('.js-loc-retry');
+  if (locRetry) { getLocation(); return; }
+  var locNotNow = t.closest('.js-loc-not-now');
+  if (locNotNow) {
+    var kind = document.getElementById('sheetBody').getAttribute('data-loc-kind');
+    setSessionFlag(kind === 'denied' ? 'pf_loc_denied_seen' : 'pf_loc_prompt_dismissed');
+    closeSheetLayer();
+    return;
+  }
 
   var dateChip = t.closest('.js-date');
   if (dateChip) {
@@ -1437,7 +1680,7 @@ document.addEventListener('click', function (e) {
   var removeF = t.closest('.js-remove-filter');
   if (removeF) { removeFilter(removeF.getAttribute('data-key')); return; }
   var clearF = t.closest('.js-clear-filters');
-  if (clearF) { state.filters = { sources: ['whatsapp', 'poparide'], match: null, time_of_day: [], verified_only: false, hide_business: false, luggage_ok: false }; state.time = null; state.flex = null; searchOrRender(); return; }
+  if (clearF) { state.filters = defaultFilters(); state.time = null; state.flex = null; searchOrRender(); return; }
 
   var fMatch = t.closest('.js-f-match');
   if (fMatch) { pendingFilters.match = fMatch.getAttribute('data-value') || null; document.getElementById('sheetBody').innerHTML = renderFiltersSheet(); updateFiltersCount(); return; }
@@ -1448,6 +1691,9 @@ document.addEventListener('click', function (e) {
       var key = val.toLowerCase();
       var i = pendingFilters.sources.indexOf(key);
       if (i > -1) pendingFilters.sources.splice(i, 1); else pendingFilters.sources.push(key);
+    } else if (group === 'ride_type') {
+      var rtField = val.toLowerCase();
+      pendingFilters[rtField] = !pendingFilters[rtField];
     } else {
       var j = pendingFilters.time_of_day.indexOf(val.toLowerCase());
       if (j > -1) pendingFilters.time_of_day.splice(j, 1); else pendingFilters.time_of_day.push(val.toLowerCase());
@@ -1457,7 +1703,7 @@ document.addEventListener('click', function (e) {
   var fToggle = t.closest('.js-f-toggle');
   if (fToggle) { var field = fToggle.getAttribute('data-field'); pendingFilters[field] = !pendingFilters[field]; document.getElementById('sheetBody').innerHTML = renderFiltersSheet(); updateFiltersCount(); return; }
   var resetF = t.closest('.js-reset-filters, .js-clear-pending');
-  if (resetF) { pendingFilters = { sources: ['whatsapp', 'poparide'], match: null, time_of_day: [], verified_only: false, hide_business: false, luggage_ok: false }; document.getElementById('sheetBody').innerHTML = renderFiltersSheet(); updateFiltersCount(); return; }
+  if (resetF) { pendingFilters = defaultFilters(); document.getElementById('sheetBody').innerHTML = renderFiltersSheet(); updateFiltersCount(); return; }
   var applyF = t.closest('.js-apply-filters');
   if (applyF) { state.filters = pendingFilters; closeSheetLayer(); searchOrRender(); return; }
 
@@ -1480,6 +1726,19 @@ document.addEventListener('click', function (e) {
 
   var retry = t.closest('.js-retry');
   if (retry) { searchOrRender(); return; }
+
+  var groupPaste = t.closest('.js-group-paste');
+  if (groupPaste) {
+    if (navigator.clipboard && navigator.clipboard.readText) {
+      navigator.clipboard.readText().then(function (text) {
+        var input = document.querySelector('.js-group-url');
+        if (input && text) input.value = text.trim();
+      }).catch(function () {});
+    }
+    return;
+  }
+  var groupSubmit = t.closest('.js-group-submit');
+  if (groupSubmit) { submitGroupLink(); return; }
 });
 document.addEventListener('change', function (e) {
   if (e.target.classList.contains('js-sort')) { state.sort = e.target.value; render(); }
