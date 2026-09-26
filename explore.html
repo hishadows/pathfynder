@@ -100,7 +100,7 @@ body.no-scroll{overflow:hidden}
 .route-input__dot{width:10px;height:10px;border-radius:50%;flex:none;border:2px solid var(--text-2);background:var(--surface)}
 .route-input__dot--to{background:var(--primary);border-color:var(--primary)}
 .route-input__label{width:36px;flex:none;font-size:12.5px;color:var(--text-2)}
-.route-input__field input{flex:1;min-width:0;border:0;padding:0;background:transparent;font:inherit;font-size:15.5px;color:var(--text);outline:none}
+.route-input__field input{flex:1;min-width:0;border:0;padding:0;background:transparent;font:inherit;font-size:15.5px;color:var(--text);outline:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .route-input__field input::placeholder{color:var(--text-2)}
 .swap-btn{width:40px;height:40px;flex:none;border-radius:50%;border:1px solid var(--divider);background:var(--card);color:var(--primary);display:grid;place-items:center;cursor:pointer}
 .filters{display:flex;flex-direction:column;gap:12px}
@@ -598,7 +598,7 @@ var state = {
   origin: initial_.from ? 'typed' : null,
   landingEnabled: !(initial_.from || initial_.to),
   landingMode: 'browse', landingInfo: null,
-  loc: { status: 'checking', coords: null, nearestName: null, justGranted: false },
+  loc: { status: 'checking', coords: null, nearestName: null },
   groupCard: { collapsed: false, message: null, messageKind: null, submitting: false, sentUrl: null },
   pendingRows: null, refreshInFlight: false,
 };
@@ -610,15 +610,16 @@ if (initial_.date) {
 
 
 /* ---------- Places lookup (resolve from/to to lat/lng) ---------- */
+function withLabel(p) { return p ? { name: p.name, province: p.province, lat: p.lat, lng: p.lng, label: p.name + ', ' + p.province + ', Canada' } : null; }
 function placesLookup(name) {
   if (!db || !name) return Promise.resolve(null);
   var key = normPlace(name);
   return db.from('places').select('name,province,lat,lng').eq('norm_key', key).limit(1)
     .then(function (res) {
       if (res.error) return null;
-      if (res.data && res.data[0]) return res.data[0];
+      if (res.data && res.data[0]) return withLabel(res.data[0]);
       return db.from('places').select('name,province,lat,lng').like('norm_key', key + '%').gte('popularity', 20).order('popularity', { ascending: false }).limit(1)
-        .then(function (r2) { return (r2.data && r2.data[0]) || null; });
+        .then(function (r2) { return withLabel((r2.data && r2.data[0]) || null); });
     })
     .catch(function () { return null; });
 }
@@ -663,7 +664,8 @@ function mapboxSuggest(query, opts) {
     .then(function (res) { return res.ok ? res.json() : { suggestions: [] }; })
     .then(function (json) {
       return (json.suggestions || []).map(function (s) {
-        return { name: s.name, sub: s.full_address || s.place_formatted, mapbox_id: s.mapbox_id, poi: s.feature_type === 'poi' };
+        var sub = s.full_address || s.place_formatted;
+        return { name: s.name, sub: sub, label: sub ? (s.name + ', ' + sub) : s.name, mapbox_id: s.mapbox_id, poi: s.feature_type === 'poi' };
       }).filter(function (r) { return r.name && r.mapbox_id; });
     })
     .catch(function () { return []; });
@@ -681,7 +683,8 @@ function mapboxRetrieve(mapboxId, sessionToken) {
       var props = f.properties || {};
       var coords = (f.geometry && f.geometry.coordinates) || [];
       if (coords[0] == null || coords[1] == null) return null;
-      return { name: props.name, sub: props.full_address || props.place_formatted, lng: coords[0], lat: coords[1] };
+      var placeText = props.place_formatted || props.full_address;
+      return { name: props.name, label: placeText ? (props.name + ', ' + placeText) : props.name, lng: coords[0], lat: coords[1] };
     })
     .catch(function () { return null; });
 }
@@ -705,7 +708,9 @@ function mergeAutocompleteResults(mapboxRows, placesRows) {
 var acTimers = {};
 var acAbort = {};
 function wireAutocomplete(input, listEl, onPick) {
+  var lastPickedLabel = null;
   input.addEventListener('input', function () {
+    if (input.value === lastPickedLabel) return; /* programmatic set right after a pick, not a new query */
     var q = input.value.trim();
     clearTimeout(acTimers[input.name]);
     if (acAbort[input.name]) { try { acAbort[input.name].abort(); } catch (e) {} acAbort[input.name] = null; }
@@ -718,7 +723,7 @@ function wireAutocomplete(input, listEl, onPick) {
       var sessionToken = sessionTokenFor(input.name);
       var mbPromise = mapboxSuggest(q, { sessionToken: sessionToken, limit: 6, proximity: proximity, signal: controller && controller.signal });
       var placesPromise = db.from('places').select('name,province,lat,lng').like('norm_key', normPlace(q) + '%').gte('popularity', 20).order('popularity', { ascending: false }).limit(8)
-        .then(function (res) { return res.data || []; });
+        .then(function (res) { return (res.data || []).map(function (p) { return { name: p.name, province: p.province, lat: p.lat, lng: p.lng, label: p.name + ', ' + p.province + ', Canada' }; }); });
       Promise.all([mbPromise, placesPromise]).then(function (results) {
         var rows = mergeAutocompleteResults(results[0], results[1]);
         if (!rows.length) { listEl.classList.remove('is-open'); listEl.innerHTML = ''; return; }
@@ -727,19 +732,43 @@ function wireAutocomplete(input, listEl, onPick) {
           return '<button type="button" class="ac-item" data-i="' + i + '">' + (r.poi ? icon('pin') : '') + '<span>' + esc(r.name) + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</span></button>';
         }).join('');
         listEl.classList.add('is-open');
+        var picked = false;
+        var selectRow = function (r) {
+          if (picked) return; /* one tap = one selection, ignore any further taps while retrieving */
+          picked = true;
+          listEl.classList.remove('is-open'); listEl.innerHTML = '';
+          if (r.mapbox_id) {
+            /* Show the chosen name immediately while the async retrieve (for
+               the authoritative lat/lng) is in flight, so the input never
+               looks empty or stale during the round trip. */
+            lastPickedLabel = r.label || r.name;
+            input.value = lastPickedLabel; input.title = lastPickedLabel;
+            mapboxRetrieve(r.mapbox_id, sessionToken).then(function (place) {
+              rotateSessionToken(input.name);
+              if (place) {
+                lastPickedLabel = place.label;
+                input.value = place.label; input.title = place.label;
+                input.blur();
+                onPick(place);
+              }
+            });
+          } else {
+            lastPickedLabel = r.label;
+            input.value = r.label; input.title = r.label;
+            input.blur();
+            onPick(r);
+          }
+        };
         listEl.querySelectorAll('.ac-item').forEach(function (btn, i) {
-          btn.addEventListener('click', function () {
-            var r = rows[i];
-            listEl.classList.remove('is-open'); listEl.innerHTML = '';
-            if (r.mapbox_id) {
-              mapboxRetrieve(r.mapbox_id, sessionToken).then(function (place) {
-                rotateSessionToken(input.name);
-                if (place) onPick(place);
-              });
-            } else {
-              onPick(r);
-            }
-          });
+          /* pointerdown (not click) so we select before the input's blur
+             fires — on touch, tapping a button after an input first blurs
+             the input (dismissing the keyboard) and only the SECOND tap
+             actually reaches the button's click handler. preventDefault()
+             here stops that focus shift, so one tap always selects. click
+             stays wired as a fallback for keyboard/assistive taps that
+             don't fire pointerdown; the picked flag keeps it to one pick. */
+          btn.addEventListener('pointerdown', function (e) { e.preventDefault(); selectRow(rows[i]); });
+          btn.addEventListener('click', function () { selectRow(rows[i]); });
         });
       });
     }, 300);
@@ -1033,13 +1062,12 @@ function resolveNearestPlace() {
     }
   });
 }
-function getLocation(fromTap) {
+function getLocation() {
   /* No sheets or modals — every outcome is reflected inline in locationCard(). */
   state.loc.status = 'locating';
   navigator.geolocation.getCurrentPosition(function (pos) {
     state.loc.coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
     state.loc.status = 'granted';
-    if (fromTap) state.loc.justGranted = true;
     resolveNearestPlace().then(function () { refreshLanding(); });
   }, function (err) {
     if (err && err.code === 1) {
@@ -1056,7 +1084,7 @@ function checkGeoPermission() {
   if (!('geolocation' in navigator)) { state.loc.status = 'unsupported'; render(); return; }
   if (navigator.permissions && navigator.permissions.query) {
     navigator.permissions.query({ name: 'geolocation' }).then(function (st) {
-      if (st.state === 'granted') { getLocation(false); return; }
+      if (st.state === 'granted') { getLocation(); return; }
       state.loc.status = st.state === 'denied' ? 'denied' : 'prompt';
       render();
     }).catch(function () {
@@ -1340,11 +1368,13 @@ function searchPanel() {
     return '<span class="chip chip--removable">' + esc(a.label) + '<button type="button" class="chip__x js-remove-filter" data-key="' + a.key + '" aria-label="Remove ' + esc(a.label) + '">' + icon('x') + '</button></span>';
   }).join('') + '<button type="button" class="link-btn js-clear-filters">Clear all</button></div>' : '';
   var pickLabel = c.dateChip === 'Pick' && c.date ? dayLabel(c.date) : '';
+  var fromDisplay = c.fromPlace ? (c.fromPlace.label || c.fromPlace.name) : c.from;
+  var toDisplay = c.toPlace ? (c.toPlace.label || c.toPlace.name) : c.to;
   return '<section class="search-panel">' +
     '<div class="segmented" role="tablist" aria-label="What are you looking for">' + seg('driver', 'car', 'Find a driver') + seg('passenger', 'user', 'Find passengers') + '</div>' +
     '<div class="route-input"><div class="route-input__fields">' +
-    '<label class="route-input__field"><span class="route-input__dot"></span><span class="route-input__label">From</span><input class="js-from" name="from" placeholder="Leaving from" value="' + esc(c.from) + '" autocomplete="off"><div class="ac-list" id="acFrom"></div></label>' +
-    '<label class="route-input__field"><span class="route-input__dot route-input__dot--to"></span><span class="route-input__label">To</span><input class="js-to" name="to" placeholder="Going to" value="' + esc(c.to) + '" autocomplete="off"><div class="ac-list" id="acTo"></div></label>' +
+    '<label class="route-input__field"><span class="route-input__dot"></span><span class="route-input__label">From</span><input class="js-from" name="from" placeholder="Leaving from" value="' + esc(fromDisplay) + '" title="' + esc(fromDisplay) + '" autocomplete="off"><div class="ac-list" id="acFrom"></div></label>' +
+    '<label class="route-input__field"><span class="route-input__dot route-input__dot--to"></span><span class="route-input__label">To</span><input class="js-to" name="to" placeholder="Going to" value="' + esc(toDisplay) + '" title="' + esc(toDisplay) + '" autocomplete="off"><div class="ac-list" id="acTo"></div></label>' +
     '</div><button type="button" class="swap-btn js-swap" aria-label="Swap from and to">' + icon('swap') + '</button></div>' +
     (c.unresolved.from ? '<p style="margin:0;padding:0 2px;font-size:12.5px;color:var(--text-2)">Couldn’t find “' + esc(c.unresolved.from) + '” — pick it from the list</p>' : '') +
     (c.unresolved.to ? '<p style="margin:0;padding:0 2px;font-size:12.5px;color:var(--text-2)">Couldn’t find “' + esc(c.unresolved.to) + '” — pick it from the list</p>' : '') +
@@ -1438,9 +1468,11 @@ function errorCard() {
 function locationCard() {
   /* Inline only — no sheets/modals. */
   if (state.loc.status === 'unsupported' || state.loc.status === 'locating' || state.loc.status === 'checking') return '';
-  if (state.loc.status === 'granted') {
-    return state.loc.justGranted ? '<p style="margin:0 2px;padding:0;font-size:13px;color:var(--text-2)">Showing rides near you</p>' : '';
-  }
+  /* Near-me is currently driving the results — the results heading already
+     says "near …", so the card (and its old "Showing rides near you" line)
+     stays hidden entirely. It only comes back once From is cleared, a typed
+     pick replaces it, or location fails — same as the checks below. */
+  if (state.loc.status === 'granted' && state.fromPlace && state.origin === 'gps') return '';
   if (state.loc.status === 'denied') {
     return '<div class="prefill"><span class="prefill__text" style="font-size:13px;line-height:1.4;color:var(--text-2)">Location is blocked. iPhone: aA → Website Settings → Location → Allow. Android: lock icon → Permissions → Location → Allow. In WhatsApp/Instagram: ⋯ → Open in browser.</span>' +
       '<button type="button" class="btn-text js-loc-retry">Try again</button></div>';
@@ -1762,24 +1794,26 @@ function setSearchInputs() {
   var fromEl = document.querySelector('.js-from'), toEl = document.querySelector('.js-to');
   if (!fromEl) return;
   wireAutocomplete(fromEl, document.getElementById('acFrom'), function (place) {
-    state.from = place.name; state.fromPlace = place; state.unresolved.from = null; state.origin = 'typed'; fromEl.value = place.name;
+    state.from = place.name; state.fromPlace = place; state.unresolved.from = null; state.origin = 'typed';
     maybeSearch();
   });
   wireAutocomplete(toEl, document.getElementById('acTo'), function (place) {
-    state.to = place.name; state.toPlace = place; state.unresolved.to = null; toEl.value = place.name;
+    state.to = place.name; state.toPlace = place; state.unresolved.to = null;
     maybeSearch();
   });
   fromEl.addEventListener('change', function () {
     var v = fromEl.value.trim();
-    state.from = fromEl.value;
-    if (!v) { state.fromPlace = null; state.unresolved.from = null; state.origin = null; searchOrRender(); }
-    else if (state.fromPlace && v !== state.fromPlace.name) { state.fromPlace = null; state.unresolved.from = v; state.origin = null; render(); }
+    var pickedLabel = state.fromPlace ? (state.fromPlace.label || state.fromPlace.name) : null;
+    if (!v) { state.from = ''; state.fromPlace = null; state.unresolved.from = null; state.origin = null; searchOrRender(); }
+    else if (state.fromPlace && v !== pickedLabel) { state.from = fromEl.value; state.fromPlace = null; state.unresolved.from = v; state.origin = null; render(); }
+    else if (!state.fromPlace) { state.from = fromEl.value; }
   });
   toEl.addEventListener('change', function () {
     var v = toEl.value.trim();
-    state.to = toEl.value;
-    if (!v) { state.toPlace = null; state.unresolved.to = null; searchOrRender(); }
-    else if (state.toPlace && v !== state.toPlace.name) { state.toPlace = null; state.unresolved.to = v; render(); }
+    var pickedLabel = state.toPlace ? (state.toPlace.label || state.toPlace.name) : null;
+    if (!v) { state.to = ''; state.toPlace = null; state.unresolved.to = null; searchOrRender(); }
+    else if (state.toPlace && v !== pickedLabel) { state.to = toEl.value; state.toPlace = null; state.unresolved.to = v; render(); }
+    else if (!state.toPlace) { state.to = toEl.value; }
   });
 }
 function maybeSearch() {
@@ -1839,10 +1873,10 @@ document.addEventListener('click', function (e) {
   }
 
   var useLoc = t.closest('.js-use-location');
-  if (useLoc) { getLocation(true); return; }
+  if (useLoc) { getLocation(); return; }
 
   var locRetry = t.closest('.js-loc-retry');
-  if (locRetry) { getLocation(true); return; }
+  if (locRetry) { getLocation(); return; }
 
   var dateChip = t.closest('.js-date');
   if (dateChip) {
