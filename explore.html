@@ -747,7 +747,7 @@ function wireAutocomplete(input, listEl, onPick) {
 
 /* ---------- Search ---------- */
 var searchSeq = 0;
-function buildFilters(f) {
+function buildFilters(f, originPlace, destPlace) {
   var out = {};
   if (f.sources && f.sources.length) out.sources = f.sources;
   if (f.match) out.match = f.match;
@@ -759,8 +759,8 @@ function buildFilters(f) {
   if (f.urgent) out.urgent = true;
   if (f.airport) out.airport = true;
   if (f.daily) out.daily = true;
-  if (state.fromPlace) out.from_name = state.fromPlace.name;
-  if (state.toPlace) out.to_name = state.toPlace.name;
+  if (originPlace) out.from_name = originPlace.name;
+  if (destPlace) out.to_name = destPlace.name;
   return out;
 }
 function rpcParams(filters) {
@@ -768,8 +768,13 @@ function rpcParams(filters) {
      browse, and the filters-sheet live count) goes through this so date,
      time-of-day, exact time and every other filter key are always read
      from the one state object, never a UI-only copy. */
+  /* A past date can only reach here via an old URL or manual typing (the
+     picker's own min already blocks it) — clamp before it's ever sent. */
+  if (state.date && state.date < torontoTodayStr(0)) { state.date = torontoTodayStr(0); state.dateChip = 'Today'; }
   /* From alone (near-from) always searches immediately, same as matched or
-     geolocation near-me — the origin is whichever of those is available. */
+     geolocation near-me — the origin is whichever of those is available.
+     from_name is derived from this SAME state.fromPlace object as the
+     coords below, never from raw input text, so the two can't disagree. */
   var oCoords = state.fromPlace || ((state.landingMode === 'near' && state.loc.coords) ? state.loc.coords : null);
   return {
     p_mode: state.mode === 'passenger' ? 'passengers' : 'drivers',
@@ -778,7 +783,7 @@ function rpcParams(filters) {
     p_d_lat: state.toPlace ? state.toPlace.lat : null,
     p_d_lng: state.toPlace ? state.toPlace.lng : null,
     p_date: state.date,
-    p_filters: buildFilters(filters || state.filters),
+    p_filters: buildFilters(filters || state.filters, state.fromPlace, state.toPlace),
   };
 }
 function runSearch(opts) {
@@ -788,7 +793,7 @@ function runSearch(opts) {
   state.loading = true; state.error = false;
   if (!opts.silent) render();
   var params = rpcParams();
-  dbg('explore_search (matched) params:', params);
+  dbg('explore_search (matched) seq:', seq, 'params:', params);
   return db.rpc('explore_search', params).then(function (res) {
     if (res.error) throw res.error;
     return res.data || [];
@@ -885,7 +890,7 @@ function performLandingSearch(mode, isFallback) {
   state.loading = true; state.error = false;
   render();
   var params = rpcParams();
-  dbg('explore_search (' + mode + ') params:', params);
+  dbg('explore_search (' + mode + ') seq:', seq, 'params:', params);
   db.rpc('explore_search', params).then(function (res) {
     if (res.error) throw res.error;
     return res.data || [];
@@ -1337,9 +1342,9 @@ function searchPanel() {
     (c.unresolved.from ? '<p style="margin:0;padding:0 2px;font-size:12.5px;color:var(--text-2)">Couldn’t find “' + esc(c.unresolved.from) + '” — pick it from the list</p>' : '') +
     (c.unresolved.to ? '<p style="margin:0;padding:0 2px;font-size:12.5px;color:var(--text-2)">Couldn’t find “' + esc(c.unresolved.to) + '” — pick it from the list</p>' : '') +
     '<div class="search-row"><div class="chip-group" data-filter="date">' + dc('Today', 'Today') + dc('Tomorrow', 'Tomorrow') +
-    '<span style="position:relative;display:inline-flex;flex:none">' +
+    '<span style="position:relative;overflow:hidden;display:inline-flex;flex:none">' +
     '<button type="button" class="chip' + (c.dateChip === 'Pick' ? '' : ' chip--icon') + '" tabindex="-1" aria-hidden="true" style="pointer-events:none">' + icon('calendar') + esc(pickLabel) + '</button>' +
-    '<input type="date" id="datePicker" aria-label="Pick a date" style="position:absolute;inset:0;opacity:0;font-size:16px;cursor:pointer;z-index:1;border:0;background:transparent;padding:0">' +
+    '<input type="date" id="datePicker" aria-label="Pick a date" style="position:absolute;top:0;right:0;bottom:0;left:0;opacity:0;font-size:16px;cursor:pointer;z-index:1;border:0;background:transparent;padding:0">' +
     '</span>' +
     '<button type="button" class="chip js-open-time' + (c.filters.time ? '' : ' chip--icon') + '" aria-label="Pick an exact time">' + icon('clock') + (c.filters.time ? (fmtTime(c.filters.time) + (c.filters.flexMin ? (' ±' + (c.filters.flexMin / 60 >= 1 ? (c.filters.flexMin / 60) + 'h' : c.filters.flexMin + 'm')) : '')) : '') + '</button></div>' +
     '<button type="button" class="filter-btn js-open-filters">' + icon('sliders') + 'Filters' + (active.length ? '<span class="filter-btn__count">' + active.length + '</span>' : '') + '</button></div>' +
@@ -1550,17 +1555,31 @@ function updateFiltersCount() {
 
 /* ---------- Sheets: exact time ---------- */
 var pendingTime = { hour: 6, minute: 0, ampm: 'PM', flexMin: 60 };
+function nextFullHour() {
+  var d = new Date(); d.setHours(d.getHours() + 1, 0, 0, 0);
+  return { hour: d.getHours() % 12 || 12, minute: 0, ampm: d.getHours() >= 12 ? 'PM' : 'AM' };
+}
 function openTimeSheet() {
   if (state.filters.time) {
     var t = state.filters.time.split(':').map(Number);
     pendingTime.ampm = t[0] >= 12 ? 'PM' : 'AM';
     pendingTime.hour = t[0] % 12 || 12;
     pendingTime.minute = t[1];
+  } else {
+    var nh = nextFullHour();
+    pendingTime.hour = nh.hour; pendingTime.minute = nh.minute; pendingTime.ampm = nh.ampm;
   }
   pendingTime.flexMin = state.filters.flexMin != null ? state.filters.flexMin : 60;
   document.getElementById('sheetBody').innerHTML = renderTimeSheet();
   openSheetLayer();
   wireTimeWheels();
+}
+function setLabel() {
+  return 'Set ' + timeSummary().split(' – ')[0] + (pendingTime.flexMin ? (' ± ' + (pendingTime.flexMin >= 60 ? (pendingTime.flexMin / 60) + ' hr' : pendingTime.flexMin + ' min')) : '');
+}
+function updateTimeSheetLabels() {
+  var sum = document.querySelector('.time-summary b'); if (sum) sum.textContent = timeSummary();
+  var setBtn = document.querySelector('.js-set-time'); if (setBtn) setBtn.textContent = setLabel();
 }
 function to24h(h, ampm) { h = h % 12; if (ampm === 'PM') h += 12; return h; }
 function timeSummary() {
@@ -1582,7 +1601,7 @@ function renderTimeSheet() {
     '<section class="fs-section"><h3 class="fs-title">How flexible are you?</h3><div class="chip-group chip-group--wrap">' +
     flexOpts.map(function (o) { return '<button type="button" class="chip js-flex" data-value="' + o[0] + '"' + (pendingTime.flexMin === o[0] ? ' style="background:var(--chip-soft);color:var(--chip-soft-text);font-weight:600"' : '') + '>' + o[1] + '</button>'; }).join('') +
     '</div></section></div>' +
-    '<div class="sheet__foot"><button type="button" class="btn btn--ghost js-cancel-time">Cancel</button><button type="button" class="btn btn--primary js-set-time">Set ' + timeSummary().split(' – ')[0] + (pendingTime.flexMin ? (' ± ' + (pendingTime.flexMin >= 60 ? (pendingTime.flexMin / 60) + ' hr' : pendingTime.flexMin + ' min')) : '') + '</button></div>';
+    '<div class="sheet__foot"><button type="button" class="btn btn--ghost js-cancel-time">Cancel</button><button type="button" class="btn btn--primary js-set-time">' + setLabel() + '</button></div>';
 }
 function wireTimeWheels() {
   ['hour', 'minute', 'ampm'].forEach(function (field) {
@@ -1592,18 +1611,20 @@ function wireTimeWheels() {
     var selIdx = 0;
     items.forEach(function (it, i) { if (it.classList.contains('is-sel')) selIdx = i; });
     colEl.scrollTop = selIdx * 38;
+    var snap = function () {
+      var idx = Math.round(colEl.scrollTop / 38);
+      idx = Math.max(0, Math.min(items.length - 1, idx));
+      items.forEach(function (it, i) { it.classList.toggle('is-sel', i === idx); });
+      var v = items[idx].getAttribute('data-v');
+      pendingTime[field] = field === 'ampm' ? v : Number(v);
+      updateTimeSheetLabels();
+    };
     var t;
     colEl.addEventListener('scroll', function () {
       clearTimeout(t);
-      t = setTimeout(function () {
-        var idx = Math.round(colEl.scrollTop / 38);
-        idx = Math.max(0, Math.min(items.length - 1, idx));
-        items.forEach(function (it, i) { it.classList.toggle('is-sel', i === idx); });
-        var v = items[idx].getAttribute('data-v');
-        pendingTime[field] = field === 'ampm' ? v : Number(v);
-        var sum = document.querySelector('.time-summary b'); if (sum) sum.textContent = timeSummary();
-      }, 120);
+      t = setTimeout(snap, 120);
     });
+    colEl.addEventListener('scrollend', function () { clearTimeout(t); snap(); });
   });
 }
 
@@ -1735,12 +1756,16 @@ function setSearchInputs() {
     maybeSearch();
   });
   fromEl.addEventListener('change', function () {
+    var v = fromEl.value.trim();
     state.from = fromEl.value;
-    if (!fromEl.value.trim()) { state.fromPlace = null; searchOrRender(); }
+    if (!v) { state.fromPlace = null; state.unresolved.from = null; searchOrRender(); }
+    else if (state.fromPlace && v !== state.fromPlace.name) { state.fromPlace = null; state.unresolved.from = v; render(); }
   });
   toEl.addEventListener('change', function () {
+    var v = toEl.value.trim();
     state.to = toEl.value;
-    if (!toEl.value.trim()) { state.toPlace = null; searchOrRender(); }
+    if (!v) { state.toPlace = null; state.unresolved.to = null; searchOrRender(); }
+    else if (state.toPlace && v !== state.toPlace.name) { state.toPlace = null; state.unresolved.to = v; render(); }
   });
 }
 function maybeSearch() {
@@ -1884,9 +1909,7 @@ document.addEventListener('click', function (e) {
     pendingTime.flexMin = Number(flexChip.getAttribute('data-value'));
     flexChip.parentElement.querySelectorAll('.js-flex').forEach(function (c) { c.style.cssText = ''; });
     flexChip.style.cssText = 'background:var(--chip-soft);color:var(--chip-soft-text);font-weight:600';
-    var sumB = document.querySelector('.time-summary b'); if (sumB) sumB.textContent = timeSummary();
-    var setBtn = document.querySelector('.js-set-time');
-    if (setBtn) setBtn.textContent = 'Set ' + timeSummary().split(' – ')[0] + (pendingTime.flexMin ? (' ± ' + (pendingTime.flexMin >= 60 ? (pendingTime.flexMin / 60) + ' hr' : pendingTime.flexMin + ' min')) : '');
+    updateTimeSheetLabels();
     return;
   }
   var clearTime = t.closest('.js-clear-time');
