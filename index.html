@@ -645,7 +645,7 @@ html.light .tag-need{color:#B45309}
       <div class="where-card" id="srcCard">
         <div class="card-h">Where rides are posted</div>
         <div class="card-sub">Next 7 days · by source</div>
-        <div class="src-legend"><span><i style="background:#25D366"></i>WhatsApp</span><span><i style="background:var(--indigo)"></i>Poparide</span><span><i style="background:#1877F2"></i>Facebook</span></div>
+        <div class="src-legend"><span><i style="background:#25D366"></i>WhatsApp</span><span><i style="background:#FF8A00"></i>Poparide</span><span><i style="background:#1877F2"></i>Facebook</span></div>
         <div id="srcBars"></div>
         <span class="skel skel-block"></span>
       </div>
@@ -1156,7 +1156,7 @@ function pfToggleTheme(){
     var wrap = document.getElementById('liveWrap');
     if (!wrap) return;
     var NEED_MULTIPLIER = 5; // "Drivers needed" when requests_30d >= 5 × max(rides_30d, 1)
-    var SRC = [['whatsapp', 'WhatsApp', '#25D366'], ['poparide', 'Poparide', 'var(--indigo)'], ['facebook', 'Facebook', '#1877F2']];
+    var SRC = [['whatsapp', 'WhatsApp', '#25D366'], ['poparide', 'Poparide', '#FF8A00'], ['facebook', 'Facebook', '#1877F2']];
     var DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     var DAYS_FULL = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
     var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
