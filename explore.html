@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Find a ride · Pathfynder</title>
 <meta name="description" content="Find drivers and passengers across Ontario — from WhatsApp groups, Poparide and more.">
 <meta property="og:title" content="Find a ride · Pathfynder">
@@ -61,7 +61,8 @@
   --on-primary:#111B21; --notice-bg:#182229; --notice-fg:#FFD279; --star:#FFC933;
 }
 *{box-sizing:border-box}
-html,body{margin:0}
+html,body{margin:0;overflow-x:hidden}
+html{touch-action:manipulation;-webkit-text-size-adjust:100%}
 body{
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   background:var(--bg); color:var(--text); -webkit-font-smoothing:antialiased;
@@ -69,8 +70,9 @@ body{
 body.no-scroll{overflow:hidden}
 
 .i{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.app{min-height:100vh;background:var(--bg);color:var(--text);font-size:15px;line-height:1.35;container-type:inline-size}
-.app button{font:inherit}
+.app{min-height:100vh;max-width:100vw;overflow-x:clip;background:var(--bg);color:var(--text);font-size:15px;line-height:1.35;container-type:inline-size;touch-action:manipulation}
+.app button{font:inherit;touch-action:manipulation}
+.chip,.ride-card,.empty-card,.group-card,.prefill,.sheet,.sheet__head,.sheet__foot,.sheet__body{touch-action:manipulation}
 
 /* App bar */
 .app-bar{position:sticky;top:0;z-index:3;background:var(--header);color:var(--header-text)}
@@ -100,7 +102,7 @@ body.no-scroll{overflow:hidden}
 .route-input__dot{width:10px;height:10px;border-radius:50%;flex:none;border:2px solid var(--text-2);background:var(--surface)}
 .route-input__dot--to{background:var(--primary);border-color:var(--primary)}
 .route-input__label{width:36px;flex:none;font-size:12.5px;color:var(--text-2)}
-.route-input__field input{flex:1;min-width:0;border:0;padding:0;background:transparent;font:inherit;font-size:15.5px;color:var(--text);outline:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.route-input__field input{flex:1;min-width:0;border:0;padding:2px 0;background:transparent;font:inherit;font-size:16px;line-height:1.2;color:var(--text);outline:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .route-input__field input::placeholder{color:var(--text-2)}
 .swap-btn{width:40px;height:40px;flex:none;border-radius:50%;border:1px solid var(--divider);background:var(--card);color:var(--primary);display:grid;place-items:center;cursor:pointer}
 .filters{display:flex;flex-direction:column;gap:12px}
@@ -140,7 +142,7 @@ body.no-scroll{overflow:hidden}
 .results-bar{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .results-bar__count{font-size:13px;font-weight:600;color:var(--text-2)}
 .sort{position:relative;display:inline-flex;align-items:center;gap:4px;font-size:13px;color:var(--text-2)}
-.sort select{appearance:none;-webkit-appearance:none;border:0;background:transparent;font:inherit;font-weight:600;color:var(--primary);padding:4px 20px 4px 2px;cursor:pointer;outline:none}
+.sort select{appearance:none;-webkit-appearance:none;border:0;background:transparent;font:inherit;font-size:16px;line-height:1;font-weight:600;color:var(--primary);padding:1px 20px 1px 2px;cursor:pointer;outline:none}
 .sort select option{color:#111B21}
 .sort .i{position:absolute;right:0;width:16px;height:16px;color:var(--primary);pointer-events:none}
 
