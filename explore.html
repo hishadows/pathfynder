@@ -117,10 +117,12 @@ body.no-scroll{overflow:hidden}
 /* Autocomplete */
 .ac-list{position:absolute;left:0;right:0;top:100%;z-index:5;margin-top:2px;background:var(--card);border:1px solid var(--divider);border-radius:10px;box-shadow:0 4px 14px rgba(11,20,26,.16);overflow:hidden;display:none}
 .ac-list.is-open{display:block}
-.ac-item{display:block;width:100%;text-align:left;padding:9px 14px;border:0;background:transparent;color:var(--text);font-size:14.5px;cursor:pointer;border-bottom:1px solid var(--divider)}
+.ac-item{display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:9px 14px;border:0;background:transparent;color:var(--text);font-size:15px;cursor:pointer;border-bottom:1px solid var(--divider)}
+.ac-item .i{flex:none;width:16px;height:16px;color:var(--text-2)}
+.ac-item span{display:block;min-width:0}
 .ac-item:last-child{border-bottom:0}
 .ac-item:hover,.ac-item.is-hi{background:var(--surface)}
-.ac-item small{display:block;font-size:12px;color:var(--text-2)}
+.ac-item small{display:block;font-size:13px;color:var(--text-2)}
 
 /* Prefill (bot link) */
 .prefill{display:flex;align-items:center;gap:12px;padding:10px 12px 10px 16px;background:var(--card);border-bottom:1px solid var(--divider)}
@@ -394,31 +396,24 @@ body.no-scroll{overflow:hidden}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(12px);z-index:30;background:var(--text);color:var(--bg);font-size:13.5px;font-weight:500;padding:10px 18px;border-radius:999px;opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;max-width:calc(100vw - 32px);text-align:center}
 .toast.is-on{opacity:1;transform:translateX(-50%) translateY(0)}
 
-/* Group link card (Option B) */
-.group-card{background:var(--card);border-radius:12px;padding:16px 14px;border:1.5px dashed var(--primary);display:flex;flex-direction:column;gap:12px}
-.group-card__head{display:flex;gap:12px;align-items:flex-start}
-.group-card__ico{width:44px;height:44px;border-radius:50%;background:var(--chip-soft);color:var(--chip-soft-text);display:grid;place-items:center;flex:none}
-.group-card__ico .i{width:20px;height:20px}
-.group-card__title{margin:0;font-size:16.5px;font-weight:600}
-.group-card__text{margin:3px 0 0;font-size:13.5px;color:var(--text-2)}
-.group-card__stats{display:flex;flex-wrap:wrap;gap:6px}
-.group-card__stat{font-size:12px;font-weight:600;padding:3px 8px;border-radius:6px;background:var(--surface);color:var(--text-2)}
-.group-card__field{display:flex;gap:8px}
-.group-card__field input{flex:1;min-width:0;height:44px;border-radius:10px;border:1px solid var(--line-strong);background:var(--surface);padding:0 12px;font-size:16px;color:var(--text);outline:none}
-.group-card__field input:focus{border-color:var(--primary)}
-.group-card__paste{height:44px;padding:0 14px;border-radius:10px;border:1px solid var(--line-strong);background:var(--card);color:var(--text);font-size:14px;font-weight:600;flex:none;cursor:pointer}
-.group-card__btn{width:100%;height:44px;border-radius:22px;border:0;background:var(--primary);color:var(--on-primary);font-size:15px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer}
-.group-card__btn .i{width:18px;height:18px}
-.group-card__btn[disabled]{opacity:.6;cursor:default}
-.group-card__result{margin:0;font-size:13px}
-.group-card__result--ok{color:var(--primary)}
-.group-card__result--bad{background:var(--notice-bg);color:var(--notice-fg);padding:8px 10px;border-radius:8px}
-.group-card__steps{margin:0;padding:10px 12px;border-radius:8px;background:var(--surface);font-size:12.5px;color:var(--text-2);display:flex;flex-wrap:wrap;gap:6px;align-items:center}
-.group-card__steps b{color:var(--text);font-weight:600}
-.group-card__steps .i{width:14px;height:14px}
-.group-card--done{padding:14px}
-.group-card__done{display:flex;align-items:center;gap:8px;font-size:14.5px}
-.group-card__done .i{color:var(--primary);width:20px;height:20px}
+/* Group link card (Option A — chat invite) */
+.group-card{background:var(--wallpaper);border-radius:12px;padding:14px 14px 16px;overflow:hidden;display:flex;flex-direction:column;gap:12px}
+.group-card__bubble{align-self:flex-start;max-width:88%;background:var(--bubble);border-radius:0 10px 10px 10px;padding:9px 11px;box-shadow:0 1px .5px rgba(11,20,26,.13);position:relative;font-size:14.5px;line-height:1.4}
+.group-card__bubble::before{content:"";position:absolute;left:-8px;top:0;border-top:10px solid var(--bubble);border-left:8px solid transparent}
+.group-card__name{font-size:13px;font-weight:600;color:var(--primary);margin-bottom:2px}
+.group-card__row{display:flex;align-items:center;gap:8px;background:var(--card);border-radius:24px;padding:4px 4px 4px 14px}
+.group-card__row input{flex:1;min-width:0;border:0;background:transparent;font-size:16px;color:var(--text);outline:none}
+.group-card__paste{height:36px;padding:0 12px;border:0;border-radius:18px;background:var(--chip-soft);color:var(--chip-soft-text);font-size:13.5px;font-weight:600;flex:none;cursor:pointer}
+.group-card__send{width:44px;height:44px;border-radius:50%;border:0;background:var(--cta);color:var(--cta-text);flex:none;display:grid;place-items:center;cursor:pointer}
+.group-card__send .i{width:20px;height:20px}
+.group-card__send[disabled]{opacity:.6;cursor:default}
+.group-card__hint{margin:0;font-size:12px;color:var(--text-2);text-align:center}
+.group-card__result{margin:0;font-size:13px;background:var(--notice-bg);color:var(--notice-fg);padding:8px 10px;border-radius:8px}
+.group-card__bubble--sent{align-self:flex-end;background:var(--chip-soft);color:var(--text);border-radius:10px 0 10px 10px}
+.group-card__bubble--sent::before{display:none}
+.group-card__bubble--sent::after{content:"";position:absolute;right:-8px;top:0;border-top:10px solid var(--chip-soft);border-right:8px solid transparent}
+.group-card__link{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.group-card__ticks{display:block;text-align:right;margin-top:2px;font-size:11px;color:var(--primary)}
 
 /* Footer */
 .app-footer{padding:18px 16px 28px;text-align:center;font-size:13px;color:var(--text-2)}
@@ -488,6 +483,7 @@ body.no-scroll{overflow:hidden}
   <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
   <symbol id="i-route" viewBox="0 0 24 24"><circle cx="6" cy="18" r="2.3"/><circle cx="18" cy="6" r="2.3"/><path d="M8.5 18H15a3.5 3.5 0 0 0 0-7H9a3.5 3.5 0 0 1 0-7h6.5"/></symbol>
   <symbol id="i-chev-r" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="M4 12 20 4l-6 16-3-7z"/></symbol>
 </svg>
 
 <div class="app" id="app"></div>
@@ -601,8 +597,8 @@ var state = {
   unresolved: { from: null, to: null },
   landingEnabled: !(initial_.from || initial_.to),
   landingMode: 'browse', landingInfo: null,
-  loc: { status: 'checking', coords: null, nearestName: null },
-  groupCard: { collapsed: false, message: null, messageKind: null, submitting: false },
+  loc: { status: 'checking', coords: null, nearestName: null, justGranted: false },
+  groupCard: { collapsed: false, message: null, messageKind: null, submitting: false, sentUrl: null },
   pendingRows: null, refreshInFlight: false,
 };
 if (initial_.date) {
@@ -628,46 +624,77 @@ function resolvePlace(name) {
   if (!name) return Promise.resolve(null);
   return placesLookup(name).then(function (place) {
     if (place) return place;
-    /* places found nothing — try one Mapbox forward call before giving up */
-    return mapboxForward(name, { autocomplete: false, limit: 1 }).then(function (rows) { return rows[0] || null; });
+    /* places found nothing — try one Search Box suggest+retrieve before giving up */
+    var token = newSessionToken();
+    return mapboxSuggest(name, { sessionToken: token, limit: 1 }).then(function (rows) {
+      if (!rows.length) return null;
+      return mapboxRetrieve(rows[0].mapbox_id, token);
+    });
   });
 }
 
-/* ---------- Mapbox Geocoding v6 (with places-first, silent fallback) ---------- */
-function mapboxForward(query, opts) {
+/* ---------- Mapbox Search Box API (POIs, addresses, cities — with places-first, silent fallback) ---------- */
+function newSessionToken() {
+  return (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : (Date.now() + '-' + Math.random().toString(16).slice(2));
+}
+var acSession = {};
+function sessionTokenFor(key) {
+  if (!acSession[key]) acSession[key] = newSessionToken();
+  return acSession[key];
+}
+function rotateSessionToken(key) { acSession[key] = null; }
+function mapboxSuggest(query, opts) {
   opts = opts || {};
   if (!MAPBOX_TOKEN || typeof fetch !== 'function') return Promise.resolve([]);
   var params = new URLSearchParams();
   params.set('q', query);
-  params.set('autocomplete', opts.autocomplete ? 'true' : 'false');
+  params.set('access_token', MAPBOX_TOKEN);
+  params.set('session_token', opts.sessionToken);
   params.set('country', 'ca');
   params.set('language', 'en');
-  params.set('limit', String(opts.limit || 5));
-  params.set('types', 'place,locality,neighborhood,address');
+  params.set('limit', String(opts.limit || 6));
+  params.set('types', 'poi,address,place,locality,neighborhood,street');
   params.set('proximity', opts.proximity || 'ip');
-  params.set('access_token', MAPBOX_TOKEN);
   var fetchOpts = {};
   if (opts.signal) fetchOpts.signal = opts.signal;
-  return fetch('https://api.mapbox.com/search/geocode/v6/forward?' + params.toString(), fetchOpts)
-    .then(function (res) { return res.ok ? res.json() : { features: [] }; })
+  return fetch('https://api.mapbox.com/search/searchbox/v1/suggest?' + params.toString(), fetchOpts)
+    .then(function (res) { return res.ok ? res.json() : { suggestions: [] }; })
     .then(function (json) {
-      return (json.features || []).map(function (f) {
-        var props = f.properties || {};
-        var coords = (f.geometry && f.geometry.coordinates) || [];
-        return { name: props.name, sub: props.place_formatted, lng: coords[0], lat: coords[1] };
-      }).filter(function (r) { return r.name && r.lat != null && r.lng != null; });
+      return (json.suggestions || []).map(function (s) {
+        return { name: s.name, sub: s.full_address || s.place_formatted, mapbox_id: s.mapbox_id, poi: s.feature_type === 'poi' };
+      }).filter(function (r) { return r.name && r.mapbox_id; });
     })
     .catch(function () { return []; });
 }
-function mergeAutocompleteResults(placesRows, mapboxRows) {
-  var out = placesRows.slice(0, 3);
+function mapboxRetrieve(mapboxId, sessionToken) {
+  if (!MAPBOX_TOKEN || typeof fetch !== 'function') return Promise.resolve(null);
+  var params = new URLSearchParams();
+  params.set('access_token', MAPBOX_TOKEN);
+  params.set('session_token', sessionToken);
+  return fetch('https://api.mapbox.com/search/searchbox/v1/retrieve/' + encodeURIComponent(mapboxId) + '?' + params.toString())
+    .then(function (res) { return res.ok ? res.json() : null; })
+    .then(function (json) {
+      var f = json && json.features && json.features[0];
+      if (!f) return null;
+      var props = f.properties || {};
+      var coords = (f.geometry && f.geometry.coordinates) || [];
+      if (coords[0] == null || coords[1] == null) return null;
+      return { name: props.name, sub: props.full_address || props.place_formatted, lng: coords[0], lat: coords[1] };
+    })
+    .catch(function () { return null; });
+}
+function mergeAutocompleteResults(mapboxRows, placesRows) {
+  var out = mapboxRows.slice(0, 6);
   var seen = {};
   out.forEach(function (r) { seen[normPlace(r.name)] = true; });
-  mapboxRows.forEach(function (r) {
+  var added = 0;
+  placesRows.forEach(function (r) {
+    if (added >= 3) return;
     var key = normPlace(r.name);
     if (seen[key]) return;
     seen[key] = true;
     out.push(r);
+    added++;
   });
   return out;
 }
@@ -683,26 +710,36 @@ function wireAutocomplete(input, listEl, onPick) {
     if (q.length < 3) { listEl.classList.remove('is-open'); listEl.innerHTML = ''; return; }
     acTimers[input.name] = setTimeout(function () {
       if (!db) return;
-      db.from('places').select('name,province,lat,lng').like('norm_key', normPlace(q) + '%').gte('popularity', 20).order('popularity', { ascending: false }).limit(8)
-        .then(function (res) {
-          var placesRows = res.data || [];
-          var controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
-          acAbort[input.name] = controller;
-          var proximity = state.loc.coords ? (state.loc.coords.lng + ',' + state.loc.coords.lat) : 'ip';
-          return mapboxForward(q, { autocomplete: true, limit: 5, proximity: proximity, signal: controller && controller.signal })
-            .then(function (mbRows) { return mergeAutocompleteResults(placesRows, mbRows); });
-        })
-        .then(function (rows) {
-          if (!rows.length) { listEl.classList.remove('is-open'); listEl.innerHTML = ''; return; }
-          listEl.innerHTML = rows.map(function (r, i) {
-            var sub = r.sub || r.province;
-            return '<button type="button" class="ac-item" data-i="' + i + '">' + esc(r.name) + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</button>';
-          }).join('');
-          listEl.classList.add('is-open');
-          listEl.querySelectorAll('.ac-item').forEach(function (btn, i) {
-            btn.addEventListener('click', function () { onPick(rows[i]); listEl.classList.remove('is-open'); listEl.innerHTML = ''; });
+      var controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+      acAbort[input.name] = controller;
+      var proximity = state.loc.coords ? (state.loc.coords.lng + ',' + state.loc.coords.lat) : 'ip';
+      var sessionToken = sessionTokenFor(input.name);
+      var mbPromise = mapboxSuggest(q, { sessionToken: sessionToken, limit: 6, proximity: proximity, signal: controller && controller.signal });
+      var placesPromise = db.from('places').select('name,province,lat,lng').like('norm_key', normPlace(q) + '%').gte('popularity', 20).order('popularity', { ascending: false }).limit(8)
+        .then(function (res) { return res.data || []; });
+      Promise.all([mbPromise, placesPromise]).then(function (results) {
+        var rows = mergeAutocompleteResults(results[0], results[1]);
+        if (!rows.length) { listEl.classList.remove('is-open'); listEl.innerHTML = ''; return; }
+        listEl.innerHTML = rows.map(function (r, i) {
+          var sub = r.sub || r.province;
+          return '<button type="button" class="ac-item" data-i="' + i + '">' + (r.poi ? icon('pin') : '') + '<span>' + esc(r.name) + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</span></button>';
+        }).join('');
+        listEl.classList.add('is-open');
+        listEl.querySelectorAll('.ac-item').forEach(function (btn, i) {
+          btn.addEventListener('click', function () {
+            var r = rows[i];
+            listEl.classList.remove('is-open'); listEl.innerHTML = '';
+            if (r.mapbox_id) {
+              mapboxRetrieve(r.mapbox_id, sessionToken).then(function (place) {
+                rotateSessionToken(input.name);
+                if (place) onPick(place);
+              });
+            } else {
+              onPick(r);
+            }
           });
         });
+      });
     }, 300);
   });
   input.addEventListener('blur', function () { setTimeout(function () { listEl.classList.remove('is-open'); }, 150); });
@@ -731,21 +768,22 @@ function rpcParams(filters) {
      browse, and the filters-sheet live count) goes through this so date,
      time-of-day, exact time and every other filter key are always read
      from the one state object, never a UI-only copy. */
-  var matched = !!(state.fromPlace && state.toPlace);
-  var nearCoords = (!matched && state.landingMode === 'near' && state.loc.coords) ? state.loc.coords : null;
+  /* From alone (near-from) always searches immediately, same as matched or
+     geolocation near-me — the origin is whichever of those is available. */
+  var oCoords = state.fromPlace || ((state.landingMode === 'near' && state.loc.coords) ? state.loc.coords : null);
   return {
     p_mode: state.mode === 'passenger' ? 'passengers' : 'drivers',
-    p_o_lat: matched ? (state.fromPlace ? state.fromPlace.lat : null) : (nearCoords ? nearCoords.lat : null),
-    p_o_lng: matched ? (state.fromPlace ? state.fromPlace.lng : null) : (nearCoords ? nearCoords.lng : null),
-    p_d_lat: matched ? (state.toPlace ? state.toPlace.lat : null) : null,
-    p_d_lng: matched ? (state.toPlace ? state.toPlace.lng : null) : null,
+    p_o_lat: oCoords ? oCoords.lat : null,
+    p_o_lng: oCoords ? oCoords.lng : null,
+    p_d_lat: state.toPlace ? state.toPlace.lat : null,
+    p_d_lng: state.toPlace ? state.toPlace.lng : null,
     p_date: state.date,
     p_filters: buildFilters(filters || state.filters),
   };
 }
 function runSearch(opts) {
   opts = opts || {};
-  if (!state.fromPlace || !state.toPlace) return Promise.resolve([]);
+  if (!state.fromPlace) return Promise.resolve([]);
   var seq = ++searchSeq;
   state.loading = true; state.error = false;
   if (!opts.silent) render();
@@ -833,9 +871,8 @@ function loadPlacesCache() {
    Coordinates live only in state.loc.coords (memory), and are only ever
    sent in the explore_search RPC body — never in the URL or storage. */
 function searchOrRender() {
-  if (state.fromPlace && state.toPlace) runSearch();
-  else if (state.landingEnabled) refreshLanding();
-  else render();
+  if (state.fromPlace) runSearch();
+  else refreshLanding();
 }
 function refreshLanding() {
   var mode = (state.loc.status === 'granted' && state.loc.coords) ? 'near' : 'browse';
@@ -884,20 +921,6 @@ function isSheetOpen() {
   var layer = document.getElementById('sheetLayer');
   return !!(layer && layer.classList.contains('is-open'));
 }
-function activeSearchParams() {
-  if (state.fromPlace && state.toPlace) return rpcParams();
-  if (state.landingEnabled) {
-    var coords = state.landingMode === 'near' ? state.loc.coords : null;
-    return {
-      p_mode: state.mode === 'passenger' ? 'passengers' : 'drivers',
-      p_o_lat: coords ? coords.lat : null,
-      p_o_lng: coords ? coords.lng : null,
-      p_d_lat: null, p_d_lng: null, p_date: null,
-      p_filters: buildFilters(state.filters),
-    };
-  }
-  return null;
-}
 function showNewRidesPill(n) {
   var list = document.querySelector('.ride-list');
   if (!list) return;
@@ -924,8 +947,7 @@ function backgroundRefresh() {
   if (document.visibilityState !== 'visible') return;
   if (isSheetOpen()) return;
   if (!db || state.loading || state.error) return;
-  var params = activeSearchParams();
-  if (!params) return;
+  var params = rpcParams();
   state.refreshInFlight = true;
   dbg('explore_search (auto-refresh) params:', params);
   db.rpc('explore_search', params).then(function (res) {
@@ -999,18 +1021,18 @@ function resolveNearestPlace() {
     }
   });
 }
-function getLocation() {
+function getLocation(fromTap) {
+  /* No sheets or modals — every outcome is reflected inline in locationCard(). */
   state.loc.status = 'locating';
   navigator.geolocation.getCurrentPosition(function (pos) {
     state.loc.coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
     state.loc.status = 'granted';
-    closeSheetLayer();
+    if (fromTap) state.loc.justGranted = true;
     resolveNearestPlace().then(function () { refreshLanding(); });
   }, function (err) {
     if (err && err.code === 1) {
       state.loc.status = 'denied';
       render();
-      openLocationSheet('denied');
     } else {
       state.loc.status = 'prompt';
       render();
@@ -1019,13 +1041,10 @@ function getLocation() {
   }, { enableHighAccuracy: false, timeout: 8000, maximumAge: 600000 });
 }
 function checkGeoPermission() {
-  /* Never opens a sheet on its own — only sets state.loc.status so the
-     small "Use my location" entry point can appear. Sheets only open in
-     direct response to that button (see getLocation()'s error handling). */
   if (!('geolocation' in navigator)) { state.loc.status = 'unsupported'; render(); return; }
   if (navigator.permissions && navigator.permissions.query) {
     navigator.permissions.query({ name: 'geolocation' }).then(function (st) {
-      if (st.state === 'granted') { getLocation(); return; }
+      if (st.state === 'granted') { getLocation(false); return; }
       state.loc.status = st.state === 'denied' ? 'denied' : 'prompt';
       render();
     }).catch(function () {
@@ -1034,19 +1053,6 @@ function checkGeoPermission() {
   } else {
     state.loc.status = 'prompt'; render();
   }
-}
-function locationSheetHTML(kind) {
-  return '<div class="sheet__grabber"></div><div class="sheet__body">' +
-    '<div class="sheet__head">' + icon('pin') + '<button type="button" class="icon-btn js-close-sheet" aria-label="Close">' + icon('x') + '</button></div>' +
-    '<div><h2 class="sheet__title">Location is blocked</h2>' +
-    '<p class="sheet__subtitle">iPhone (Safari): tap aA → Website Settings → Location → Allow.<br><br>' +
-    'In WhatsApp/Instagram: tap ⋯ → Open in Safari/Chrome, then allow location.<br><br>' +
-    'Android (Chrome): tap the lock icon → Permissions → Location → Allow.</p></div></div>' +
-    '<div class="sheet__cta"><button type="button" class="btn btn--primary js-loc-retry">Try again</button><button type="button" class="btn btn--ghost js-loc-not-now">Not now</button></div>';
-}
-function openLocationSheet(kind) {
-  document.getElementById('sheetBody').innerHTML = locationSheetHTML(kind);
-  openSheetLayer();
 }
 function bootLanding() {
   refreshLanding();
@@ -1103,25 +1109,24 @@ function shouldShowGroupCard(rows) {
 }
 function groupLinkCard() {
   var gc = state.groupCard;
-  if (gc.collapsed) {
-    return '<article class="group-card group-card--done"><div class="group-card__done">' + icon('check') + esc(gc.message) + '</div></article>';
-  }
   var hasRoute = !!(state.fromPlace && state.toPlace);
-  var textLine = hasRoute
-    ? 'No WhatsApp rides for this route yet. Share a group’s invite link and its rides show up here.'
-    : 'Know a WhatsApp ride group? Share its invite link and its rides show up here.';
-  var resultLine = gc.message
-    ? '<p class="group-card__result ' + ((gc.messageKind === 'ok' || gc.messageKind === 'duplicate') ? 'group-card__result--ok' : 'group-card__result--bad') + '">' + esc(gc.message) + '</p>'
-    : '';
+  var askText = hasRoute
+    ? 'Know a WhatsApp ride group for <b>' + esc(state.fromPlace.name) + ' → ' + esc(state.toPlace.name) + '</b>? Drop the invite link — we’ll show its rides here for everyone 🙌'
+    : 'Know a WhatsApp ride group? Drop the invite link — we’ll show its rides here for everyone 🙌';
+  var askBubble = '<div class="group-card__bubble"><div class="group-card__name">Pathfynder</div>' + askText + '</div>';
+  if (gc.collapsed) {
+    var sentBubble = '<div class="group-card__bubble group-card__bubble--sent"><span class="group-card__link">' + esc(gc.sentUrl || '') + '</span><span class="group-card__ticks">✓✓</span></div>';
+    var replyBubble = '<div class="group-card__bubble"><div class="group-card__name">Pathfynder</div>' + esc(gc.message) + '</div>';
+    return '<article class="group-card">' + askBubble + sentBubble + replyBubble + '</article>';
+  }
+  var resultLine = (gc.message && gc.messageKind !== 'ok' && gc.messageKind !== 'duplicate')
+    ? '<p class="group-card__result">' + esc(gc.message) + '</p>' : '';
   var pasteBtn = (navigator.clipboard && navigator.clipboard.readText) ? '<button type="button" class="group-card__paste js-group-paste">Paste</button>' : '';
-  return '<article class="group-card">' +
-    '<div class="group-card__head"><span class="group-card__ico">' + icon('groups') + '</span>' +
-    '<div><h3 class="group-card__title">Add a WhatsApp group</h3><p class="group-card__text">' + textLine + '</p></div></div>' +
-    '<div class="group-card__stats"><span class="group-card__stat">Takes 10 seconds</span><span class="group-card__stat">We only read ride posts</span></div>' +
-    '<div class="group-card__field"><input class="js-group-url" placeholder="Paste invite link" autocomplete="off">' + pasteBtn + '</div>' +
-    '<button type="button" class="group-card__btn js-group-submit"' + (gc.submitting ? ' disabled' : '') + '>' + icon('plus') + (gc.submitting ? 'Adding…' : 'Add group') + '</button>' +
+  return '<article class="group-card">' + askBubble +
+    '<div class="group-card__row"><input class="js-group-url" placeholder="chat.whatsapp.com/…" autocomplete="off">' + pasteBtn +
+    '<button type="button" class="group-card__send js-group-submit" aria-label="Share group link"' + (gc.submitting ? ' disabled' : '') + '>' + icon('send') + '</button></div>' +
     resultLine +
-    '<p class="group-card__steps">In WhatsApp: <b>group</b>' + icon('chev-r') + '<b>group name</b>' + icon('chev-r') + '<b>Invite via link</b>' + icon('chev-r') + '<b>Copy link</b></p>' +
+    '<p class="group-card__hint">Group → group name → Invite via link → Copy link</p>' +
     '</article>';
 }
 function submitGroupLink() {
@@ -1130,6 +1135,7 @@ function submitGroupLink() {
   var url = input.value.trim();
   if (!url) return;
   state.groupCard.submitting = true;
+  state.groupCard.sentUrl = url;
   render();
   dbg('submit_group_link params:', { p_url: url });
   db.rpc('submit_group_link', {
@@ -1411,10 +1417,17 @@ function errorCard() {
     '<div class="empty__actions"><button type="button" class="btn btn--outline js-retry">Retry</button></div></div>';
 }
 function locationCard() {
-  if (state.loc.status === 'unsupported' || state.loc.status === 'granted' || state.loc.status === 'locating' || state.loc.status === 'checking') return '';
-  var eyebrow = state.loc.status === 'denied' ? 'Location is blocked' : 'See rides near you';
+  /* Inline only — no sheets/modals. */
+  if (state.loc.status === 'unsupported' || state.loc.status === 'locating' || state.loc.status === 'checking') return '';
+  if (state.loc.status === 'granted') {
+    return state.loc.justGranted ? '<p style="margin:0 2px;padding:0;font-size:13px;color:var(--text-2)">Showing rides near you</p>' : '';
+  }
+  if (state.loc.status === 'denied') {
+    return '<div class="prefill"><span class="prefill__text" style="font-size:13px;line-height:1.4;color:var(--text-2)">Location is blocked. iPhone: aA → Website Settings → Location → Allow. Android: lock icon → Permissions → Location → Allow. In WhatsApp/Instagram: ⋯ → Open in browser.</span>' +
+      '<button type="button" class="btn-text js-loc-retry">Try again</button></div>';
+  }
   return '<div class="prefill">' + icon('pin') +
-    '<div class="prefill__text"><span class="prefill__eyebrow">' + eyebrow + '</span>' +
+    '<div class="prefill__text"><span class="prefill__eyebrow">See rides near you</span>' +
     '<span class="prefill__query" style="font-size:13px;font-weight:400;color:var(--text-2)">Uses your location once — never saved</span></div>' +
     '<button type="button" class="btn-text js-use-location">' + icon('search') + 'Use my location</button></div>';
 }
@@ -1422,8 +1435,9 @@ function landingResultsHead(rows) {
   var n = rows.length;
   var subject = state.mode === 'passenger' ? 'Passengers' : 'Drivers';
   var noun, dateLine;
-  if (state.landingMode === 'near') {
-    noun = subject + ' near ' + esc(state.loc.nearestName || 'you');
+  var nearLabel = state.fromPlace ? state.fromPlace.name : (state.landingMode === 'near' ? state.loc.nearestName : null);
+  if (nearLabel) {
+    noun = subject + ' near ' + esc(nearLabel);
     dateLine = 'Within 25 km · next 3 days';
   } else {
     noun = 'Upcoming ' + (state.mode === 'passenger' ? 'passenger requests' : 'rides');
@@ -1454,7 +1468,7 @@ function renderLanding() {
     app.innerHTML = appBar('0 rides') + '<div class="app__col">' + top + card + '<div class="ride-list" style="padding-top:12px">' + (shouldShowGroupCard(state.rows) ? groupLinkCard() : '') + landingEmpty() + '</div>' + foot + '</div>';
   } else {
     var rows = sortedRows();
-    var landingOpts = { hideBadge: true, distanceNote: state.landingMode === 'near' };
+    var landingOpts = { hideBadge: true, distanceNote: !!(state.fromPlace || state.landingMode === 'near') };
     app.innerHTML = appBar(plural(state.rows.length, 'ride')) + '<div class="app__col">' + top + card + landingResultsHead(rows) + '<div class="ride-list">' + (shouldShowGroupCard(state.rows) ? groupLinkCard() : '') + listHTML(rows, landingOpts) + '</div>' + foot + '</div>';
   }
   wireApp();
@@ -1464,15 +1478,11 @@ function renderLanding() {
 function render() {
   syncUrl();
   savePlacesCache();
-  if (state.landingEnabled && !(state.fromPlace && state.toPlace)) { renderLanding(); return; }
+  if (!(state.fromPlace && state.toPlace)) { renderLanding(); return; }
   var app = document.getElementById('app');
   var foot = '<footer class="app-footer"><p><strong>Rideshare you know, now organized.</strong></p><a href="https://pathfynder.ca">pathfynder.ca</a></footer>';
   var top = state.editing ? searchPanel() : prefillBar();
-  var body;
-  if (!state.fromPlace || !state.toPlace) {
-    body = top + (state.editing ? '' : '<div class="ride-list" style="padding-top:12px"></div>');
-    app.innerHTML = appBar('Search to see rides') + '<div class="app__col">' + body + foot + '</div>';
-  } else if (state.loading) {
+  if (state.loading) {
     app.innerHTML = appBar('Finding rides…') + '<div class="app__col">' + top +
       '<div class="results-head"><div class="skel-row"><div class="skel" style="width:190px;height:15px"></div><div class="skel" style="width:84px;height:12px"></div></div></div>' +
       '<div class="ride-list">' + [1,2,3].map(skeletonCard).join('') + '</div></div>';
@@ -1528,7 +1538,6 @@ function updateFiltersCount() {
   clearTimeout(filtersCountTimer);
   filtersCountTimer = setTimeout(function () {
     if (!db) return;
-    if (!(state.fromPlace && state.toPlace) && !state.landingEnabled) return;
     var params = rpcParams(pendingFilters);
     dbg('explore_search (filters count) params:', params);
     db.rpc('explore_search', params).then(function (res) {
@@ -1735,8 +1744,8 @@ function setSearchInputs() {
   });
 }
 function maybeSearch() {
-  if (state.fromPlace && state.toPlace) {
-    state.editing = false;
+  if (state.fromPlace) {
+    state.editing = !state.toPlace;
     runSearch();
   } else {
     render();
@@ -1790,12 +1799,10 @@ document.addEventListener('click', function (e) {
   }
 
   var useLoc = t.closest('.js-use-location');
-  if (useLoc) { getLocation(); return; }
+  if (useLoc) { getLocation(true); return; }
 
   var locRetry = t.closest('.js-loc-retry');
-  if (locRetry) { getLocation(); return; }
-  var locNotNow = t.closest('.js-loc-not-now');
-  if (locNotNow) { closeSheetLayer(); return; }
+  if (locRetry) { getLocation(true); return; }
 
   var dateChip = t.closest('.js-date');
   if (dateChip) {
@@ -1945,7 +1952,7 @@ function boot() {
   }
   Promise.all(jobs).then(function () {
     if (!state.date) state.date = torontoTodayStr(0);
-    if (state.fromPlace && state.toPlace) { state.editing = false; runSearch(); }
+    if (state.fromPlace) { state.editing = !state.toPlace; runSearch(); }
     else { state.editing = true; render(); }
   });
 }
