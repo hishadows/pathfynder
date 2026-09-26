@@ -519,6 +519,7 @@ function timeText(r) { return r.ride_time ? fmtTime(r.ride_time) : null; }
 function avatarClass(name) { var h = 0, i; for (i = 0; i < name.length; i++) h = (h * 31 + name.codePointAt(i)) >>> 0; return 'avatar--' + (h % 5 + 1); }
 function initial(name) { var m = (name || '').match(/\p{L}/u); return m ? m[0].toUpperCase() : '•'; }
 function cityOf(label) { return String(label || '').split(',')[0].trim(); }
+function normPlace(s) { return String(s || '').toLowerCase().replace(/\./g, '').replace(/\s+/g, ' ').trim(); }
 
 /* ---------- URL state ---------- */
 function parseUrl() {
@@ -545,6 +546,7 @@ var state = {
   editing: !(initial_.from && initial_.to),
   sheet: null, sheetRow: null,
   nearby: [],
+  unresolved: { from: null, to: null },
 };
 if (initial_.date) {
   var dd = dayDiff(initial_.date);
@@ -559,11 +561,12 @@ function todayStr(offset) {
 /* ---------- Places lookup (resolve from/to to lat/lng) ---------- */
 function resolvePlace(name) {
   if (!db || !name) return Promise.resolve(null);
-  return db.from('places').select('name,province,lat,lng').ilike('name', name).limit(1)
+  var key = normPlace(name);
+  return db.from('places').select('name,province,lat,lng').eq('norm_key', key).limit(1)
     .then(function (res) {
       if (res.error) return null;
       if (res.data && res.data[0]) return res.data[0];
-      return db.from('places').select('name,province,lat,lng').ilike('name', name + '%').order('name').limit(1)
+      return db.from('places').select('name,province,lat,lng').like('norm_key', key + '%').gte('popularity', 20).order('popularity', { ascending: false }).limit(1)
         .then(function (r2) { return (r2.data && r2.data[0]) || null; });
     })
     .catch(function () { return null; });
@@ -578,7 +581,7 @@ function wireAutocomplete(input, listEl, onPick) {
     if (q.length < 2) { listEl.classList.remove('is-open'); listEl.innerHTML = ''; return; }
     acTimers[input.name] = setTimeout(function () {
       if (!db) return;
-      db.from('places').select('name,province,lat,lng').ilike('name', q + '%').order('name').limit(8)
+      db.from('places').select('name,province,lat,lng').like('norm_key', normPlace(q) + '%').gte('popularity', 20).order('popularity', { ascending: false }).limit(8)
         .then(function (res) {
           var rows = res.data || [];
           if (!rows.length) { listEl.classList.remove('is-open'); listEl.innerHTML = ''; return; }
@@ -849,6 +852,8 @@ function searchPanel() {
     '<label class="route-input__field"><span class="route-input__dot"></span><span class="route-input__label">From</span><input class="js-from" name="from" placeholder="Leaving from" value="' + esc(c.from) + '" autocomplete="off"><div class="ac-list" id="acFrom"></div></label>' +
     '<label class="route-input__field"><span class="route-input__dot route-input__dot--to"></span><span class="route-input__label">To</span><input class="js-to" name="to" placeholder="Going to" value="' + esc(c.to) + '" autocomplete="off"><div class="ac-list" id="acTo"></div></label>' +
     '</div><button type="button" class="swap-btn js-swap" aria-label="Swap from and to">' + icon('swap') + '</button></div>' +
+    (c.unresolved.from ? '<p style="margin:0;padding:0 2px;font-size:12.5px;color:var(--text-2)">Couldn’t find “' + esc(c.unresolved.from) + '” — pick it from the list</p>' : '') +
+    (c.unresolved.to ? '<p style="margin:0;padding:0 2px;font-size:12.5px;color:var(--text-2)">Couldn’t find “' + esc(c.unresolved.to) + '” — pick it from the list</p>' : '') +
     '<div class="search-row"><div class="chip-group" data-filter="date">' + dc('Today', 'Today') + dc('Tomorrow', 'Tomorrow') +
     '<button type="button" class="chip js-date-pick' + (c.dateChip === 'Pick' ? '' : ' chip--icon') + '">' + icon('calendar') + esc(pickLabel) + '</button>' +
     '<input type="date" id="datePicker" style="position:absolute;opacity:0;width:1px;height:1px;pointer-events:none">' +
@@ -1167,11 +1172,11 @@ function setSearchInputs() {
   var fromEl = document.querySelector('.js-from'), toEl = document.querySelector('.js-to');
   if (!fromEl) return;
   wireAutocomplete(fromEl, document.getElementById('acFrom'), function (place) {
-    state.from = place.name; state.fromPlace = place; fromEl.value = place.name;
+    state.from = place.name; state.fromPlace = place; state.unresolved.from = null; fromEl.value = place.name;
     maybeSearch();
   });
   wireAutocomplete(toEl, document.getElementById('acTo'), function (place) {
-    state.to = place.name; state.toPlace = place; toEl.value = place.name;
+    state.to = place.name; state.toPlace = place; state.unresolved.to = null; toEl.value = place.name;
     maybeSearch();
   });
   fromEl.addEventListener('change', function () { state.from = fromEl.value; });
@@ -1298,12 +1303,18 @@ document.addEventListener('change', function (e) {
 function boot() {
   render();
   var jobs = [];
-  if (state.from) jobs.push(resolvePlace(state.from).then(function (p) { state.fromPlace = p; }));
-  if (state.to) jobs.push(resolvePlace(state.to).then(function (p) { state.toPlace = p; }));
+  if (state.from) jobs.push(resolvePlace(state.from).then(function (p) {
+    if (p) { state.fromPlace = p; state.from = p.name; state.unresolved.from = null; }
+    else state.unresolved.from = state.from;
+  }));
+  if (state.to) jobs.push(resolvePlace(state.to).then(function (p) {
+    if (p) { state.toPlace = p; state.to = p.name; state.unresolved.to = null; }
+    else state.unresolved.to = state.to;
+  }));
   Promise.all(jobs).then(function () {
     if (!state.date) state.date = todayStr(0);
     if (state.fromPlace && state.toPlace) { state.editing = false; runSearch(); }
-    else render();
+    else { state.editing = true; render(); }
   });
 }
 if (db) boot(); else render();
