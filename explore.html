@@ -560,7 +560,7 @@ function normPlace(s) { return String(s || '').toLowerCase().replace(/\./g, '').
 
 /* ---------- URL state ---------- */
 function defaultFilters() {
-  return { sources: ['whatsapp', 'poparide', 'facebook'], match: null, time_of_day: [], urgent: false, airport: false, daily: false, verified_only: false, hide_business: false, luggage_ok: false };
+  return { sources: ['whatsapp', 'poparide', 'facebook'], match: null, time_of_day: [], time: null, flexMin: null, urgent: false, airport: false, daily: false, verified_only: false, hide_business: false, luggage_ok: false };
 }
 function parseUrl() {
   var p = new URLSearchParams(location.search);
@@ -570,13 +570,13 @@ function parseUrl() {
     from: p.get('from') || '',
     to: p.get('to') || '',
     date: p.get('date') || null,
-    time: p.get('time') || null,
-    flex: p.get('flex') ? Number(p.get('flex')) : null,
     sort: p.get('sort') || 'best',
     filters: {
       sources: src ? src.split(',').filter(Boolean) : defaultFilters().sources,
       match: p.get('match') === 'direct' ? 'direct' : null,
       time_of_day: tod ? tod.split(',').filter(Boolean) : [],
+      time: p.get('time') || null,
+      flexMin: p.get('flex') ? Number(p.get('flex')) : null,
       urgent: rt.indexOf('urgent') > -1,
       airport: rt.indexOf('airport') > -1,
       daily: rt.indexOf('daily') > -1,
@@ -592,7 +592,6 @@ var state = {
   from: initial_.from, to: initial_.to,
   fromPlace: null, toPlace: null,
   date: initial_.date, dateChip: initial_.date ? 'Pick' : 'Today',
-  time: initial_.time, flex: initial_.flex,
   filters: initial_.filters,
   sort: initial_.sort,
   rows: [], loading: false, error: false,
@@ -611,10 +610,6 @@ if (initial_.date) {
   state.dateChip = dd === 0 ? 'Today' : (dd === 1 ? 'Tomorrow' : 'Pick');
 }
 
-function todayStr(offset) {
-  var d = new Date(NOW); d.setDate(d.getDate() + (offset || 0)); d.setHours(0,0,0,0);
-  return d.toISOString().slice(0, 10);
-}
 
 /* ---------- Places lookup (resolve from/to to lat/lng) ---------- */
 function placesLookup(name) {
@@ -732,12 +727,18 @@ function buildFilters(f) {
   return out;
 }
 function rpcParams(filters) {
+  /* Single request builder — every explore_search caller (matched, near-me,
+     browse, and the filters-sheet live count) goes through this so date,
+     time-of-day, exact time and every other filter key are always read
+     from the one state object, never a UI-only copy. */
+  var matched = !!(state.fromPlace && state.toPlace);
+  var nearCoords = (!matched && state.landingMode === 'near' && state.loc.coords) ? state.loc.coords : null;
   return {
     p_mode: state.mode === 'passenger' ? 'passengers' : 'drivers',
-    p_o_lat: state.fromPlace ? state.fromPlace.lat : null,
-    p_o_lng: state.fromPlace ? state.fromPlace.lng : null,
-    p_d_lat: state.toPlace ? state.toPlace.lat : null,
-    p_d_lng: state.toPlace ? state.toPlace.lng : null,
+    p_o_lat: matched ? (state.fromPlace ? state.fromPlace.lat : null) : (nearCoords ? nearCoords.lat : null),
+    p_o_lng: matched ? (state.fromPlace ? state.fromPlace.lng : null) : (nearCoords ? nearCoords.lng : null),
+    p_d_lat: matched ? (state.toPlace ? state.toPlace.lat : null) : null,
+    p_d_lng: matched ? (state.toPlace ? state.toPlace.lng : null) : null,
     p_date: state.date,
     p_filters: buildFilters(filters || state.filters),
   };
@@ -797,12 +798,10 @@ function syncUrl() {
   if (matched) {
     if (state.from) p.set('from', state.from);
     if (state.to) p.set('to', state.to);
-    if (state.date) p.set('date', state.date);
-    if (state.time) p.set('time', state.time);
-    if (state.flex != null) p.set('flex', state.flex);
   } else if (state.landingEnabled && state.landingMode === 'near' && state.loc.status === 'granted' && state.loc.coords) {
     p.set('near', '1');
   }
+  if (state.date) p.set('date', state.date);
   if (state.sort && state.sort !== 'best') p.set('sort', state.sort);
   var f = state.filters;
   var defSrc = defaultFilters().sources;
@@ -810,6 +809,7 @@ function syncUrl() {
   if (!srcIsDefault) p.set('src', f.sources.join(','));
   if (f.match) p.set('match', f.match);
   if (f.time_of_day && f.time_of_day.length) p.set('tod', f.time_of_day.join(','));
+  if (f.time) { p.set('time', f.time); if (f.flexMin != null) p.set('flex', f.flexMin); }
   var rt = [f.urgent && 'urgent', f.airport && 'airport', f.daily && 'daily'].filter(Boolean);
   if (rt.length) p.set('rt', rt.join(','));
   if (f.verified_only) p.set('v', '1');
@@ -847,16 +847,7 @@ function performLandingSearch(mode, isFallback) {
   var seq = ++searchSeq;
   state.loading = true; state.error = false;
   render();
-  var coords = mode === 'near' ? state.loc.coords : null;
-  var params = {
-    p_mode: state.mode === 'passenger' ? 'passengers' : 'drivers',
-    p_o_lat: coords ? coords.lat : null,
-    p_o_lng: coords ? coords.lng : null,
-    p_d_lat: null,
-    p_d_lng: null,
-    p_date: null,
-    p_filters: buildFilters(state.filters),
-  };
+  var params = rpcParams();
   dbg('explore_search (' + mode + ') params:', params);
   db.rpc('explore_search', params).then(function (res) {
     if (res.error) throw res.error;
@@ -1344,7 +1335,7 @@ function searchPanel() {
     '<button type="button" class="chip' + (c.dateChip === 'Pick' ? '' : ' chip--icon') + '" tabindex="-1" aria-hidden="true" style="pointer-events:none">' + icon('calendar') + esc(pickLabel) + '</button>' +
     '<input type="date" id="datePicker" aria-label="Pick a date" style="position:absolute;inset:0;opacity:0;font-size:16px;cursor:pointer;z-index:1;border:0;background:transparent;padding:0">' +
     '</span>' +
-    '<button type="button" class="chip js-open-time' + (c.time ? '' : ' chip--icon') + '" aria-label="Pick an exact time">' + icon('clock') + (c.time ? (fmtTime(c.time) + (c.flex ? (' ±' + (c.flex / 60 >= 1 ? (c.flex / 60) + 'h' : c.flex + 'm')) : '')) : '') + '</button></div>' +
+    '<button type="button" class="chip js-open-time' + (c.filters.time ? '' : ' chip--icon') + '" aria-label="Pick an exact time">' + icon('clock') + (c.filters.time ? (fmtTime(c.filters.time) + (c.filters.flexMin ? (' ±' + (c.filters.flexMin / 60 >= 1 ? (c.filters.flexMin / 60) + 'h' : c.filters.flexMin + 'm')) : '')) : '') + '</button></div>' +
     '<button type="button" class="filter-btn js-open-filters">' + icon('sliders') + 'Filters' + (active.length ? '<span class="filter-btn__count">' + active.length + '</span>' : '') + '</button></div>' +
     activeHTML + '</section>';
 }
@@ -1537,18 +1528,8 @@ function updateFiltersCount() {
   clearTimeout(filtersCountTimer);
   filtersCountTimer = setTimeout(function () {
     if (!db) return;
-    var params;
-    if (state.fromPlace && state.toPlace) {
-      params = rpcParams(pendingFilters);
-    } else if (state.landingEnabled) {
-      var coords = (state.landingMode === 'near' && state.loc.coords) ? state.loc.coords : null;
-      params = {
-        p_mode: state.mode === 'passenger' ? 'passengers' : 'drivers',
-        p_o_lat: coords ? coords.lat : null, p_o_lng: coords ? coords.lng : null,
-        p_d_lat: null, p_d_lng: null, p_date: null,
-        p_filters: buildFilters(pendingFilters),
-      };
-    } else return;
+    if (!(state.fromPlace && state.toPlace) && !state.landingEnabled) return;
+    var params = rpcParams(pendingFilters);
     dbg('explore_search (filters count) params:', params);
     db.rpc('explore_search', params).then(function (res) {
       var n = res.error ? 0 : (res.data || []).length;
@@ -1561,13 +1542,13 @@ function updateFiltersCount() {
 /* ---------- Sheets: exact time ---------- */
 var pendingTime = { hour: 6, minute: 0, ampm: 'PM', flexMin: 60 };
 function openTimeSheet() {
-  if (state.time) {
-    var t = state.time.split(':').map(Number);
+  if (state.filters.time) {
+    var t = state.filters.time.split(':').map(Number);
     pendingTime.ampm = t[0] >= 12 ? 'PM' : 'AM';
     pendingTime.hour = t[0] % 12 || 12;
     pendingTime.minute = t[1];
   }
-  pendingTime.flexMin = state.flex != null ? state.flex : 60;
+  pendingTime.flexMin = state.filters.flexMin != null ? state.filters.flexMin : 60;
   document.getElementById('sheetBody').innerHTML = renderTimeSheet();
   openSheetLayer();
   wireTimeWheels();
@@ -1819,7 +1800,7 @@ document.addEventListener('click', function (e) {
   var dateChip = t.closest('.js-date');
   if (dateChip) {
     var v = dateChip.getAttribute('data-value');
-    state.dateChip = v; state.date = v === 'Today' ? todayStr(0) : todayStr(1);
+    state.dateChip = v; state.date = v === 'Today' ? torontoTodayStr(0) : torontoTodayStr(1);
     dbg('date chip: ' + v + ' tap -> p_date', state.date);
     searchOrRender();
     return;
@@ -1839,7 +1820,7 @@ document.addEventListener('click', function (e) {
   var removeF = t.closest('.js-remove-filter');
   if (removeF) { removeFilter(removeF.getAttribute('data-key')); return; }
   var clearF = t.closest('.js-clear-filters');
-  if (clearF) { state.filters = defaultFilters(); state.time = null; state.flex = null; searchOrRender(); return; }
+  if (clearF) { state.filters = defaultFilters(); searchOrRender(); return; }
 
   var fMatch = t.closest('.js-f-match');
   if (fMatch) {
@@ -1902,12 +1883,12 @@ document.addEventListener('click', function (e) {
     return;
   }
   var clearTime = t.closest('.js-clear-time');
-  if (clearTime) { state.time = null; state.flex = null; closeSheetLayer(); searchOrRender(); return; }
+  if (clearTime) { state.filters.time = null; state.filters.flexMin = null; closeSheetLayer(); searchOrRender(); return; }
   var setTime = t.closest('.js-set-time');
   if (setTime) {
     var h24 = to24h(pendingTime.hour, pendingTime.ampm);
-    state.time = String(h24).padStart(2, '0') + ':' + String(pendingTime.minute).padStart(2, '0');
-    state.flex = pendingTime.flexMin;
+    state.filters.time = String(h24).padStart(2, '0') + ':' + String(pendingTime.minute).padStart(2, '0');
+    state.filters.flexMin = pendingTime.flexMin;
     closeSheetLayer();
     searchOrRender();
     return;
@@ -1963,7 +1944,7 @@ function boot() {
     }
   }
   Promise.all(jobs).then(function () {
-    if (!state.date) state.date = todayStr(0);
+    if (!state.date) state.date = torontoTodayStr(0);
     if (state.fromPlace && state.toPlace) { state.editing = false; runSearch(); }
     else { state.editing = true; render(); }
   });
