@@ -1,0 +1,1176 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pathfynder Explore Rides</title>
+<meta name="description" content="Design review: WhatsApp-skinned Explore Rides page for Pathfynder, light + dark, mobile and desktop.">
+<style>
+/* =========================================================
+   TOKENS — WhatsApp light (default)
+   ========================================================= */
+:root{
+  --header:#008069; --header-text:#FFFFFF; --header-sub:rgba(255,255,255,.82); --header-hover:rgba(255,255,255,.12);
+  --brand-bg:#FFFFFF; --brand-fg:#008069;
+  --primary:#008069; --cta:#25D366; --cta-hover:#1EBE5A; --cta-text:#111B21;
+  --bg:#F0F2F5; --card:#FFFFFF; --surface:#F0F2F5;
+  --text:#111B21; --text-2:#667781; --divider:#E9EDEF; --line-strong:#D1D7DB; --route-line:#AEBAC1;
+  --chip-soft:#D9FDD3; --chip-soft-text:#006D5B;
+  --pass-bg:#E6F2FA; --pass-fg:#0A6DA3;
+  --link:#027EB5;
+  --wallpaper:#EFEAE2; --bubble:#FFFFFF; --bubble-name:#C0548A;
+  --skeleton:#E9EDEF; --skeleton-hi:#F7F8FA;
+  --overlay:rgba(11,20,26,.42);
+  --on-primary:#FFFFFF; --notice-bg:#FFEECD; --notice-fg:#54656F; --star:#F5B400;
+  --board-bg:#D8DCDF; --board-bar:#FFFFFF; --board-line:#C9D0D4; --board-text:#54656F; --board-strong:#111B21;
+}
+/* WhatsApp dark — follows system unless forced light */
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --header:#202C33; --header-text:#E9EDEF; --header-sub:#8696A0; --header-hover:rgba(233,237,239,.08);
+    --brand-bg:#00A884; --brand-fg:#111B21;
+    --primary:#00A884; --cta:#00A884; --cta-hover:#06CF9C; --cta-text:#111B21;
+    --bg:#0B141A; --card:#202C33; --surface:#111B21;
+    --text:#E9EDEF; --text-2:#8696A0; --divider:#2A3942; --line-strong:#3B4A54; --route-line:#54656F;
+    --chip-soft:#0A332C; --chip-soft-text:#25D366;
+    --pass-bg:#102A3A; --pass-fg:#53BDEB;
+    --link:#53BDEB;
+    --wallpaper:#0B141A; --bubble:#202C33; --bubble-name:#FC9775;
+    --skeleton:#2A3942; --skeleton-hi:#34454F;
+    --overlay:rgba(0,0,0,.62);
+  --on-primary:#111B21; --notice-bg:#182229; --notice-fg:#FFD279; --star:#FFC933;
+    --board-bg:#050A0D; --board-bar:#111B21; --board-line:#2A3942; --board-text:#8696A0; --board-strong:#E9EDEF;
+  }
+}
+:root[data-theme="dark"]{
+  --header:#202C33; --header-text:#E9EDEF; --header-sub:#8696A0; --header-hover:rgba(233,237,239,.08);
+  --brand-bg:#00A884; --brand-fg:#111B21;
+  --primary:#00A884; --cta:#00A884; --cta-hover:#06CF9C; --cta-text:#111B21;
+  --bg:#0B141A; --card:#202C33; --surface:#111B21;
+  --text:#E9EDEF; --text-2:#8696A0; --divider:#2A3942; --line-strong:#3B4A54; --route-line:#54656F;
+  --chip-soft:#0A332C; --chip-soft-text:#25D366;
+  --pass-bg:#102A3A; --pass-fg:#53BDEB;
+  --link:#53BDEB;
+  --wallpaper:#0B141A; --bubble:#202C33; --bubble-name:#FC9775;
+  --skeleton:#2A3942; --skeleton-hi:#34454F;
+  --overlay:rgba(0,0,0,.62);
+  --on-primary:#111B21; --notice-bg:#182229; --notice-fg:#FFD279; --star:#FFC933;
+  --board-bg:#050A0D; --board-bar:#111B21; --board-line:#2A3942; --board-text:#8696A0; --board-strong:#E9EDEF;
+}
+
+/* =========================================================
+   REVIEW BOARD (not part of the product)
+   ========================================================= */
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  background:var(--board-bg); color:var(--board-text); -webkit-font-smoothing:antialiased;
+}
+.review-bar{position:sticky;top:0;z-index:20;display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;
+  padding:12px 24px;background:var(--board-bar);border-bottom:1px solid var(--board-line)}
+.review-bar h1{margin:0;font-size:15px;font-weight:600;color:var(--board-strong)}
+.review-bar p{margin:2px 0 0;font-size:12.5px}
+.theme-toggle{display:inline-flex;padding:3px;border-radius:999px;background:var(--board-bg)}
+.theme-toggle button{border:0;background:transparent;color:var(--board-text);font:inherit;font-size:13px;font-weight:600;padding:6px 14px;border-radius:999px;cursor:pointer}
+.theme-toggle button[aria-pressed="true"]{background:var(--board-bar);color:var(--board-strong)}
+.board{display:flex;flex-wrap:wrap;justify-content:center;gap:40px 32px;padding:28px 24px 40px}
+.frame{display:flex;flex-direction:column;gap:8px;width:390px;max-width:100%}
+.frame__label{font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--board-strong)}
+.frame__desc{font-size:12.5px;margin:0;line-height:1.4;min-height:34px}
+.frame__url{font:11.5px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--board-bar);border:1px solid var(--board-line);border-radius:6px;padding:5px 8px;word-break:break-all}
+.device{position:relative;width:100%;height:844px;border-radius:26px;overflow:hidden;background:var(--bg);border:1px solid var(--board-line)}
+.frame--desktop{width:100%;max-width:1280px}
+.desktop-viewport{width:100%;overflow:hidden;border-radius:12px;border:1px solid var(--board-line);background:var(--bg)}
+.desktop-scaler{width:1280px;height:900px;transform-origin:0 0;display:flex;flex-direction:column}
+.desktop-scaler .app{flex:1;min-height:0;height:auto}
+.browser-bar{height:40px;flex:none;display:flex;align-items:center;gap:8px;padding:0 14px;background:var(--board-bar);border-bottom:1px solid var(--board-line)}
+.browser-bar i{width:11px;height:11px;border-radius:50%;background:var(--board-line)}
+.browser-bar span{margin-left:14px;flex:0 1 480px;height:26px;border-radius:13px;background:var(--board-bg);font-size:12.5px;display:flex;align-items:center;padding:0 12px}
+.notes{max-width:1280px;margin:0 auto 56px;padding:0 24px;font-size:13.5px;line-height:1.55}
+.notes h2{font-size:14px;color:var(--board-strong);margin:0 0 8px}
+.notes ul{margin:0;padding-left:18px}
+.notes code{font:12.5px ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--board-strong)}
+@media (max-width:460px){
+  .review-bar{padding:10px 16px}
+  .board{padding:16px 16px 32px}
+  .device{height:760px;border-radius:16px}
+  .notes{padding:0 16px}
+}
+
+/* =========================================================
+   APP — Explore rides
+   ========================================================= */
+.i{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.app{height:100%;overflow-y:auto;background:var(--bg);color:var(--text);font-size:15px;line-height:1.35;container-type:inline-size;scrollbar-width:thin}
+.app button{font:inherit}
+
+/* App bar */
+.app-bar{position:sticky;top:0;z-index:3;background:var(--header);color:var(--header-text)}
+.app-bar__inner{display:flex;align-items:center;gap:12px;min-height:60px;padding:8px 8px 8px 16px}
+.brand{display:grid;place-items:center;width:36px;height:36px;border-radius:10px;background:var(--brand-bg);color:var(--brand-fg);flex:none}
+.brand .i{width:22px;height:22px;stroke-width:2.1}
+.app-bar__titles{flex:1;min-width:0}
+.app-bar__title{margin:0;font-size:19px;font-weight:500;line-height:1.2}
+.app-bar__sub{margin:1px 0 0;font-size:13px;color:var(--header-sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.app-bar__sub b{font-weight:600}
+.icon-btn{width:40px;height:40px;border-radius:50%;border:0;background:transparent;color:inherit;display:grid;place-items:center;cursor:pointer;flex:none}
+.icon-btn:hover{background:var(--header-hover)}
+
+.app__col{display:flex;flex-direction:column}
+
+/* Search panel */
+.search-panel{background:var(--card);padding:12px 16px 14px;border-bottom:1px solid var(--divider);display:flex;flex-direction:column;gap:12px}
+.segmented{display:flex;padding:3px;border-radius:10px;background:var(--surface)}
+.segmented__opt{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;border:0;background:transparent;padding:8px 6px;border-radius:8px;font-size:14px;font-weight:600;color:var(--text-2);cursor:pointer}
+.segmented__opt .i{width:18px;height:18px}
+.segmented__opt.is-active{background:var(--card);color:var(--primary);box-shadow:0 1px 2px rgba(11,20,26,.12)}
+.route-input{display:flex;align-items:center;gap:6px;padding:2px 6px 2px 12px;border-radius:10px;background:var(--surface)}
+.route-input__fields{position:relative;flex:1;min-width:0;display:flex;flex-direction:column}
+.route-input__fields::before{content:"";position:absolute;left:4px;top:27px;bottom:27px;border-left:2px dotted var(--route-line)}
+.route-input__field{display:flex;align-items:center;gap:10px;min-height:46px;cursor:text}
+.route-input__field + .route-input__field{border-top:1px solid var(--divider)}
+.route-input__dot{width:10px;height:10px;border-radius:50%;flex:none;border:2px solid var(--text-2);background:var(--surface)}
+.route-input__dot--to{background:var(--primary);border-color:var(--primary)}
+.route-input__label{width:36px;flex:none;font-size:12.5px;color:var(--text-2)}
+.route-input__field input{flex:1;min-width:0;border:0;padding:0;background:transparent;font:inherit;font-size:15.5px;color:var(--text);outline:none}
+.route-input__field input::placeholder{color:var(--text-2)}
+.swap-btn{width:40px;height:40px;flex:none;border-radius:50%;border:1px solid var(--divider);background:var(--card);color:var(--primary);display:grid;place-items:center;cursor:pointer}
+.filters{display:flex;flex-direction:column;gap:12px}
+.filter-row{display:flex;flex-direction:column;gap:6px;min-width:0}
+.filter-row__label{font-size:12.5px;font-weight:600;color:var(--text-2)}
+.chip-group{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:0 16px}
+.chip-group::-webkit-scrollbar{display:none}
+.chip-group--wrap{flex-wrap:wrap;overflow:visible;margin:0;padding:0}
+.chip{flex:none;display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border:0;border-radius:999px;background:var(--surface);color:var(--text-2);font-size:14px;font-weight:500;white-space:nowrap;cursor:pointer}
+.chip .i{width:16px;height:16px}
+.chip.is-active{background:var(--chip-soft);color:var(--chip-soft-text);font-weight:600}
+.chip__count{font-size:12px;opacity:.75}
+
+/* Prefill (bot link) */
+.prefill{display:flex;align-items:center;gap:12px;padding:10px 12px 10px 16px;background:var(--card);border-bottom:1px solid var(--divider)}
+.prefill > .i{color:var(--primary)}
+.prefill__text{flex:1;min-width:0}
+.prefill__eyebrow{display:block;font-size:12px;color:var(--text-2)}
+.prefill__query{display:block;font-size:15px;font-weight:500;line-height:1.3}
+.btn-text{flex:none;display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 12px;border:0;border-radius:999px;background:var(--chip-soft);color:var(--chip-soft-text);font-size:14px;font-weight:600;cursor:pointer}
+.btn-text .i{width:16px;height:16px}
+
+/* Results head */
+.results-head{display:flex;flex-direction:column;gap:10px;padding:12px 16px 2px}
+.results-head .chip{background:var(--card)}
+.results-head .chip.is-active{background:var(--chip-soft)}
+.results-bar{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.results-bar__count{font-size:13px;font-weight:600;color:var(--text-2)}
+.sort{position:relative;display:inline-flex;align-items:center;gap:4px;font-size:13px;color:var(--text-2)}
+.sort select{appearance:none;-webkit-appearance:none;border:0;background:transparent;font:inherit;font-weight:600;color:var(--primary);padding:4px 20px 4px 2px;cursor:pointer;outline:none}
+.sort select option{color:#111B21}
+.sort .i{position:absolute;right:0;width:16px;height:16px;color:var(--primary);pointer-events:none}
+
+/* Ride list */
+.ride-list{display:flex;flex-direction:column;gap:8px;padding:8px 10px 12px}
+.list-section{display:flex;align-items:center;gap:6px;margin:14px 6px 0;font-size:13px;font-weight:600;color:var(--text-2)}
+.list-section .i{width:16px;height:16px}
+.list-section small{font-weight:400}
+
+/* Ride card */
+.ride-card{display:flex;flex-direction:column;gap:10px;padding:12px 14px 14px;border-radius:12px;background:var(--card);cursor:pointer;outline:none}
+.ride-card:focus-visible{box-shadow:0 0 0 2px var(--primary)}
+.ride-card__top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.ride-card__ago{font-size:12.5px;color:var(--text-2);white-space:nowrap}
+.role-badge{display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 9px 0 7px;border-radius:6px;font-size:12.5px;font-weight:600;white-space:nowrap}
+.role-badge .i{width:15px;height:15px}
+.role-badge--driver{background:var(--chip-soft);color:var(--chip-soft-text)}
+.role-badge--passenger{background:var(--pass-bg);color:var(--pass-fg)}
+.ride-card__main{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:start}
+.route{position:relative;display:flex;flex-direction:column;gap:8px;padding-left:20px;min-width:0}
+.route::before{content:"";position:absolute;left:4px;top:10px;bottom:10px;border-left:2px dotted var(--route-line)}
+.route__stop{position:relative;min-width:0}
+.route__dot{position:absolute;left:-20px;top:6px;width:10px;height:10px;border-radius:50%;border:2px solid var(--text-2);background:var(--card)}
+.route__stop--to .route__dot{background:var(--primary);border-color:var(--primary)}
+.route__label{display:block;font-size:12px;color:var(--text-2)}
+.route__city{display:block;font-size:16.5px;font-weight:600;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.when{text-align:right}
+.when__time{font-size:20px;font-weight:600;letter-spacing:-.01em;white-space:nowrap;font-variant-numeric:tabular-nums}
+.when__date{margin-top:2px;font-size:13px;color:var(--text-2);white-space:nowrap}
+.when__flex{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:6px;background:var(--surface);font-size:13px;font-weight:600;color:var(--text-2);white-space:nowrap}
+.when__flex .i{width:14px;height:14px}
+.ride-meta{display:flex;flex-wrap:wrap;gap:6px;margin:0;padding:0;list-style:none}
+.ride-meta__item{display:inline-flex;align-items:center;gap:5px;padding:4px 8px;border-radius:6px;background:var(--surface);font-size:13px}
+.ride-meta__item .i{width:15px;height:15px;color:var(--text-2)}
+.ride-meta__item--price{font-weight:600}
+.ride-meta__item--note{color:var(--text-2)}
+.ride-card__foot{display:flex;flex-direction:column;gap:10px;padding-top:10px;border-top:1px solid var(--divider)}
+.poster{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
+.avatar{width:36px;height:36px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:15px;font-weight:600;color:var(--av);background:color-mix(in srgb,var(--av) 16%,var(--card))}
+.avatar--1{--av:#1FA855}.avatar--2{--av:#0A8FD6}.avatar--3{--av:#E0762B}.avatar--4{--av:#C0548A}.avatar--5{--av:#7C6BE0}
+.poster__text{flex:1;min-width:0}
+.poster__name{display:block;font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.poster__sub{display:block;font-size:13px;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.poster__groups{display:inline-flex;align-items:center;gap:4px;border:0;background:none;padding:0;color:var(--primary);font-size:13px;font-weight:600;cursor:pointer}
+.poster__groups .i{width:14px;height:14px}
+.source-badge{flex:none;display:inline-flex;align-items:center;gap:4px;height:24px;padding:0 9px;border-radius:999px;border:1px solid var(--line-strong);font-size:12px;font-weight:600;color:var(--text-2);white-space:nowrap}
+.source-badge .i{width:14px;height:14px}
+.source-badge--whatsapp{border-color:transparent;background:var(--chip-soft);color:var(--chip-soft-text)}
+.ride-card__cta{display:flex;flex-direction:column;gap:6px}
+
+/* Buttons */
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:44px;padding:8px 18px;border:0;border-radius:22px;font-size:15px;font-weight:600;line-height:1.25;text-align:center;text-decoration:none;cursor:pointer}
+.btn .i{width:19px;height:19px}
+.btn--wa{background:var(--cta);color:var(--cta-text)}
+.btn--wa:hover{background:var(--cta-hover)}
+.btn--outline{background:transparent;color:var(--text);border:1px solid var(--line-strong);font-weight:500}
+.btn--outline:hover{background:var(--surface)}
+.btn--outline .i{width:16px;height:16px;color:var(--text-2)}
+.btn--soft{background:var(--chip-soft);color:var(--chip-soft-text)}
+.btn__hint{margin:0;font-size:12px;color:var(--text-2);text-align:center}
+
+/* Facebook fallback */
+.poster--top{flex:none}
+.raw-post{margin:0;padding:10px 12px;border-radius:8px;background:var(--surface);border-left:3px solid var(--line-strong)}
+.raw-post__text{margin:0;font-size:14.5px;line-height:1.45;white-space:pre-line;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.raw-post.is-open .raw-post__text{display:block;-webkit-line-clamp:unset}
+.raw-post__more{display:none;margin-top:4px;padding:0;border:0;background:none;color:var(--link);font-size:13.5px;font-weight:600;cursor:pointer}
+.raw-post.has-more .raw-post__more{display:inline-block}
+
+/* Empty */
+.empty-card{background:var(--card);border-radius:12px;padding:28px 18px 20px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px}
+.empty__art{width:92px;height:92px;border-radius:50%;background:var(--chip-soft);color:var(--primary);display:grid;place-items:center;margin-bottom:6px}
+.empty__title{margin:0;font-size:18px;font-weight:600}
+.empty__text{margin:0;max-width:290px;font-size:14px;color:var(--text-2)}
+.empty__actions{width:100%;display:flex;flex-direction:column;gap:10px;margin-top:12px}
+.suggest{width:100%;margin-top:18px;padding-top:16px;border-top:1px solid var(--divider);text-align:left}
+.suggest__title{margin:0 0 10px;font-size:13px;font-weight:600;color:var(--text-2)}
+.suggest .chip{height:34px}
+
+/* Skeleton */
+.skel{position:relative;overflow:hidden;border-radius:6px;background:var(--skeleton)}
+.skel::after{content:"";position:absolute;inset:0;transform:translateX(-100%);background:linear-gradient(90deg,transparent,var(--skeleton-hi),transparent);animation:shimmer 1.3s infinite}
+@keyframes shimmer{to{transform:translateX(100%)}}
+@media (prefers-reduced-motion:reduce){.skel::after{animation:none}}
+.skel-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.skel--pill{border-radius:999px}
+.skel--circle{border-radius:50%}
+
+/* Detail sheet */
+.sheet-layer{position:absolute;inset:0;z-index:6;display:flex;flex-direction:column;justify-content:flex-end}
+.sheet-backdrop{position:absolute;inset:0;background:var(--overlay)}
+.sheet{position:relative;display:flex;flex-direction:column;max-height:90%;background:var(--card);color:var(--text);border-radius:16px 16px 0 0;font-size:15px;line-height:1.35}
+.sheet__grabber{width:36px;height:4px;margin:8px auto 2px;border-radius:2px;background:var(--line-strong)}
+.sheet__body{overflow-y:auto;padding:4px 16px 18px;display:flex;flex-direction:column;gap:16px}
+.sheet__head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.sheet__head .icon-btn{color:var(--text-2);margin-right:-8px}
+.sheet__title{margin:0;font-size:21px;font-weight:600;line-height:1.25}
+.sheet__subtitle{margin:4px 0 0;font-size:14px;color:var(--text-2)}
+.sheet-block{padding-top:14px;border-top:1px solid var(--divider)}
+.sheet-block__label{margin:0 0 10px;font-size:13px;font-weight:600;color:var(--primary)}
+.route--full{gap:14px}
+.route--full .route::before{top:26px;bottom:14px}
+.route--full .route__dot{top:23px}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 16px;margin:0}
+.detail-grid dt{font-size:12.5px;color:var(--text-2)}
+.detail-grid dd{margin:2px 0 0;font-size:15px;font-weight:500}
+.group-list{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px}
+.group-list li{display:flex;align-items:center;gap:10px;font-size:14.5px}
+.group-list .g-ico{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:var(--chip-soft);color:var(--chip-soft-text);flex:none}
+.group-list .g-ico .i{width:17px;height:17px}
+.group-list span{flex:1;min-width:0}
+.group-list small{font-size:12.5px;color:var(--text-2)}
+.wa-chat{padding:12px 12px 14px 20px;border-radius:10px;background:var(--wallpaper)}
+.wa-chat__day{display:table;margin:0 auto 10px;padding:4px 10px;border-radius:8px;background:var(--bubble);font-size:11.5px;font-weight:600;color:var(--text-2);letter-spacing:.03em}
+.bubble{position:relative;max-width:94%;padding:6px 8px 7px 9px;border-radius:0 8px 8px 8px;background:var(--bubble);font-size:14.5px;line-height:1.4;box-shadow:0 1px .5px rgba(11,20,26,.13)}
+.bubble::before{content:"";position:absolute;left:-8px;top:0;border-top:10px solid var(--bubble);border-left:8px solid transparent}
+.bubble__name{font-size:13px;font-weight:600;color:var(--bubble-name);margin-bottom:1px}
+.bubble__text{white-space:pre-line;word-wrap:break-word}
+.bubble__time{float:right;margin:8px 0 -4px 12px;font-size:11px;color:var(--text-2)}
+.sheet__cta{display:flex;flex-direction:column;gap:6px;padding:12px 16px 16px;border-top:1px solid var(--divider);background:var(--card);border-radius:0}
+
+/* ---------- v2: matching, trust, filters ---------- */
+.match-badge{display:inline-flex;align-items:center;gap:4px;height:24px;padding:0 9px 0 7px;border-radius:6px;font-size:12.5px;font-weight:600;white-space:nowrap}
+.match-badge .i{width:14px;height:14px;stroke-width:2.3}
+.match-badge--direct{background:var(--primary);color:var(--on-primary)}
+.match-badge--near{box-shadow:inset 0 0 0 1.5px var(--primary);color:var(--primary)}
+.match-badge--none{box-shadow:inset 0 0 0 1px var(--line-strong);color:var(--text-2);padding:0 9px}
+.match-note{display:flex;align-items:flex-start;gap:6px;margin:-2px 0 0;font-size:13px;color:var(--text-2)}
+.match-note .i{width:15px;height:15px;margin-top:1px;color:var(--primary)}
+.match-note b{color:var(--text);font-weight:600}
+.route__via{margin:-3px 0 0;font-size:12.5px;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.when__arrive{margin-top:1px;font-size:13px;color:var(--text-2);white-space:nowrap;font-variant-numeric:tabular-nums}
+.ride-meta__item small{font-weight:400;color:var(--text-2);font-size:12px}
+.poster__line{display:flex;align-items:center;gap:4px;min-width:0}
+.poster__line .poster__name{flex:0 1 auto}
+.verified{display:inline-flex;color:var(--primary);flex:none}
+.verified .i{width:17px;height:17px}
+.tag{flex:none;display:inline-flex;align-items:center;gap:4px;height:20px;margin-left:4px;padding:0 6px;border-radius:5px;font-size:11.5px;font-weight:600;background:var(--surface);color:var(--text-2);white-space:nowrap}
+.tag .i{width:12px;height:12px;stroke-width:2}
+.ride-card__tags{display:flex;align-items:center;gap:2px;min-width:0}
+.poster__sub .tag{margin:0 6px 0 0;vertical-align:1px}
+.tag--regular{background:var(--chip-soft);color:var(--chip-soft-text)}
+.tag--coordinator{background:var(--pass-bg);color:var(--pass-fg)}
+.rating{display:inline-flex;align-items:center;gap:3px;font-weight:600;color:var(--text)}
+.rating .star{width:14px;height:14px;fill:var(--star);stroke:var(--star)}
+.rating__count{font-weight:400;color:var(--text-2)}
+.avatar--biz{border-radius:9px;--av:#667781;color:var(--text-2);background:var(--surface)}
+.avatar--biz .i{width:19px;height:19px}
+.search-row{display:flex;align-items:center;gap:8px}
+.search-row .chip-group{flex:1;min-width:0;margin:0;padding:0}
+.filter-btn{flex:none;display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 10px 0 12px;border-radius:999px;border:1px solid var(--line-strong);background:var(--card);color:var(--text);font-size:14px;font-weight:600;cursor:pointer}
+.filter-btn .i{width:17px;height:17px}
+.filter-btn__count{min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--primary);color:var(--on-primary);font-size:11px;display:grid;place-items:center}
+.active-filters{display:flex;align-items:center;gap:8px;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:0 16px}
+.chip--removable{background:var(--chip-soft);color:var(--chip-soft-text);font-weight:600;padding:0 4px 0 12px;cursor:default}
+.chip__x{width:24px;height:24px;border:0;border-radius:50%;background:transparent;color:inherit;display:grid;place-items:center;cursor:pointer}
+.chip__x .i{width:14px;height:14px}
+.link-btn{flex:none;border:0;background:none;padding:0 4px;color:var(--primary);font-size:13.5px;font-weight:600;white-space:nowrap;cursor:pointer}
+.results-title{margin:0;font-size:15px;font-weight:600;color:var(--text);min-width:0}
+.results-title__date{display:block;font-size:13px;font-weight:400;color:var(--text-2)}
+.info-line{display:flex;align-items:flex-start;gap:8px;margin:8px 10px 0;padding:10px 12px;border-radius:8px;background:var(--notice-bg);color:var(--notice-fg);font-size:13.5px;line-height:1.35}
+.info-line .i{width:17px;height:17px}
+.chip--suggest b{font-weight:600;color:var(--primary)}
+.chip--static{cursor:default;color:var(--text)}
+.chip--icon{width:36px;padding:0;justify-content:center}
+.btn--primary{background:var(--primary);color:var(--on-primary)}
+.btn--ghost{background:transparent;color:var(--primary);flex:0 0 auto !important;width:auto}
+.btn--strong{border-color:var(--text-2);font-weight:600}
+/* filters sheet */
+.sheet__head--title{padding:6px 16px 4px}
+.sheet__head--title h2{margin:0;font-size:19px;font-weight:600}
+.fs-section{padding:14px 0;border-top:1px solid var(--divider)}
+.fs-title{margin:0 0 10px;font-size:13px;font-weight:600;color:var(--primary)}
+.fs-section .chip{height:34px}
+.fs-section .chip small{font-size:11.5px;font-weight:400;opacity:.75}
+.radio-row{display:flex;align-items:center;gap:14px;padding:8px 0;cursor:pointer}
+.radio{width:20px;height:20px;flex:none;border-radius:50%;border:2px solid var(--text-2);display:grid;place-items:center}
+.radio.is-on{border-color:var(--primary)}
+.radio.is-on::after{content:"";width:10px;height:10px;border-radius:50%;background:var(--primary)}
+.radio-row__text strong,.toggle-row__text strong{display:block;font-size:15px;font-weight:500}
+.radio-row__text small,.toggle-row__text small{display:block;font-size:13px;color:var(--text-2)}
+.toggle-row{display:flex;align-items:center;gap:12px;padding:8px 0}
+.toggle-row__text{flex:1;min-width:0}
+.switch{position:relative;width:38px;height:22px;flex:none;border:0;border-radius:11px;background:var(--line-strong);cursor:pointer}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .15s}
+.switch[aria-checked="true"]{background:var(--primary)}
+.switch[aria-checked="true"]::after{transform:translateX(16px)}
+.sheet__foot{display:flex;align-items:center;gap:8px;padding:12px 16px 16px;border-top:1px solid var(--divider)}
+.sheet__foot .btn--primary{flex:1}
+/* route strip */
+.route-strip{padding:4px 2px 0}
+.route-strip__track{position:relative;height:120px;margin:0 8px}
+.route-strip__track::before{content:"";position:absolute;left:0;right:0;top:40px;height:3px;border-radius:2px;background:var(--route-line)}
+.route-strip__ride{position:absolute;top:40px;height:3px;border-radius:2px;background:var(--primary)}
+.rs-dot{position:absolute;top:35px;width:13px;height:13px;border-radius:50%;transform:translateX(-50%)}
+.rs-dot--driver{background:var(--text-2)}
+.rs-dot--you{background:var(--card);box-shadow:inset 0 0 0 3px var(--primary)}
+.rs-dot--both{background:var(--text-2);box-shadow:0 0 0 3px var(--card),0 0 0 5px var(--primary)}
+.rs-km{position:absolute;top:49px;transform:translateX(-50%);font-size:11.5px;font-weight:600;color:var(--text-2);white-space:nowrap}
+.rs-label{position:absolute;top:66px;width:110px;transform:translateX(-50%);text-align:center;font-size:12px;line-height:1.3;color:var(--text-2)}
+.rs-label b{display:block;font-size:13px;font-weight:600;color:var(--text)}
+.rs-label--you{top:0;color:var(--primary)}
+.rs-label--you b{color:var(--primary)}
+.rs-label--start{transform:translateX(-8px);text-align:left}
+.rs-label--end{transform:translateX(calc(-100% + 8px));text-align:right}
+.route-strip__legend{display:flex;gap:14px;font-size:12px;color:var(--text-2)}
+.route-strip__legend span{display:inline-flex;align-items:center;gap:6px}
+.lg{width:16px;height:3px;border-radius:2px;display:inline-block}
+.lg--driver{background:var(--route-line)}.lg--you{background:var(--primary)}
+.raw-post--desc{background:transparent;border-left:0;padding:0}
+.raw-post--desc .raw-post__text{-webkit-line-clamp:4}
+.trust-list{margin:12px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px}
+.trust-list li{display:flex;align-items:center;gap:10px;font-size:14.5px}
+.trust-list li > span:last-child{color:var(--text-2)}
+.trust-list .rating{min-width:22px}
+.trust-ico{display:inline-flex;color:var(--primary)}
+.trust-ico .i{width:18px;height:18px}
+
+/* ---------- v3: swipe to original message, exact time ---------- */
+.ride-card__swipe{position:relative;overflow:hidden;touch-action:pan-y}
+.swipe-track{position:relative;transition:transform .28s cubic-bezier(.2,.8,.2,1)}
+.ride-card__swipe.is-swiped .swipe-track{transform:translateX(calc(-100% - 14px))}
+.ride-card__swipe.is-dragging .swipe-track{transition:none}
+.ride-card__swipe.is-dragging{user-select:none;-webkit-user-select:none}
+.swipe-pane--details{display:flex;flex-direction:column;gap:10px}
+/* message pane: absolutely placed, so the details pane alone sets the height */
+.swipe-pane--message{position:absolute;top:0;bottom:0;left:calc(100% + 14px);width:100%;overflow-y:auto;scrollbar-width:none;
+  padding:8px 10px 18px 18px;border-radius:8px;background:var(--wallpaper);
+  -webkit-mask-image:linear-gradient(to bottom,#000 calc(100% - 18px),transparent);mask-image:linear-gradient(to bottom,#000 calc(100% - 18px),transparent)}
+.swipe-pane--message::-webkit-scrollbar{display:none}
+.bubble--card{max-width:100%;font-size:14px}
+.swipe-dots{display:flex;align-items:center;gap:5px;margin:-2px 0 -4px}
+.swipe-dot{width:6px;height:6px;padding:0;border:0;border-radius:3px;background:var(--line-strong);cursor:pointer;transition:width .2s,background .2s}
+.swipe-dot.is-on{width:14px;background:var(--primary)}
+.swipe-hint{margin-left:6px;font-size:11.5px;color:var(--text-2)}
+.exact-row{display:flex;align-items:center;gap:12px;width:100%;margin-top:12px;padding:10px 12px;border:1px solid var(--divider);border-radius:10px;background:transparent;color:var(--text);text-align:left;cursor:pointer}
+.exact-row > .i:first-child{color:var(--primary)}
+.exact-row > .i:last-child{width:16px;height:16px;color:var(--text-2)}
+.exact-row__text{flex:1;min-width:0}
+.exact-row__text strong{display:block;font-size:15px;font-weight:500}
+.exact-row__text small{display:block;font-size:12.5px;color:var(--text-2)}
+.exact-row__val{font-size:14px;font-weight:600;color:var(--primary)}
+.time-wheel{position:relative;display:flex;justify-content:center;align-items:center;gap:2px;margin:6px 0 4px}
+.time-wheel::before{content:"";position:absolute;left:0;right:0;top:50%;height:46px;transform:translateY(-50%);border-radius:10px;background:var(--surface)}
+.wheel-col{position:relative;display:flex;flex-direction:column;align-items:center;width:72px}
+.wheel-col span{height:38px;display:grid;place-items:center;font-size:19px;color:var(--text-2);opacity:.4;font-variant-numeric:tabular-nums}
+.wheel-col span.n1{opacity:.75}
+.wheel-col span.is-sel{height:46px;opacity:1;font-size:26px;font-weight:600;color:var(--text)}
+.wheel-col[data-field="ampm"] span{font-size:17px}
+.wheel-col[data-field="ampm"] span.is-sel{font-size:21px;color:var(--primary)}
+.wheel-sep{position:relative;font-size:24px;font-weight:600;margin-top:-4px}
+.time-summary{display:flex;align-items:center;justify-content:center;gap:6px;margin:4px 0 14px;font-size:13.5px;color:var(--text-2)}
+.time-summary .i{width:16px;height:16px;color:var(--primary)}
+.time-summary b{color:var(--text);font-weight:600}
+
+/* Footer */
+.app-footer{padding:18px 16px 28px;text-align:center;font-size:13px;color:var(--text-2)}
+.app-footer p{margin:0 0 4px}
+.app-footer strong{color:var(--text);font-weight:600}
+.app-footer a{color:var(--primary);font-weight:600;text-decoration:none}
+
+/* =========================================================
+   DESKTOP ≥ 760px (container query on .app)
+   ========================================================= */
+@container (min-width: 760px){
+  .app-bar__inner{max-width:720px;margin:0 auto;padding:8px 0}
+  .app__col{max-width:720px;margin:0 auto;padding-top:16px}
+  .search-panel{border:1px solid var(--divider);border-radius:12px;padding:14px 16px 16px}
+  .route-input__fields{flex-direction:row}
+  .route-input__fields::before{display:none}
+  .route-input__field{flex:1}
+  .route-input__field + .route-input__field{border-top:0;border-left:1px solid var(--divider);padding-left:14px}
+  .swap-btn{order:0}
+  .swap-btn .i{transform:rotate(90deg)}
+  .filters{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .chip-group{margin:0;padding:0}
+  .filters .chip-group{flex-wrap:wrap}
+  .active-filters{margin:0;padding:0}
+  .search-row .chip-group{flex:0 1 auto}
+  .info-line{margin:8px 0 0}
+  .results-head{padding:16px 2px 2px}
+  .ride-list{padding:8px 0 16px;gap:10px}
+  .ride-card{padding:14px 18px 16px}
+  .ride-card__foot{flex-direction:row;align-items:center;gap:16px}
+  .ride-card__cta{width:260px;flex:none}
+  .prefill{border:1px solid var(--divider);border-radius:12px}
+}
+</style>
+</head>
+<body>
+
+<!-- ICON SPRITE (line style) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></symbol>
+  <symbol id="i-swap" viewBox="0 0 24 24"><path d="M8 4v16M8 4 4.5 7.5M8 4l3.5 3.5M16 20V4m0 16-3.5-3.5M16 20l3.5-3.5"/></symbol>
+  <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-6.5-6.1-6.5-11a6.5 6.5 0 0 1 13 0c0 4.9-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.8"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></symbol>
+  <symbol id="i-seat" viewBox="0 0 24 24"><circle cx="9" cy="8.5" r="3.2"/><path d="M3 19.5a6 6 0 0 1 12 0M15.5 5.5a3.2 3.2 0 0 1 0 6.1M17.5 14a6 6 0 0 1 3.5 5.5"/></symbol>
+  <symbol id="i-car" viewBox="0 0 24 24"><path d="M4 16.5V13l1.9-4.8A2 2 0 0 1 7.8 7h8.4a2 2 0 0 1 1.9 1.2L20 13v3.5M4 13h16M6.3 16.5H4M20 16.5h-2.3M9.7 16.5h4.6"/><circle cx="8" cy="16.5" r="1.7"/><circle cx="16" cy="16.5" r="1.7"/></symbol>
+  <symbol id="i-repeat" viewBox="0 0 24 24"><path d="m17 3 3 3-3 3"/><path d="M4 11V9.5A3.5 3.5 0 0 1 7.5 6H20M7 21l-3-3 3-3"/><path d="M20 13v1.5a3.5 3.5 0 0 1-3.5 3.5H4"/></symbol>
+  <symbol id="i-note" viewBox="0 0 24 24"><path d="M6 3.5h8.5L19 8v12.5H6z"/><path d="M14 3.5V8h5M9 12.5h7M9 16h5"/></symbol>
+  <symbol id="i-tag" viewBox="0 0 24 24"><path d="M3.5 12.3 12 3.8h7.7a.5.5 0 0 1 .5.5V12l-8.5 8.5a1 1 0 0 1-1.4 0l-6.8-6.8a1 1 0 0 1 0-1.4z"/><circle cx="15.8" cy="8.2" r="1.3"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M4 20h4L19.3 8.7a1.4 1.4 0 0 0 0-2l-2-2a1.4 1.4 0 0 0-2 0L4 16z"/><path d="m13.5 6.5 4 4"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 1.5h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M3.8 20.2 5 16.4A8.3 8.3 0 1 1 8 19.3z"/><path d="M8.5 11.5h7M8.5 14.5h4.5"/></symbol>
+  <symbol id="i-external" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  <symbol id="i-sort" viewBox="0 0 24 24"><path d="M4 7h10M4 12h7M4 17h4M18 5v14m0 0-3-3m3 3 3-3"/></symbol>
+  <symbol id="i-groups" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.3"/><path d="M5.5 19.5a6.5 6.5 0 0 1 13 0M5.3 11.7a2.6 2.6 0 1 1 1.5-4.6M18.7 11.7a2.6 2.6 0 1 0-1.5-4.6M2.5 17a4 4 0 0 1 3.2-3.5M21.5 17a4 4 0 0 0-3.2-3.5"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5M12 8h.01"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6 6 6M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></symbol>
+  <symbol id="i-bag" viewBox="0 0 24 24"><rect x="5" y="7.5" width="14" height="12.5" rx="2"/><path d="M9 7.5V5.5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M9.5 11v5.5M14.5 11v5.5"/></symbol>
+  <symbol id="i-bag-off" viewBox="0 0 24 24"><rect x="5" y="7.5" width="14" height="12.5" rx="2"/><path d="M9 7.5V5.5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M3.5 3.5l17 17"/></symbol>
+  <symbol id="i-verified" viewBox="0 0 24 24"><path d="M12 2.8l2.3 1.7 2.8-.1.9 2.7 2.3 1.6-.9 2.7.9 2.7-2.3 1.6-.9 2.7-2.8-.1L12 21.2l-2.3-1.7-2.8.1-.9-2.7-2.3-1.6.9-2.7-.9-2.7 2.3-1.6.9-2.7 2.8.1z"/><path d="m8.8 12.2 2.2 2.2 4.2-4.4"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 3.5 2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.8l-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></symbol>
+  <symbol id="i-building" viewBox="0 0 24 24"><path d="M4.5 20.5V5a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v15.5M14.5 9h4a1 1 0 0 1 1 1v10.5M2.5 20.5h19M8 8h3M8 12h3M8 16h3"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-route" viewBox="0 0 24 24"><circle cx="6" cy="18" r="2.3"/><circle cx="18" cy="6" r="2.3"/><path d="M8.5 18H15a3.5 3.5 0 0 0 0-7H9a3.5 3.5 0 0 1 0-7h6.5"/></symbol>
+  <symbol id="i-chev-r" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+  <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></symbol>
+</svg>
+
+<header class="review-bar">
+  <div>
+    <h1>Pathfynder · Explore rides — design review v3</h1>
+    <p>v3: swipe WhatsApp/Facebook cards left for the original message · exact time picker · 390px + 1280px · light + dark</p>
+  </div>
+  <div class="theme-toggle" role="group" aria-label="Theme">
+    <button type="button" data-theme-set="system" aria-pressed="true">System</button>
+    <button type="button" data-theme-set="light" aria-pressed="false">Light</button>
+    <button type="button" data-theme-set="dark" aria-pressed="false">Dark</button>
+  </div>
+</header>
+
+<main class="board">
+
+  <section class="frame">
+    <div class="frame__label">01 · Explore · find a driver</div>
+    <p class="frame__desc">Swipe a WhatsApp or Facebook card left to see the original message. Only the ride details slide. Results ranked by best match. Direct matches come first, then “passes near you”, and business operators sit last. Active filters show as removable chips.</p>
+    <div class="frame__url">pathfynder.ca/explore?type=driver&amp;from=Mississauga&amp;to=Niagara+Falls&amp;date=2026-09-26</div>
+    <div class="device"><div class="app" data-app="explore"></div></div>
+  </section>
+
+  <section class="frame">
+    <div class="frame__label">02 · Filters sheet</div>
+    <p class="frame__desc">Opens from the Filters button. Match type, time of day, source, three toggles. The footer shows a live count.</p>
+    <div class="frame__url">pathfynder.ca/explore?…&amp;sheet=filters</div>
+    <div class="device">
+      <div class="app" data-app="explore" aria-hidden="true"></div>
+      <div class="sheet-layer"><div class="sheet-backdrop"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="Filters" data-render-filters></div></div>
+    </div>
+  </section>
+
+  <section class="frame">
+    <div class="frame__label">03 · Exact time picker</div>
+    <p class="frame__desc">The clock chip next to the date opens a wheel for the exact departure time, plus a flexibility window. Time-of-day chips stay as shortcuts.</p>
+    <div class="frame__url">pathfynder.ca/explore?…&amp;time=18:00&amp;flex=60</div>
+    <div class="device">
+      <div class="app" data-app="exploreTime" aria-hidden="true"></div>
+      <div class="sheet-layer"><div class="sheet-backdrop"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="Pick a time" data-render-time></div></div>
+    </div>
+  </section>
+
+  <section class="frame">
+    <div class="frame__label">04 · Ride detail sheet</div>
+    <p class="frame__desc">Route strip with km labels, the driver's own description (4-line clamp), a trust block, and the CTA pinned to the bottom.</p>
+    <div class="frame__url">pathfynder.ca/explore?…&amp;ride=omar</div>
+    <div class="device">
+      <div class="app" data-app="explore" aria-hidden="true"></div>
+      <div class="sheet-layer"><div class="sheet-backdrop"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="Ride details" data-render-detail="omar"></div></div>
+    </div>
+  </section>
+
+  <section class="frame">
+    <div class="frame__label">05 · Find passengers (driver mode)</div>
+    <p class="frame__desc">Same page with the toggle flipped. Passenger requests along the driver's route, shown with first name + last initial, plus Regular rider and Ride coordinator tags.</p>
+    <div class="frame__url">pathfynder.ca/explore?type=passenger&amp;from=St.+Catharines&amp;to=Welland</div>
+    <div class="device"><div class="app" data-app="riders"></div></div>
+  </section>
+
+  <section class="frame">
+    <div class="frame__label">06 · Opened from bot link</div>
+    <p class="frame__desc">Jaspreet's card is shown swiped to its original message at the same size. Sam's Facebook post was fully parsed, so it gets the normal card. Brandon's couldn't be parsed, so it falls back to the raw-post card.</p>
+    <div class="frame__url">pathfynder.ca/explore?type=driver&amp;from=Welland&amp;to=Niagara+Falls&amp;date=2026-09-26</div>
+    <div class="device"><div class="app" data-app="bot"></div></div>
+  </section>
+
+  <section class="frame">
+    <div class="frame__label">07 · Low results · only “passes near you”</div>
+    <p class="frame__desc">No direct rides, so an info line explains that these drivers pass close to your route.</p>
+    <div class="frame__url">pathfynder.ca/explore?type=driver&amp;from=Hamilton&amp;to=Niagara+Falls&amp;date=2026-09-27</div>
+    <div class="device"><div class="app" data-app="low"></div></div>
+  </section>
+
+  <section class="frame">
+    <div class="frame__label">08 · No drivers</div>
+    <p class="frame__desc">A WhatsApp alert is the primary action and posting in the group is secondary, then nearby dates with driver counts.</p>
+    <div class="frame__url">pathfynder.ca/explore?type=driver&amp;from=Kitchener&amp;to=Niagara+Falls&amp;date=2026-09-27</div>
+    <div class="device"><div class="app" data-app="empty"></div></div>
+  </section>
+
+  <section class="frame">
+    <div class="frame__label">09 · Loading</div>
+    <p class="frame__desc">The search line renders at once from the URL, and cards shimmer until matching returns.</p>
+    <div class="frame__url">pathfynder.ca/explore?type=driver&amp;from=Welland&amp;to=Niagara+Falls</div>
+    <div class="device"><div class="app" data-app="loading"></div></div>
+  </section>
+
+  <section class="frame frame--desktop">
+    <div class="frame__label">10 · Desktop · 1280px (720px column)</div>
+    <p class="frame__desc">Same components. From/To go side by side, and each card's CTA sits to the right of the driver row. Shows a recurring Poparide ride with stops, a daily WhatsApp driver, a Facebook business operator, and an unparsed post.</p>
+    <div class="desktop-viewport">
+      <div class="desktop-scaler">
+        <div class="browser-bar"><i></i><i></i><i></i><span>pathfynder.ca/explore?type=driver&amp;from=London&amp;to=Toronto&amp;date=2026-09-29</span></div>
+        <div class="app" data-app="desktop"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<section class="notes">
+  <h2>Wiring notes</h2>
+  <ul>
+    <li>Each screen is a config in <code>APPS</code> rendered by <code>renderApp(config)</code>. Cards come from <code>renderRideCard(ride)</code>: <code>source</code>, <code>parsed</code>, <code>role</code> and <code>business</code> pick the variant (<code>.ride-card--whatsapp|poparide|facebook</code>, <code>--raw</code>, <code>--request</code>, <code>--business</code>). Swap <code>RIDES</code> for the matching RPC's rows.</li>
+    <li>Matching fields per row: <code>match.type</code> (<code>direct</code> | <code>near</code>), <code>match.pickup_km</code>, <code>match.dropoff_km</code>, and an optional <code>match.strip</code> (point % positions + segment km) for the detail sheet. Rows come back already ranked: direct, then near, with <code>business</code> rows pushed last.</li>
+    <li>Every value sits on a <code>data-field</code> attribute named after its column (<code>depart_time</code>, <code>arrive_time</code>, <code>seats</code>, <code>price_per_seat</code>, <code>rating</code>, <code>verified</code>, <code>luggage</code>, <code>recurring</code>, <code>via</code>, <code>rider_tag</code>, <code>is_business</code>, <code>description</code>, <code>group_names</code>). An empty optional field renders no element at all.</li>
+    <li>Driver mode shows <code>poster_name</code> as first name + last initial (“Harleen K.”). Format it server-side so the full name never reaches the client.</li>
+    <li>Duplicate WhatsApp posts are merged before render: one row with <code>group_names[]</code>. The card shows “Posted in N groups”, and the sheet lists each group.</li>
+    <li>The WhatsApp CTA is <code>wa.me/&lt;wa_number&gt;?text=…</code> with a ready-to-send message. The number never renders in the UI.</li>
+    <li>The green CTA uses dark text (#111B21) on #25D366 / #00A884, because white on #25D366 fails contrast.</li>
+  </ul>
+</section>
+
+<script>
+/* ---------- Sample data (shape ≈ Supabase rows from the matching RPC) ---------- */
+const NOW = new Date('2026-09-26T07:05:00');
+const G = (name, posted_at) => ({ name, posted_at });
+const RIDES = [
+  /* Frame 01 · Mississauga → Niagara Falls · Sat 26 Sep */
+  { id:'gurpreet', role:'driver', source:'whatsapp', parsed:true, poster_name:'Gurpreet S.', from_city:'Mississauga', to_city:'Niagara Falls',
+    ride_date:'2026-09-26', depart_time:'18:00', arrive_time:'19:30', seats:3, price_per_seat:25, luggage:'Medium bag OK',
+    groups:[G('GTA ↔ Niagara Rideshare','2026-09-26T05:40'),G('Niagara Local Rides','2026-09-26T05:41'),G('Brampton–Mississauga Rides','2026-09-26T05:44')],
+    posted_at:'2026-09-26T05:40', wa_number:'12895550111', match:{ type:'direct' },
+    raw_text:'Driving Square One → Niagara Falls today 6pm 🚗\n3 seats, $25 each. Medium bag ok 👍' },
+  { id:'daniel', role:'driver', source:'poparide', parsed:true, poster_name:'Daniel R.', from_city:'Mississauga', to_city:'Niagara Falls',
+    ride_date:'2026-09-26', depart_time:'14:30', arrive_time:'16:00', seats:2, price_per_seat:22, rating:4.9, rating_count:38, verified:true,
+    luggage:'No luggage', posted_at:'2026-09-25T20:10', external_url:'https://www.poparide.com/', match:{ type:'direct' } },
+  { id:'omar', role:'driver', source:'poparide', parsed:true, poster_name:'Omar K.', from_city:'Toronto', to_city:'Niagara Falls',
+    ride_date:'2026-09-26', depart_time:'22:15', arrive_time:'00:00', seats:4, price_per_seat:26, rating:5.0, rating_count:11, verified:true,
+    luggage:'Medium bag OK', replies:'Usually replies within an hour', posted_at:'2026-09-25T18:00', external_url:'https://www.poparide.com/',
+    pickup_points:['Yorkdale Mall','Scarborough Town Centre'],
+    description:'Heading home to the Falls after work every Saturday. Pickup at Yorkdale Mall or Scarborough Town Centre. I can also grab you along the QEW if it\'s on the way, just message me first. Drop-offs anywhere in Niagara Falls, Clifton Hill area preferred. A medium bag fits in the trunk. Please be on time, I leave 5 minutes after the pickup time. Quiet ride, no smoking.',
+    match:{ type:'near', pickup_km:9.5, dropoff_km:0,
+      strip:{ ride:[24,100], segs:[{a:0,b:24,km:'32 km'},{a:24,b:100,km:'98 km'}],
+        points:[{pct:0,kind:'driver',label:'Toronto',sub:'Driver starts'},{pct:24,kind:'you',label:'Your pickup',sub:'9.5 km from you'},{pct:100,kind:'both',label:'Niagara Falls',sub:'Your drop-off · driver\'s end'}] } } },
+  { id:'nxshuttle', role:'driver', source:'whatsapp', parsed:true, business:true, poster_name:'Niagara Express Shuttle', poster_sub:'Door-to-door service',
+    from_city:'Mississauga', to_city:'Niagara Falls', ride_date:'2026-09-26', depart_time:'10:00', arrive_time:'11:45', seats:8, price_per_seat:39,
+    recurring:'Daily', luggage:'Large bags OK', groups:[G('GTA ↔ Niagara Rideshare','2026-09-26T04:00')], posted_at:'2026-09-26T04:00',
+    wa_number:'12895550114', match:{ type:'direct' }, raw_text:'🚐 NIAGARA EXPRESS SHUTTLE 🚐\nDaily Mississauga ⇄ Niagara Falls. Door-to-door. $39/seat. Book now!' },
+
+  /* Frame 05 · bot link · Welland → Niagara Falls · Sat */
+  { id:'jaspreet', role:'driver', source:'whatsapp', parsed:true, poster_name:'Jaspreet S.', from_city:'Welland', to_city:'Niagara Falls',
+    ride_date:'2026-09-26', depart_time:'08:00', groups:[G('Niagara Local Rides','2026-09-25T21:30'),G('Welland ↔ Niagara Carpool','2026-09-25T21:32')],
+    posted_at:'2026-09-25T21:30', wa_number:'12895550115', match:{ type:'direct' },
+    raw_text:'Going Welland to Niagara Falls Sat 8am, leaving from Seaway Mall. Can take people 🚗' },
+  { id:'navdeep', role:'driver', source:'whatsapp', parsed:true, poster_name:'Navdeep G.', from_city:'Port Colborne', to_city:'Niagara Falls',
+    ride_date:'2026-09-26', depart_time:'09:30', arrive_time:'10:15', seats:2, price_per_seat:10, recurring:'Daily',
+    groups:[G('Welland ↔ Niagara Carpool','2026-09-25T19:00')], posted_at:'2026-09-25T19:00', wa_number:'12895550116',
+    match:{ type:'near', pickup_km:3.1, dropoff_km:0 }, raw_text:'Daily Port Colborne → Niagara Falls 9:30am via Welland. 2 seats $10' },
+
+  { id:'sam', role:'driver', source:'facebook', parsed:true, poster_name:'Sam T.', from_city:'Welland', to_city:'Niagara Falls',
+    ride_date:'2026-09-26', depart_time:'08:30', arrive_time:'09:00', seats:2, price_per_seat:8,
+    groups:[G('Niagara Region Rideshare','2026-09-25T20:15')], posted_at:'2026-09-25T20:15', external_url:'https://www.facebook.com/', match:{ type:'direct' },
+    raw_text:'Driving Welland → Niagara Falls Saturday 8:30am, back around 5. 2 seats, $8. Can pick up near Niagara College 🚙' },
+  { id:'fbwelland', role:'driver', source:'facebook', parsed:false, poster_name:'Brandon', posted_at:'2026-09-26T06:00', external_url:'https://www.facebook.com/',
+    raw_text:'anyone need a lift to the falls from my area tmrw morning? got room for 2, just chip in for gas' },
+
+  /* Frame 06 · Hamilton → Niagara Falls · Sun 27 */
+  { id:'sukh', role:'driver', source:'whatsapp', parsed:true, poster_name:'Sukh B.', from_city:'Toronto', to_city:'St. Catharines',
+    ride_date:'2026-09-27', depart_time:'09:00', arrive_time:'10:30', seats:3, price_per_seat:20,
+    groups:[G('GTA ↔ Niagara Rideshare','2026-09-26T06:20')], posted_at:'2026-09-26T06:20', wa_number:'12895550117',
+    match:{ type:'near', pickup_km:1.5, dropoff_km:16 }, raw_text:'Toronto → St Catharines Sunday 9am, 3 spots $20' },
+  { id:'amrit', role:'driver', source:'poparide', parsed:true, poster_name:'Amrit T.', from_city:'Burlington', to_city:'Niagara-on-the-Lake',
+    ride_date:'2026-09-27', depart_time:'16:00', arrive_time:'17:10', seats:2, price_per_seat:18, rating:4.8, rating_count:27, verified:true,
+    luggage:'Small bag OK', posted_at:'2026-09-25T15:00', external_url:'https://www.poparide.com/', match:{ type:'near', pickup_km:12, dropoff_km:14 } },
+
+  /* Frame 09 · desktop · London → Toronto · Tue 29 */
+  { id:'lena', role:'driver', source:'poparide', parsed:true, poster_name:'Lena M.', from_city:'London', to_city:'Toronto',
+    via:['White Oaks Mall','Woodstock','Cambridge','Yorkdale'], ride_date:'2026-09-29', depart_time:'05:30', seats:3, price_per_seat:35,
+    recurring:'Every Tuesday', posted_at:'2026-09-24T12:00', external_url:'https://www.poparide.com/', match:{ type:'direct' },
+    description:'Weekly commute to Toronto. Stops at White Oaks Mall, Woodstock (Norwich Ave), Cambridge (Hespeler Rd) and Yorkdale. One small bag each please.' },
+  { id:'priya', role:'driver', source:'whatsapp', parsed:true, poster_name:'Priya N.', from_city:'London', to_city:'Toronto',
+    ride_date:'2026-09-29', depart_time:'06:45', arrive_time:'09:00', seats:2, price_per_seat:30, recurring:'Daily', luggage:'No luggage',
+    groups:[G('London ↔ Toronto Carpool','2026-09-25T22:00'),G('Western U Rides','2026-09-25T22:03')], posted_at:'2026-09-25T22:00',
+    wa_number:'12895550120', match:{ type:'direct' }, raw_text:'Daily London → Toronto 6:45am, 2 seats $30. No luggage sorry' },
+  { id:'windsor', role:'driver', source:'facebook', parsed:true, business:true, poster_name:'Windsor Express Rides', poster_sub:'Ride service · Facebook page',
+    from_city:'Windsor', to_city:'Toronto', ride_date:'2026-09-29', depart_time:'07:00', price_per_seat:45, price_from:true, recurring:'Daily',
+    posted_at:'2026-09-25T09:00', external_url:'https://www.facebook.com/', match:{ type:'near', pickup_km:3, dropoff_km:0 },
+    raw_text:'🚐 WINDSOR EXPRESS 🚐\nDaily Windsor → London → Toronto. From $45. Door to door. DM to book' },
+  { id:'emily', role:'driver', source:'facebook', parsed:true, poster_name:'Emily R.', from_city:'London', to_city:'Toronto',
+    ride_date:'2026-09-29', depart_time:'08:00', arrive_time:'10:15', seats:2, price_per_seat:30, luggage:'Small bag OK',
+    groups:[G('London Ontario Rideshare','2026-09-26T01:00')], posted_at:'2026-09-26T01:00', external_url:'https://www.facebook.com/', match:{ type:'direct' },
+    raw_text:'Driving London → Toronto (Union) Tuesday 8am, 2 seats $30. Small bag is fine 🙂' },
+  { id:'forestcity', role:'driver', source:'facebook', parsed:false, poster_name:'Kyle', posted_at:'2026-09-25T23:00', external_url:'https://www.facebook.com/',
+    raw_text:'Heading to the city Tuesday before sunrise from the Forest City 🌲 got 2 spots open, splitting gas. DM me' },
+
+  /* Frame 04 · driver mode · St. Catharines → Welland · Today */
+  { id:'mehak', role:'passenger', source:'whatsapp', parsed:true, poster_name:'Mehak S.', from_city:'St. Catharines', to_city:'Welland',
+    ride_date:'2026-09-26', depart_time:'08:30', seats:1, groups:[G('Niagara Local Rides','2026-09-26T06:25')], posted_at:'2026-09-26T06:25',
+    wa_number:'12895550130', match:{ type:'direct' }, raw_text:'Need ride St Catharines → Welland (Niagara College) 8:30 today, 1 person' },
+  { id:'tom', role:'passenger', source:'poparide', parsed:true, poster_name:'Tom W.', from_city:'St. Catharines', to_city:'Welland',
+    ride_date:'2026-09-26', depart_time:'17:00', seats:2, posted_at:'2026-09-25T21:00', external_url:'https://www.poparide.com/', match:{ type:'direct' } },
+  { id:'harleen', role:'passenger', source:'whatsapp', parsed:true, poster_name:'Harleen K.', rider_tag:'regular', from_city:'St. Catharines', to_city:'Niagara Falls',
+    ride_date:'2026-09-26', depart_time:'19:00', seats:1, groups:[G('Niagara Local Rides','2026-09-26T05:05')], posted_at:'2026-09-26T05:05',
+    wa_number:'12895550131', match:{ type:'near', note:'Drop-off <b>9 km</b> off your route' }, raw_text:'Need ride StC → Niagara Falls 7pm today. 1 person 🙏' },
+  { id:'raj', role:'passenger', source:'whatsapp', parsed:true, poster_name:'Raj P.', rider_tag:'coordinator', poster_sub:'Posts rides for others',
+    from_city:'Niagara Falls', to_city:'Welland', ride_date:'2026-09-26', depart_time:'16:00', seats:3,
+    groups:[G('Niagara Local Rides','2026-09-26T03:10'),G('Welland ↔ Niagara Carpool','2026-09-26T03:12')], posted_at:'2026-09-26T03:10',
+    wa_number:'12895550132', match:{ type:'near', note:'Pickup <b>8 km</b> off your route · Drops at your destination' },
+    raw_text:'3 people need ride Niagara Falls → Welland 4pm today. Message me for details' },
+];
+const BY_ID = Object.fromEntries(RIDES.map(r => [r.id, r]));
+
+/* Screen configs: each maps to one Explore page state */
+const APPS = {
+  exploreTime:{ mode:'driver', from:'Mississauga', to:'Niagara Falls', date:'Today', dateText:'Sat 26 Sep', time:'6:00 PM ±1h',
+    active:['WhatsApp + Poparide'], sections:[['main',['gurpreet','daniel','omar','nxshuttle']]] },
+  explore:{ mode:'driver', from:'Mississauga', to:'Niagara Falls', date:'Today', dateText:'Sat 26 Sep',
+    active:['WhatsApp + Poparide'], sections:[['main',['gurpreet','daniel','omar','nxshuttle']]] },
+  riders:{ mode:'passenger', from:'St. Catharines', to:'Welland', date:'Today', dateText:'Sat 26 Sep',
+    sections:[['main',['mehak','tom','harleen','raj']]] },
+  bot:{ mode:'driver', prefill:true, from:'Welland', to:'Niagara Falls', date:'Today', dateText:'Sat 26 Sep', sections:[['main',['jaspreet','sam','navdeep']],['fb',['fbwelland']]], swiped:['jaspreet'] },
+  low:{ mode:'driver', prefill:true, from:'Hamilton', to:'Niagara Falls', date:'Pick', dateText:'Sun 27 Sep', info:true, sections:[['main',['sukh','amrit']]] },
+  empty:{ mode:'driver', prefill:true, from:'Kitchener', to:'Niagara Falls', date:'Pick', dateText:'Sun 27 Sep', state:'empty' },
+  loading:{ mode:'driver', prefill:true, from:'Welland', to:'Niagara Falls', date:'Any', dateText:'Any day', state:'loading' },
+  desktop:{ mode:'driver', from:'London', to:'Toronto', date:'Pick', dateText:'Tue 29 Sep', sections:[['main',['lena','priya','emily','windsor']],['fb',['forestcity']]] },
+};
+
+/* ---------- Helpers ---------- */
+const icon = n => `<svg class="i" aria-hidden="true"><use href="#i-${n}"/></svg>`;
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const SOURCE_LABEL = { whatsapp:'WhatsApp', poparide:'Poparide', facebook:'Facebook' };
+const SOURCE_DOMAIN = { poparide:'poparide.com', facebook:'facebook.com' };
+
+function dayDiff(dateStr){
+  const d = new Date(dateStr + 'T00:00:00'), t = new Date(NOW); t.setHours(0,0,0,0);
+  return Math.round((d - t) / 864e5);
+}
+function dayLabel(dateStr, long){
+  const diff = dayDiff(dateStr), d = new Date(dateStr + 'T00:00:00');
+  const full = d.toLocaleDateString('en-CA', { weekday:'short', month:'short', day:'numeric' });
+  if (diff === 0) return long ? `Today, ${full}` : 'Today';
+  if (diff === 1) return long ? `Tomorrow, ${full}` : 'Tomorrow';
+  return full;
+}
+function fmtTime(t){
+  let [h, m] = t.split(':').map(Number); const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12;
+  return `${h}:${String(m).padStart(2,'0')} ${ap}`;
+}
+function ago(iso){
+  const min = Math.max(1, Math.round((NOW - new Date(iso)) / 6e4));
+  if (min < 60) return `${min}m ago`;
+  const h = Math.round(min / 60); if (h < 24) return `${h}h ago`;
+  return `${Math.round(h / 24)}d ago`;
+}
+function timeText(r){ return r.depart_time ? fmtTime(r.depart_time) : (r.time_label || null); }
+function avatarClass(name){ let h = 0; for (const c of name) h = (h * 31 + c.codePointAt(0)) >>> 0; return 'avatar--' + (h % 5 + 1); }
+function initial(name){ const m = name.match(/\p{L}/u); return m ? m[0].toUpperCase() : '•'; }
+function greetName(name){ return /\p{Extended_Pictographic}/u.test(name) ? 'there' : name.split(' ')[0]; }
+function waLink(r){
+  const t = timeText(r);
+  const what = r.role === 'passenger' ? 'ride request' : 'ride';
+  const msg = `Hi ${greetName(r.poster_name)}, I found your ${what} on Pathfynder: ${r.from_city} → ${r.to_city}, ${dayLabel(r.ride_date)}${t ? ' ' + t : ''}. Is it still available?`;
+  return `https://wa.me/${r.wa_number}?text=${encodeURIComponent(msg)}`;
+}
+const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
+
+/* ---------- Pieces ---------- */
+function matchBadge(r){
+  if (!r.match) return `<span class="match-badge match-badge--none">Route not read</span>`;
+  if (r.match.type === 'direct') return `<span class="match-badge match-badge--direct" data-field="match_type">${icon('check')}Direct match</span>`;
+  return `<span class="match-badge match-badge--near" data-field="match_type">${icon('route')}${r.role === 'passenger' ? 'Near your route' : 'Passes near you'}</span>`;
+}
+function matchNote(r){
+  const m = r.match; if (!m || m.type !== 'near') return '';
+  const txt = m.note || [
+    m.pickup_km ? `Pickup <b>${m.pickup_km} km</b> from you` : 'Picks up where you are',
+    m.dropoff_km ? `Drops <b>${m.dropoff_km} km</b> from your destination` : 'Drops at your destination',
+  ].join(' · ');
+  return `<p class="match-note" data-field="match_distance">${icon('pin')}<span>${txt}</span></p>`;
+}
+function riderTag(r){
+  if (r.business) return `<span class="tag tag--business" data-field="is_business">${icon('building')}Business</span>`;
+  if (r.rider_tag === 'regular') return `<span class="tag tag--regular" data-field="rider_tag">${icon('repeat')}Regular rider</span>`;
+  if (r.rider_tag === 'coordinator') return `<span class="tag tag--coordinator" data-field="rider_tag">${icon('groups')}Ride coordinator</span>`;
+  return '';
+}
+function sourceBadge(r){
+  if (r.source === 'whatsapp') return ''; /* the green WhatsApp CTA already says where this came from */
+  return `<span class="source-badge source-badge--${r.source}" data-field="source">${r.source === 'whatsapp' ? icon('chat') : ''}${SOURCE_LABEL[r.source]}</span>`;
+}
+function whenBlock(r){
+  const date = (r.recurring ? 'Next: ' : '') + dayLabel(r.ride_date);
+  const t = timeText(r);
+  const top = t
+    ? `<div class="when__time" data-field="depart_time">${esc(t)}</div>${r.arrive_time ? `<div class="when__arrive" data-field="arrive_time">→ ${fmtTime(r.arrive_time)}</div>` : ''}`
+    : `<div class="when__flex" data-field="depart_time">${icon('clock')}Time flexible</div>`;
+  return `<div class="when">${top}<div class="when__date" data-field="ride_date">${esc(date)}</div></div>`;
+}
+function rating(r){
+  return r.rating ? `<span class="rating" data-field="rating"><svg class="i star" aria-hidden="true"><use href="#i-star"/></svg>${r.rating.toFixed(1)}<span class="rating__count">· ${r.rating_count}</span></span>` : '';
+}
+function metaList(r){
+  const items = [];
+  if (r.seats) items.push(`<li class="ride-meta__item" data-field="seats">${icon('seat')}${r.role === 'driver' ? plural(r.seats,'seat') : `Needs ${plural(r.seats,'seat')}`}</li>`);
+  if (r.price_per_seat) items.push(`<li class="ride-meta__item ride-meta__item--price" data-field="price_per_seat">${r.price_from ? '<small>from</small> ' : ''}$${r.price_per_seat}<small>/seat</small></li>`);
+  if (r.luggage) items.push(`<li class="ride-meta__item" data-field="luggage">${icon(r.luggage === 'No luggage' ? 'bag-off' : 'bag')}${esc(r.luggage)}</li>`);
+  if (r.recurring) items.push(`<li class="ride-meta__item ride-meta__item--recurring" data-field="recurring">${icon('repeat')}${esc(r.recurring)}</li>`);
+  if (r.notes) items.push(`<li class="ride-meta__item ride-meta__item--note" data-field="notes">${icon('note')}${esc(r.notes)}</li>`);
+  return items.length ? `<ul class="ride-meta">${items.join('')}</ul>` : '';
+}
+function posterSub(r){
+  if (r.poster_sub) return `<span data-field="poster_sub">${esc(r.poster_sub)}</span>`;
+  if (r.rating) return rating(r);
+  if (r.source === 'whatsapp'){
+    return r.groups.length > 1
+      ? `<button class="poster__groups" data-field="group_names">${icon('groups')}Posted in ${r.groups.length} groups</button>`
+      : `<span data-field="group_names">from ${esc(r.groups[0].name)}</span>`;
+  }
+  if (r.source === 'facebook' && r.groups) return `<span data-field="group_names">from ${esc(r.groups[0].name)}</span>`;
+  return r.source === 'poparide' ? 'Poparide member' : `Facebook post · ${ago(r.posted_at)}`;
+}
+function poster(r, extra = ''){
+  const av = r.business
+    ? `<span class="avatar avatar--biz" aria-hidden="true">${icon('building')}</span>`
+    : `<span class="avatar ${avatarClass(r.poster_name)}" aria-hidden="true">${esc(initial(r.poster_name))}</span>`;
+  return `<div class="poster ${extra}">
+    ${av}
+    <div class="poster__text">
+      <span class="poster__line"><span class="poster__name" data-field="poster_name">${esc(r.poster_name)}</span>${r.verified ? `<span class="verified" title="Verified" data-field="verified">${icon('verified')}</span>` : ''}</span>
+      <span class="poster__sub">${!r.business && r.rider_tag ? riderTag(r) : posterSub(r)}</span>
+    </div>
+    ${sourceBadge(r)}
+  </div>`;
+}
+function cta(r, label){
+  if (r.source === 'whatsapp')
+    return `<div class="ride-card__cta"><a class="btn btn--wa" href="${waLink(r)}" target="_blank" rel="noopener" data-action="whatsapp">${icon('chat')}${label || 'Message on WhatsApp'}</a></div>`;
+  return `<div class="ride-card__cta"><a class="btn btn--outline" href="${r.external_url}" target="_blank" rel="noopener" data-action="external">View on ${SOURCE_LABEL[r.source]}${icon('external')}</a><p class="btn__hint">Opens ${SOURCE_DOMAIN[r.source]} · you'll leave Pathfynder</p></div>`;
+}
+
+/* ---------- Card ---------- */
+function messagePane(r){
+  const at = new Date(r.groups?.[0]?.posted_at || r.posted_at);
+  const bt = at.toLocaleTimeString('en-CA', { hour:'numeric', minute:'2-digit' }).replace(/\./g,'').toUpperCase();
+  return `<div class="swipe-pane swipe-pane--message" aria-label="Original message">
+    <div class="bubble bubble--card"><div class="bubble__name">${esc(r.poster_name)}</div><span class="bubble__text" data-field="raw_text">${esc(r.raw_text)}</span><span class="bubble__time">${bt}</span></div>
+  </div>`;
+}
+function renderRideCard(r){
+  if (!r.parsed) return renderRawCard(r);
+  const req = r.role === 'passenger';
+  const via = r.via?.length ? `<p class="route__via" data-field="via">via ${esc(r.via.slice(0,2).join(' · '))}${r.via.length > 2 ? ` · +${r.via.length - 2}` : ''}</p>` : '';
+  const details = `<div class="ride-card__top"><span class="ride-card__tags">${matchBadge(r)}${r.business ? riderTag(r) : ''}</span><span class="ride-card__ago" data-field="posted_at">${req ? 'Needs ride · ' : ''}posted ${ago(r.posted_at)}</span></div>
+    <div class="ride-card__main">
+      <div class="route">
+        <div class="route__stop route__stop--from"><span class="route__dot"></span><span class="route__city" data-field="from_city">${esc(r.from_city)}</span></div>
+        <div class="route__stop route__stop--to"><span class="route__dot"></span><span class="route__city" data-field="to_city">${esc(r.to_city)}</span></div>
+        ${via}
+      </div>
+      ${whenBlock(r)}
+    </div>
+    ${matchNote(r)}
+    ${metaList(r)}`;
+  /* WhatsApp + parsed Facebook posts: only this block slides; name row + CTA stay put */
+  const swipe = r.raw_text && r.source !== 'poparide';
+  const body = swipe ? `<div class="ride-card__swipe" data-swipe>
+      <div class="swipe-track"><div class="swipe-pane swipe-pane--details">${details}</div>${messagePane(r)}</div>
+    </div>
+    <div class="swipe-dots"><button class="swipe-dot is-on" aria-label="Show ride details"></button><button class="swipe-dot" aria-label="Show original message"></button><span class="swipe-hint">Swipe for original message</span></div>` : details;
+  return `<article class="ride-card ride-card--${r.source}${r.business ? ' ride-card--business' : ''}${req ? ' ride-card--request' : ''}" data-ride-id="${r.id}" tabindex="0">
+    ${body}
+    <div class="ride-card__foot">${poster(r)}${cta(r)}</div>
+  </article>`;
+}
+function renderRawCard(r){
+  return `<article class="ride-card ride-card--${r.source} ride-card--raw" data-ride-id="${r.id}" tabindex="0">
+    <div class="ride-card__top">${matchBadge({})}<span class="ride-card__ago">Details as posted</span></div>
+    ${poster(r, 'poster--top')}
+    <blockquote class="raw-post"><p class="raw-post__text" data-field="raw_text">${esc(r.raw_text)}</p><button class="raw-post__more" type="button">Read more</button></blockquote>
+    ${cta(r)}
+  </article>`;
+}
+function skeletonCard(){
+  return `<div class="ride-card" aria-hidden="true">
+    <div class="skel-row"><div class="skel" style="width:112px;height:22px"></div><div class="skel" style="width:70px;height:11px"></div></div>
+    <div class="skel-row" style="align-items:flex-start">
+      <div style="display:flex;flex-direction:column;gap:12px;flex:1"><div class="skel" style="width:62%;height:16px"></div><div class="skel" style="width:48%;height:16px"></div></div>
+      <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end"><div class="skel" style="width:76px;height:20px"></div><div class="skel" style="width:56px;height:12px"></div></div>
+    </div>
+    <div class="skel-row" style="justify-content:flex-start;gap:6px"><div class="skel" style="width:70px;height:24px"></div><div class="skel" style="width:60px;height:24px"></div><div class="skel" style="width:110px;height:24px"></div></div>
+    <div class="ride-card__foot">
+      <div class="skel-row" style="justify-content:flex-start"><div class="skel skel--circle" style="width:36px;height:36px"></div><div style="display:flex;flex-direction:column;gap:7px;flex:1"><div class="skel" style="width:40%;height:13px"></div><div class="skel" style="width:30%;height:11px"></div></div></div>
+      <div class="skel skel--pill" style="width:100%;height:44px"></div>
+    </div>
+  </div>`;
+}
+
+/* ---------- Page shell ---------- */
+function appBar(sub){
+  return `<header class="app-bar"><div class="app-bar__inner">
+    <a class="brand" href="https://pathfynder.ca" aria-label="Pathfynder home">${icon('pin')}</a>
+    <div class="app-bar__titles"><h1 class="app-bar__title">Explore rides</h1><p class="app-bar__sub"><b>Pathfynder</b> · <span class="js-result-count">${sub}</span></p></div>
+    <button class="icon-btn" aria-label="Get ride alerts">${icon('bell')}</button>
+  </div></header>`;
+}
+function searchPanel(c){
+  const seg = (v, ic, label) => `<button class="segmented__opt js-seg${c.mode === v ? ' is-active' : ''}" data-value="${v}" role="tab" aria-selected="${c.mode === v}">${icon(ic)}${label}</button>`;
+  const dc = (k, label) => `<button class="chip${c.date === k ? ' is-active' : ''}">${label}</button>`;
+  const active = c.active?.length ? `<div class="active-filters" data-bind="active-filters">
+      ${c.active.map(a => `<span class="chip chip--removable">${esc(a)}<button class="chip__x js-remove" aria-label="Remove ${esc(a)}">${icon('x')}</button></span>`).join('')}
+      <button class="link-btn">Clear all</button></div>` : '';
+  return `<section class="search-panel">
+    <div class="segmented" role="tablist" aria-label="What are you looking for">${seg('driver','car','Find a driver')}${seg('passenger','user','Find passengers')}</div>
+    <div class="route-input">
+      <div class="route-input__fields">
+        <label class="route-input__field"><span class="route-input__dot"></span><span class="route-input__label">From</span><input class="js-from" name="from" placeholder="Leaving from" value="${esc(c.from)}" autocomplete="off"></label>
+        <label class="route-input__field"><span class="route-input__dot route-input__dot--to"></span><span class="route-input__label">To</span><input class="js-to" name="to" placeholder="Going to" value="${esc(c.to)}" autocomplete="off"></label>
+      </div>
+      <button class="swap-btn js-swap" aria-label="Swap from and to">${icon('swap')}</button>
+    </div>
+    <div class="search-row">
+      <div class="chip-group js-chips" data-filter="date">${dc('Today','Today')}${dc('Tomorrow','Tomorrow')}<button class="chip${c.date === 'Pick' ? ' is-active' : ' chip--icon'}" aria-label="Pick a date">${icon('calendar')}${c.date === 'Pick' ? c.dateText : ''}</button>
+      <button class="chip${c.time ? ' is-active' : ' chip--icon'}" data-action="open-time" aria-label="Pick an exact time">${icon('clock')}${c.time || ''}</button></div>
+      <button class="filter-btn" data-action="open-filters">${icon('sliders')}Filters${c.active?.length ? `<span class="filter-btn__count">${c.active.length}</span>` : ''}</button>
+    </div>
+    ${active}
+  </section>`;
+}
+function prefillBar(c){
+  return `<div class="prefill">
+    ${icon('search')}
+    <div class="prefill__text"><span class="prefill__eyebrow">Showing results for</span>
+      <span class="prefill__query"><span data-field="type">${c.mode === 'driver' ? 'Drivers' : 'Passengers'}</span> · <span data-field="from">${esc(c.from)}</span> → <span data-field="to">${esc(c.to)}</span> · <span data-field="date">${esc(c.date === 'Today' ? 'Today' : c.dateText)}</span></span></div>
+    <button class="btn-text js-edit">${icon('pencil')}Edit</button>
+  </div>`;
+}
+function resultsHead(c, n){
+  const noun = c.mode === 'passenger' ? `${plural(n,'passenger')} along your route`
+    : c.info ? `${plural(n,'driver')} pass${n === 1 ? 'es' : ''} near your route` : `${plural(n,'driver')} going your way`;
+  return `<div class="results-head"><div class="results-bar">
+      <h2 class="results-title"><span data-bind="result-title">${noun}</span><span class="results-title__date">${esc(c.dateText)}</span></h2>
+      <label class="sort"><select class="js-sort" aria-label="Sort"><option value="best">Best match</option><option value="soonest">Soonest</option><option value="cheapest">Cheapest</option></select>${icon('chev')}</label>
+    </div></div>
+    ${c.info ? `<p class="info-line">${icon('info')}<span>No direct rides — these drivers pass close to your route</span></p>` : ''}`;
+}
+function listHTML(sections){
+  return sections.map(([kind, ids]) => {
+    const list = ids.map(id => renderRideCard(BY_ID[id])).join('');
+    if (kind === 'fb') return `<h3 class="list-section">${icon('info')}Posts we couldn't match <small>· details as written</small></h3>${list}`;
+    return list;
+  }).join('');
+}
+function emptyState(c){
+  return `<div class="empty-card">
+    <div class="empty__art" aria-hidden="true">
+      <svg width="52" height="52" viewBox="0 0 52 52" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="14" cy="38" r="4"/><path d="M38 22s-7-6.5-7-11.5a7 7 0 0 1 14 0C45 15.5 38 22 38 22z"/><circle cx="38" cy="10.5" r="2"/>
+        <path d="M18 38h10a6 6 0 0 0 0-12h-2a6 6 0 0 1 0-12h1" stroke-dasharray="3 4"/></svg>
+    </div>
+    <h2 class="empty__title">No drivers going your way yet</h2>
+    <p class="empty__text">Nobody has posted ${esc(c.from)} → ${esc(c.to)} for ${esc(c.dateText)}. We'll message you on WhatsApp as soon as a driver does.</p>
+    <div class="empty__actions">
+      <a class="btn btn--wa" href="#" data-action="notify-bot">${icon('bell')}Get a WhatsApp alert when one appears</a>
+      <a class="btn btn--outline" href="#" data-action="post-in-group">${icon('plus')}Post in our WhatsApp group</a>
+    </div>
+    <div class="suggest">
+      <p class="suggest__title">Drivers on nearby dates</p>
+      <div class="chip-group chip-group--wrap">
+        <button class="chip chip--suggest">${icon('calendar')}Sat 26 <b>· 2 drivers</b></button>
+        <button class="chip chip--suggest">${icon('calendar')}Mon 28 <b>· 3 drivers</b></button>
+        <button class="chip chip--suggest">${icon('calendar')}Tue 29 <b>· 1 driver</b></button>
+      </div>
+      <p class="suggest__title" style="margin-top:14px">Close routes</p>
+      <div class="chip-group chip-group--wrap">
+        <button class="chip chip--suggest">${icon('pin')}Kitchener → St. Catharines <b>· 1</b></button>
+        <button class="chip chip--suggest">${icon('pin')}Cambridge → Niagara Falls <b>· 2</b></button>
+      </div>
+    </div>
+  </div>`;
+}
+function renderApp(c){
+  const foot = `<footer class="app-footer"><p><strong>Rideshare you know, now organized.</strong></p><a href="https://pathfynder.ca">pathfynder.ca</a></footer>`;
+  const top = c.prefill ? prefillBar(c) : searchPanel(c);
+  if (c.state === 'loading'){
+    return appBar('Finding rides…') + `<div class="app__col">${top}
+      <div class="results-head"><div class="skel-row"><div class="skel" style="width:190px;height:15px"></div><div class="skel" style="width:84px;height:12px"></div></div></div>
+      <div class="ride-list">${Array.from({length:3}, skeletonCard).join('')}</div></div>`;
+  }
+  if (c.state === 'empty') return appBar('0 rides') + `<div class="app__col">${top}<div class="ride-list" style="padding-top:12px">${emptyState(c)}</div>${foot}</div>`;
+  const n = c.sections.filter(s => s[0] === 'main').reduce((a, s) => a + s[1].length, 0);
+  const total = c.sections.reduce((a, s) => a + s[1].length, 0);
+  return appBar(plural(total, 'ride')) + `<div class="app__col">${top}${resultsHead(c, n)}<div class="ride-list">${listHTML(c.sections)}</div>${foot}</div>`;
+}
+
+/* ---------- Filters sheet ---------- */
+function renderFiltersSheet(){
+  const chips = (list, on) => list.map(([l, s]) => `<button class="chip${on.includes(l) ? ' is-active' : ''}">${l}${s ? ` <small>${s}</small>` : ''}</button>`).join('');
+  const toggle = (label, sub, on, field) => `<div class="toggle-row"><div class="toggle-row__text"><strong>${label}</strong>${sub ? `<small>${sub}</small>` : ''}</div><button class="switch js-switch" role="switch" aria-checked="${on}" data-filter="${field}" aria-label="${label}"></button></div>`;
+  return `<div class="sheet__grabber"></div>
+    <div class="sheet__head sheet__head--title"><h2>Filters</h2><button class="link-btn">Reset</button></div>
+    <div class="sheet__body" style="gap:0">
+      <section class="fs-section" style="border-top:0">
+        <h3 class="fs-title">Match type</h3>
+        <div class="js-radios" data-filter="match_type">
+          <label class="radio-row"><span class="radio"></span><span class="radio-row__text"><strong>Direct only</strong><small>Driver starts and ends near you</small></span></label>
+          <label class="radio-row"><span class="radio is-on"></span><span class="radio-row__text"><strong>Include “passes near you”</strong><small>Driver's route goes past your pickup and drop-off</small></span></label>
+        </div>
+      </section>
+      <section class="fs-section"><h3 class="fs-title">Time of day</h3>
+        <div class="chip-group chip-group--wrap js-multi" data-filter="time_of_day">${chips([['Morning','5–12'],['Afternoon','12–5'],['Evening','5–9'],['Night','9–5']], [])}</div>
+        <button class="exact-row" data-action="open-time">${icon('clock')}<span class="exact-row__text"><strong>Exact time</strong><small>Leave around a set time, ± how flexible you are</small></span><span class="exact-row__val">Set</span>${icon('chev-r')}</button></section>
+      <section class="fs-section"><h3 class="fs-title">Source</h3>
+        <div class="chip-group chip-group--wrap js-multi" data-filter="source">${chips([['WhatsApp'],['Poparide'],['Facebook']], ['WhatsApp','Poparide'])}</div></section>
+      <section class="fs-section"><h3 class="fs-title">More</h3>
+        ${toggle('Verified only','Poparide ID-verified drivers', false, 'verified_only')}
+        ${toggle('Hide business operators','Shuttles and door-to-door services', false, 'hide_business')}
+        ${toggle('Luggage OK','Drivers who accept a bag', false, 'luggage_ok')}
+      </section>
+    </div>
+    <div class="sheet__foot"><button class="btn btn--ghost">Clear all</button><button class="btn btn--primary">Show 4 drivers</button></div>`;
+}
+
+/* ---------- Exact time picker ---------- */
+function renderTimeSheet(){
+  const col = (vals, sel, field) => `<div class="wheel-col" data-field="${field}">${vals.map((v, i) => `<span class="${i === sel ? 'is-sel' : Math.abs(i - sel) === 1 ? 'n1' : ''}">${v}</span>`).join('')}</div>`;
+  const flex = [['Exact'],['± 15 min'],['± 30 min'],['± 1 hr'],['± 2 hr']];
+  return `<div class="sheet__grabber"></div>
+    <div class="sheet__head sheet__head--title"><h2>Leave around</h2><button class="link-btn">Clear</button></div>
+    <div class="sheet__body" style="gap:0">
+      <div class="time-wheel" role="group" aria-label="Departure time">
+        ${col(['4','5','6','7','8'], 2, 'hour')}<span class="wheel-sep">:</span>${col(['50','55','00','05','10'], 2, 'minute')}${col(['','AM','PM','',''], 2, 'ampm')}
+      </div>
+      <p class="time-summary">${icon('clock')}Rides leaving <b>5:00 – 7:00 PM</b></p>
+      <section class="fs-section"><h3 class="fs-title">How flexible are you?</h3>
+        <div class="chip-group chip-group--wrap js-chips" data-filter="time_flex">${flex.map(([l]) => `<button class="chip${l === '± 1 hr' ? ' is-active' : ''}">${l}</button>`).join('')}</div></section>
+      <section class="fs-section"><h3 class="fs-title">Or pick a time of day</h3>
+        <div class="chip-group chip-group--wrap js-chips" data-filter="time_of_day">${[['Morning','5–12'],['Afternoon','12–5'],['Evening','5–9'],['Night','9–5']].map(([l, s]) => `<button class="chip">${l} <small>${s}</small></button>`).join('')}</div></section>
+    </div>
+    <div class="sheet__foot"><button class="btn btn--ghost">Cancel</button><button class="btn btn--primary">Set 6:00 PM ± 1 hr</button></div>`;
+}
+
+/* ---------- Detail sheet ---------- */
+function routeStrip(s){
+  const dots = s.points.map((p, i) => {
+    const edge = (i === 0 ? ' rs-label--start' : (i === s.points.length - 1 ? ' rs-label--end' : '')) + (p.kind === 'you' ? ' rs-label--you' : '');
+    return `<span class="rs-dot rs-dot--${p.kind}" style="left:${p.pct}%"></span>
+      <span class="rs-label${edge}" style="left:${p.pct}%"><b>${esc(p.label)}</b>${esc(p.sub)}</span>`;
+  }).join('');
+  const kms = s.segs.map(g => `<span class="rs-km" style="left:${(g.a + g.b) / 2}%">${g.km}</span>`).join('');
+  return `<div class="route-strip" data-field="route_strip">
+    <div class="route-strip__track"><span class="route-strip__ride" style="left:${s.ride[0]}%;width:${s.ride[1] - s.ride[0]}%"></span>${kms}${dots}</div>
+    <div class="route-strip__legend"><span><i class="lg lg--driver"></i>Driver's route</span><span><i class="lg lg--you"></i>Your part of the trip</span></div>
+  </div>`;
+}
+function renderRideDetail(r){
+  const t = timeText(r);
+  const grid = [
+    ['Departs', t || 'Flexible'],
+    r.arrive_time ? ['Arrives', fmtTime(r.arrive_time)] : null,
+    r.seats ? [r.role === 'driver' ? 'Seats left' : 'Seats needed', r.seats] : null,
+    r.price_per_seat ? ['Price', `${r.price_from ? 'from ' : ''}$${r.price_per_seat} per seat`] : null,
+    r.luggage ? ['Luggage', r.luggage] : null,
+    r.recurring ? ['Repeats', r.recurring] : null,
+  ].filter(Boolean).map(([k, v]) => `<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join('');
+  const trust = [
+    r.rating ? `<li><span class="trust-ico" style="color:var(--star)"><svg class="i" style="fill:currentColor"><use href="#i-star"/></svg></span><span><b style="color:var(--text)">${r.rating.toFixed(1)}</b> from ${r.rating_count} ratings</span></li>` : '',
+    r.verified ? `<li><span class="trust-ico">${icon('verified')}</span><span>Verified on ${SOURCE_LABEL[r.source]}</span></li>` : '',
+    r.replies ? `<li><span class="trust-ico">${icon('clock')}</span><span>${esc(r.replies)}</span></li>` : '',
+  ].join('');
+  const groups = r.groups ? `<section class="sheet-block"><h3 class="sheet-block__label">Shared on WhatsApp in ${plural(r.groups.length,'group')}</h3>
+      <ul class="group-list">${r.groups.map(g => `<li><span class="g-ico">${icon('groups')}</span><span>${esc(g.name)}</span><small>${ago(g.posted_at)}</small></li>`).join('')}</ul></section>` : '';
+  const bubble = r.source === 'whatsapp' && r.raw_text ? (() => {
+    const first = new Date(r.groups[0].posted_at);
+    const bt = first.toLocaleTimeString('en-CA', { hour:'numeric', minute:'2-digit' }).replace(/\./g,'').toUpperCase();
+    return `<section class="sheet-block"><h3 class="sheet-block__label">Original message</h3><div class="wa-chat">
+      <span class="wa-chat__day">${dayDiff(r.groups[0].posted_at.slice(0,10)) === -1 ? 'YESTERDAY' : 'TODAY'}</span>
+      <div class="bubble"><div class="bubble__name">${esc(r.poster_name)}</div><span class="bubble__text" data-field="raw_text">${esc(r.raw_text)}</span><span class="bubble__time">${bt}</span></div></div></section>`;
+  })() : '';
+  const ctaHTML = r.source === 'whatsapp'
+    ? `<a class="btn btn--wa" href="${waLink(r)}" target="_blank" rel="noopener">${icon('chat')}Message ${esc(greetName(r.poster_name))} on WhatsApp</a><p class="btn__hint">Opens WhatsApp with a message ready to send</p>`
+    : `<a class="btn btn--outline btn--strong" href="${r.external_url}" target="_blank" rel="noopener">View on ${SOURCE_LABEL[r.source]}${icon('external')}</a><p class="btn__hint">Opens ${SOURCE_DOMAIN[r.source]} to book · you'll leave Pathfynder</p>`;
+  return `<div class="sheet__grabber"></div>
+    <div class="sheet__body">
+      <div class="sheet__head">${matchBadge(r)}<button class="icon-btn" aria-label="Close">${icon('x')}</button></div>
+      <div>
+        <h2 class="sheet__title">${esc(r.from_city)} → ${esc(r.to_city)}</h2>
+        <p class="sheet__subtitle">${esc(dayLabel(r.ride_date, true))} · ${t ? esc(t) : 'Time flexible'}${r.arrive_time ? ' → ' + fmtTime(r.arrive_time) : ''}</p>
+        ${matchNote(r)}
+      </div>
+      ${r.match?.strip ? `<section class="sheet-block"><h3 class="sheet-block__label">How this ride fits your trip</h3>${routeStrip(r.match.strip)}</section>` : ''}
+      <section class="sheet-block"><dl class="detail-grid">${grid}</dl></section>
+      ${r.pickup_points?.length ? `<section class="sheet-block"><h3 class="sheet-block__label">Pickup points</h3><div class="chip-group chip-group--wrap">${r.pickup_points.map(p => `<span class="chip chip--static">${icon('pin')}${esc(p)}</span>`).join('')}</div></section>` : ''}
+      ${r.description ? `<section class="sheet-block"><h3 class="sheet-block__label">From the driver</h3><blockquote class="raw-post raw-post--desc"><p class="raw-post__text" data-field="description">${esc(r.description)}</p><button class="raw-post__more" type="button">Read more</button></blockquote></section>` : ''}
+      <section class="sheet-block"><h3 class="sheet-block__label">${r.role === 'driver' ? 'Driver' : 'Rider'}</h3>${poster(r, 'poster--top')}${trust ? `<ul class="trust-list">${trust}</ul>` : ''}</section>
+      ${groups}
+      ${bubble}
+    </div>
+    <div class="sheet__cta">${ctaHTML}</div>`;
+}
+
+/* ---------- Mount ---------- */
+document.querySelectorAll('[data-app]').forEach(el => el.innerHTML = renderApp(APPS[el.dataset.app]));
+document.querySelectorAll('[data-render-detail]').forEach(el => el.innerHTML = renderRideDetail(BY_ID[el.dataset.renderDetail]));
+document.querySelectorAll('[data-render-filters]').forEach(el => el.innerHTML = renderFiltersSheet());
+document.querySelectorAll('[data-render-time]').forEach(el => el.innerHTML = renderTimeSheet());
+
+/* ---------- Swipe: details ⇄ original message ---------- */
+function setSwipe(box, on){
+  box.classList.toggle('is-swiped', on);
+  const card = box.closest('.ride-card');
+  card.querySelectorAll('.swipe-dot').forEach((d, i) => d.classList.toggle('is-on', on ? i === 1 : i === 0));
+  card.querySelector('.swipe-hint').textContent = on ? 'Original message · swipe back' : 'Swipe for original message';
+}
+Object.entries(APPS).forEach(([key, c]) => (c.swiped || []).forEach(id =>
+  document.querySelectorAll(`[data-app="${key}"] [data-ride-id="${id}"] [data-swipe]`).forEach(b => setSwipe(b, true))));
+let drag = null;
+const GAP = 14;
+document.addEventListener('pointerdown', e => {
+  const box = e.target.closest('[data-swipe]'); if (!box) return;
+  drag = { box, x:e.clientX, y:e.clientY, dx:0, w:box.clientWidth, on:box.classList.contains('is-swiped'), moved:false };
+});
+document.addEventListener('pointermove', e => {
+  if (!drag) return;
+  const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+  if (!drag.moved){
+    if (Math.abs(dx) < 6) return;
+    if (Math.abs(dy) > Math.abs(dx)) { drag = null; return; }
+    drag.moved = true; drag.box.classList.add('is-dragging');
+  }
+  drag.dx = dx;
+  const x = Math.max(-(drag.w + GAP), Math.min(0, (drag.on ? -(drag.w + GAP) : 0) + dx));
+  drag.box.querySelector('.swipe-track').style.transform = `translateX(${x}px)`;
+});
+function endDrag(){
+  if (!drag) return;
+  const { box, dx, on, moved } = drag; drag = null;
+  box.classList.remove('is-dragging'); box.querySelector('.swipe-track').style.transform = '';
+  if (!moved) return;
+  if (!on && dx < -50) setSwipe(box, true); else if (on && dx > 50) setSwipe(box, false);
+}
+document.addEventListener('pointerup', endDrag);
+document.addEventListener('pointercancel', endDrag);
+
+/* Read more: only show when the text is actually clamped */
+function checkClamps(){
+  document.querySelectorAll('.raw-post').forEach(b => {
+    if (b.classList.contains('is-open')) return;
+    const p = b.querySelector('.raw-post__text');
+    b.classList.toggle('has-more', p.scrollHeight > p.clientHeight + 1);
+  });
+}
+
+/* ---------- Interactions (review only) ---------- */
+document.addEventListener('click', e => {
+  const more = e.target.closest('.raw-post__more');
+  if (more){ const b = more.closest('.raw-post'); b.classList.toggle('is-open'); more.textContent = b.classList.contains('is-open') ? 'Show less' : 'Read more'; return; }
+  const dot = e.target.closest('.swipe-dot');
+  if (dot){ const box = dot.closest('.ride-card').querySelector('[data-swipe]'); setSwipe(box, dot.parentElement.querySelectorAll('.swipe-dot')[1] === dot); return; }
+  const multi = e.target.closest('.js-multi .chip');
+  if (multi){ multi.classList.toggle('is-active'); return; }
+  const sw = e.target.closest('.js-switch');
+  if (sw){ sw.setAttribute('aria-checked', sw.getAttribute('aria-checked') !== 'true'); return; }
+  const radio = e.target.closest('.js-radios .radio-row');
+  if (radio){ radio.parentElement.querySelectorAll('.radio').forEach(r => r.classList.toggle('is-on', r.parentElement === radio)); return; }
+  const rm = e.target.closest('.js-remove');
+  if (rm){ rm.closest('.chip').remove(); return; }
+  const chip = e.target.closest('.js-chips .chip');
+  if (chip){ chip.parentElement.querySelectorAll('.chip').forEach(c => c.classList.toggle('is-active', c === chip)); return; }
+  const seg = e.target.closest('.js-seg');
+  if (seg){ seg.parentElement.querySelectorAll('.js-seg').forEach(s => { s.classList.toggle('is-active', s === seg); s.setAttribute('aria-selected', s === seg); }); return; }
+  const swap = e.target.closest('.js-swap');
+  if (swap){ const box = swap.closest('.route-input'); const a = box.querySelector('.js-from'), b = box.querySelector('.js-to'); [a.value, b.value] = [b.value, a.value]; [a.placeholder, b.placeholder] = [b.placeholder, a.placeholder]; return; }
+  const btn = e.target.closest('[data-theme-set]');
+  if (btn){
+    const v = btn.dataset.themeSet;
+    if (v === 'system') document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme', v);
+    document.querySelectorAll('[data-theme-set]').forEach(b => b.setAttribute('aria-pressed', b === btn));
+    return;
+  }
+  if (e.target.closest('a[href="#"]')) e.preventDefault();
+});
+
+/* Desktop frame scaling */
+function fitDesktop(){
+  document.querySelectorAll('.desktop-viewport').forEach(v => {
+    const sc = v.firstElementChild, s = Math.min(1, v.clientWidth / 1280);
+    sc.style.transform = `scale(${s})`; v.style.height = (900 * s) + 'px';
+  });
+}
+window.addEventListener('resize', () => { fitDesktop(); checkClamps(); });
+fitDesktop(); checkClamps();
+</script>
+</body>
+</html>
