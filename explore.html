@@ -595,14 +595,16 @@ var state = {
   sheet: null, sheetRow: null,
   nearby: [],
   unresolved: { from: null, to: null },
+  origin: initial_.from ? 'typed' : null,
   landingEnabled: !(initial_.from || initial_.to),
   landingMode: 'browse', landingInfo: null,
   loc: { status: 'checking', coords: null, nearestName: null, justGranted: false },
   groupCard: { collapsed: false, message: null, messageKind: null, submitting: false, sentUrl: null },
   pendingRows: null, refreshInFlight: false,
 };
+if (state.date && state.date < torontoTodayStr(0)) state.date = torontoTodayStr(0);
 if (initial_.date) {
-  var dd = dayDiff(initial_.date);
+  var dd = dayDiff(state.date);
   state.dateChip = dd === 0 ? 'Today' : (dd === 1 ? 'Tomorrow' : 'Pick');
 }
 
@@ -903,8 +905,12 @@ function performLandingSearch(mode, isFallback) {
     dbg('explore_search (' + mode + ') rows:', rows.length);
     if (seq !== searchSeq) return;
     state.loading = false; state.error = false;
-    if (mode === 'near' && rows.length === 0) {
+    /* Only a GPS-derived near-me search with zero results widens to browse
+       (all rides) — a typed From with zero results is a real empty state,
+       never auto-widened. */
+    if (mode === 'near' && state.origin === 'gps' && rows.length === 0) {
       state.landingMode = 'browse'; state.landingInfo = 'no-near';
+      state.fromPlace = null; state.origin = null;
       performLandingSearch('browse', true);
       return;
     }
@@ -1023,6 +1029,7 @@ function resolveNearestPlace() {
       state.from = best.name;
       state.fromPlace = { name: best.name, lat: best.lat, lng: best.lng };
       state.unresolved.from = null;
+      state.origin = 'gps';
     }
   });
 }
@@ -1406,10 +1413,17 @@ function emptyState() {
   var nearbyHTML = c.nearby.length ? '<div class="suggest"><p class="suggest__title">Drivers on nearby dates</p><div class="chip-group chip-group--wrap">' +
     c.nearby.map(function (n) { return '<button type="button" class="chip chip--suggest js-nearby-date" data-date="' + n.date + '">' + icon('calendar') + esc(dayLabel(n.date)) + ' <b>· ' + plural(n.n, state.mode === 'driver' ? 'driver' : 'passenger') + '</b></button>'; }).join('') +
     '</div></div>' : '';
+  var hasTo = !!c.toPlace;
+  var title = hasTo
+    ? ('No ' + (state.mode === 'driver' ? 'drivers' : 'passengers') + ' going your way yet')
+    : ('No ' + (state.mode === 'driver' ? 'drivers' : 'passengers') + ' from ' + esc(c.from) + ' yet');
+  var body = hasTo
+    ? ('Nobody has posted ' + esc(c.from) + ' → ' + esc(c.to) + (c.date ? (' for ' + esc(dayLabel(c.date))) : '') + '. We\'ll message you on WhatsApp as soon as one does.')
+    : ('Nobody has posted from ' + esc(c.from) + (c.date ? (' for ' + esc(dayLabel(c.date))) : '') + ' yet. We\'ll message you on WhatsApp as soon as one does.');
   return '<div class="empty-card"><div class="empty__art" aria-hidden="true">' +
     '<svg width="52" height="52" viewBox="0 0 52 52" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="14" cy="38" r="4"/><path d="M38 22s-7-6.5-7-11.5a7 7 0 0 1 14 0C45 15.5 38 22 38 22z"/><circle cx="38" cy="10.5" r="2"/><path d="M18 38h10a6 6 0 0 0 0-12h-2a6 6 0 0 1 0-12h1" stroke-dasharray="3 4"/></svg></div>' +
-    '<h2 class="empty__title">No ' + (state.mode === 'driver' ? 'drivers' : 'passengers') + ' going your way yet</h2>' +
-    '<p class="empty__text">Nobody has posted ' + esc(c.from) + ' → ' + esc(c.to) + (c.date ? (' for ' + esc(dayLabel(c.date))) : '') + '. We\'ll message you on WhatsApp as soon as one does.</p>' +
+    '<h2 class="empty__title">' + title + '</h2>' +
+    '<p class="empty__text">' + body + '</p>' +
     '<div class="empty__actions">' +
     '<!-- TODO: ride-alert bot link not built yet --><a class="btn btn--wa" href="#" data-action="noop">' + icon('bell') + 'Get a WhatsApp alert when one appears</a>' +
     '<!-- TODO: post-in-group bot link not built yet --><a class="btn btn--outline" href="#" data-action="noop">' + icon('plus') + 'Post in our WhatsApp group</a>' +
@@ -1470,7 +1484,7 @@ function renderLanding() {
   } else if (state.error) {
     app.innerHTML = appBar('—') + '<div class="app__col">' + top + card + '<div class="ride-list" style="padding-top:12px">' + errorCard() + '</div>' + foot + '</div>';
   } else if (!state.rows.length) {
-    app.innerHTML = appBar('0 rides') + '<div class="app__col">' + top + card + '<div class="ride-list" style="padding-top:12px">' + (shouldShowGroupCard(state.rows) ? groupLinkCard() : '') + landingEmpty() + '</div>' + foot + '</div>';
+    app.innerHTML = appBar('0 rides') + '<div class="app__col">' + top + card + '<div class="ride-list" style="padding-top:12px">' + (shouldShowGroupCard(state.rows) ? groupLinkCard() : '') + (state.fromPlace ? emptyState() : landingEmpty()) + '</div>' + foot + '</div>';
   } else {
     var rows = sortedRows();
     var landingOpts = { hideBadge: true, distanceNote: !!(state.fromPlace || state.landingMode === 'near') };
@@ -1748,7 +1762,7 @@ function setSearchInputs() {
   var fromEl = document.querySelector('.js-from'), toEl = document.querySelector('.js-to');
   if (!fromEl) return;
   wireAutocomplete(fromEl, document.getElementById('acFrom'), function (place) {
-    state.from = place.name; state.fromPlace = place; state.unresolved.from = null; fromEl.value = place.name;
+    state.from = place.name; state.fromPlace = place; state.unresolved.from = null; state.origin = 'typed'; fromEl.value = place.name;
     maybeSearch();
   });
   wireAutocomplete(toEl, document.getElementById('acTo'), function (place) {
@@ -1758,8 +1772,8 @@ function setSearchInputs() {
   fromEl.addEventListener('change', function () {
     var v = fromEl.value.trim();
     state.from = fromEl.value;
-    if (!v) { state.fromPlace = null; state.unresolved.from = null; searchOrRender(); }
-    else if (state.fromPlace && v !== state.fromPlace.name) { state.fromPlace = null; state.unresolved.from = v; render(); }
+    if (!v) { state.fromPlace = null; state.unresolved.from = null; state.origin = null; searchOrRender(); }
+    else if (state.fromPlace && v !== state.fromPlace.name) { state.fromPlace = null; state.unresolved.from = v; state.origin = null; render(); }
   });
   toEl.addEventListener('change', function () {
     var v = toEl.value.trim();
@@ -1819,6 +1833,7 @@ document.addEventListener('click', function (e) {
   var swap = t.closest('.js-swap');
   if (swap) {
     var f = state.from, tp = state.fromPlace; state.from = state.to; state.fromPlace = state.toPlace; state.to = f; state.toPlace = tp;
+    state.origin = state.fromPlace ? 'typed' : null;
     searchOrRender();
     return;
   }
