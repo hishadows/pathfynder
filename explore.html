@@ -560,6 +560,15 @@ function normPlace(s) { return String(s || '').toLowerCase().replace(/\./g, '').
 function defaultFilters() {
   return { sources: ['whatsapp', 'poparide', 'facebook'], match: null, time_of_day: [], time: null, flexMin: null, urgent: false, airport: false, daily: false, verified_only: false, hide_business: false, luggage_ok: false };
 }
+function parseLatLng(str) {
+  if (!str) return null;
+  var parts = str.split(',');
+  if (parts.length !== 2) return null;
+  var lat = Number(parts[0]), lng = Number(parts[1]);
+  if (!isFinite(lat) || !isFinite(lng)) return null;
+  if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
+  return { lat: lat, lng: lng };
+}
 function parseUrl() {
   var p = new URLSearchParams(location.search);
   var src = p.get('src'), tod = p.get('tod'), rt = (p.get('rt') || '').split(',').filter(Boolean);
@@ -567,6 +576,8 @@ function parseUrl() {
     mode: p.get('type') === 'passenger' ? 'passenger' : 'driver',
     from: p.get('from') || '',
     to: p.get('to') || '',
+    oCoords: parseLatLng(p.get('o')),
+    dCoords: parseLatLng(p.get('d')),
     date: p.get('date') || null,
     sort: p.get('sort') || 'best',
     filters: {
@@ -877,6 +888,8 @@ function syncUrl() {
   } else if (state.landingEnabled && state.landingMode === 'near' && state.loc.status === 'granted' && state.loc.coords) {
     p.set('near', '1');
   }
+  if (state.fromPlace && state.origin !== 'gps') p.set('o', state.fromPlace.lat.toFixed(5) + ',' + state.fromPlace.lng.toFixed(5));
+  if (state.toPlace) p.set('d', state.toPlace.lat.toFixed(5) + ',' + state.toPlace.lng.toFixed(5));
   if (state.date) p.set('date', state.date);
   if (state.sort && state.sort !== 'best') p.set('sort', state.sort);
   var f = state.filters;
@@ -2015,7 +2028,10 @@ function boot() {
   var cache = loadPlacesCache();
   var jobs = [];
   if (state.from) {
-    if (cache && cache.from && normPlace(cache.from.name) === normPlace(state.from)) {
+    if (initial_.oCoords) {
+      state.fromPlace = { name: state.from, lat: initial_.oCoords.lat, lng: initial_.oCoords.lng };
+      state.unresolved.from = null;
+    } else if (cache && cache.from && normPlace(cache.from.name) === normPlace(state.from)) {
       state.fromPlace = cache.from; state.from = cache.from.name; state.unresolved.from = null;
     } else {
       jobs.push(resolvePlace(state.from).then(function (p) {
@@ -2025,7 +2041,10 @@ function boot() {
     }
   }
   if (state.to) {
-    if (cache && cache.to && normPlace(cache.to.name) === normPlace(state.to)) {
+    if (initial_.dCoords) {
+      state.toPlace = { name: state.to, lat: initial_.dCoords.lat, lng: initial_.dCoords.lng };
+      state.unresolved.to = null;
+    } else if (cache && cache.to && normPlace(cache.to.name) === normPlace(state.to)) {
       state.toPlace = cache.to; state.to = cache.to.name; state.unresolved.to = null;
     } else {
       jobs.push(resolvePlace(state.to).then(function (p) {
