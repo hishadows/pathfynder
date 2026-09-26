@@ -547,6 +547,9 @@ var state = {
   sheet: null, sheetRow: null,
   nearby: [],
   unresolved: { from: null, to: null },
+  landingEnabled: !(initial_.from || initial_.to),
+  landingMode: 'browse', landingInfo: null,
+  loc: { status: 'checking', coords: null, nearestName: null },
 };
 if (initial_.date) {
   var dd = dayDiff(initial_.date);
@@ -677,6 +680,119 @@ function syncUrl() {
   history.replaceState(null, '', location.pathname + '?' + p.toString());
 }
 
+/* ---------- Landing (no from/to in URL): NEAR ME / BROWSE ----------
+   Coordinates live only in state.loc.coords (memory), and are only ever
+   sent in the explore_search RPC body — never in the URL or storage. */
+function searchOrRender() {
+  if (state.fromPlace && state.toPlace) runSearch();
+  else if (state.landingEnabled) refreshLanding();
+  else render();
+}
+function refreshLanding() {
+  var mode = (state.loc.status === 'granted' && state.loc.coords) ? 'near' : 'browse';
+  state.landingMode = mode;
+  state.landingInfo = null;
+  performLandingSearch(mode, false);
+}
+function performLandingSearch(mode, isFallback) {
+  var seq = ++searchSeq;
+  state.loading = true; state.error = false;
+  render();
+  var coords = mode === 'near' ? state.loc.coords : null;
+  var params = {
+    p_mode: state.mode === 'passenger' ? 'passengers' : 'drivers',
+    p_o_lat: coords ? coords.lat : null,
+    p_o_lng: coords ? coords.lng : null,
+    p_d_lat: null,
+    p_d_lng: null,
+    p_date: null,
+    p_filters: buildFilters(state.filters),
+  };
+  db.rpc('explore_search', params).then(function (res) {
+    if (res.error) throw res.error;
+    return res.data || [];
+  }).catch(function (err) {
+    if (err && (err.code === '42883' || /does not exist/i.test(err.message || ''))) {
+      return window.EXPLORE_MOCK ? window.EXPLORE_MOCK.search(params) : [];
+    }
+    throw err;
+  }).then(function (rows) {
+    if (seq !== searchSeq) return;
+    state.loading = false; state.error = false;
+    if (mode === 'near' && rows.length === 0) {
+      state.landingMode = 'browse'; state.landingInfo = 'no-near';
+      performLandingSearch('browse', true);
+      return;
+    }
+    state.landingMode = mode;
+    if (!isFallback) state.landingInfo = null;
+    state.rows = rows;
+    render();
+  }).catch(function (err) {
+    if (seq !== searchSeq) return;
+    console.error('explore_search failed:', err);
+    state.loading = false; state.error = true; state.rows = [];
+    render();
+  });
+}
+var popularPlacesPromise = null;
+function fetchPopularPlaces() {
+  if (popularPlacesPromise) return popularPlacesPromise;
+  popularPlacesPromise = db
+    ? db.from('places').select('name,lat,lng').gte('popularity', 20).then(function (res) { return res.data || []; }).catch(function () { return []; })
+    : Promise.resolve([]);
+  return popularPlacesPromise;
+}
+function haversineKm(lat1, lng1, lat2, lng2) {
+  var R = 6371, toRad = Math.PI / 180;
+  var dLat = (lat2 - lat1) * toRad, dLng = (lng2 - lng1) * toRad;
+  var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(lat1 * toRad) * Math.cos(lat2 * toRad) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+function resolveNearestPlace() {
+  return fetchPopularPlaces().then(function (places) {
+    if (!places.length || !state.loc.coords) return;
+    var best = null, bestD = Infinity;
+    places.forEach(function (p) {
+      if (p.lat == null || p.lng == null) return;
+      var d = haversineKm(state.loc.coords.lat, state.loc.coords.lng, p.lat, p.lng);
+      if (d < bestD) { bestD = d; best = p; }
+    });
+    if (best) {
+      state.loc.nearestName = best.name;
+      state.from = best.name;
+      state.fromPlace = { name: best.name, lat: best.lat, lng: best.lng };
+      state.unresolved.from = null;
+    }
+  });
+}
+function getLocation() {
+  state.loc.status = 'locating';
+  navigator.geolocation.getCurrentPosition(function (pos) {
+    state.loc.coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+    state.loc.status = 'granted';
+    resolveNearestPlace().then(function () { refreshLanding(); });
+  }, function () {
+    state.loc.status = 'denied';
+    render();
+  }, { enableHighAccuracy: false, timeout: 8000, maximumAge: 600000 });
+}
+function checkGeoPermission() {
+  if (!('geolocation' in navigator)) { state.loc.status = 'unsupported'; render(); return; }
+  if (navigator.permissions && navigator.permissions.query) {
+    navigator.permissions.query({ name: 'geolocation' }).then(function (st) {
+      if (st.state === 'granted') getLocation();
+      else { state.loc.status = 'prompt'; render(); }
+    }).catch(function () { state.loc.status = 'prompt'; render(); });
+  } else {
+    state.loc.status = 'prompt'; render();
+  }
+}
+function bootLanding() {
+  refreshLanding();
+  checkGeoPermission();
+}
+
 /* ---------- Contact (RPC only — no numbers ever reach the client) ---------- */
 function toast(msg) {
   var el = document.getElementById('toast');
@@ -773,14 +889,21 @@ function messagePane(r) {
   var bt = at.toLocaleTimeString('en-CA', { hour:'numeric', minute:'2-digit' }).replace(/\./g, '').toUpperCase();
   return '<div class="swipe-pane swipe-pane--message" aria-label="Original message"><div class="bubble bubble--card"><div class="bubble__name">' + esc(r.display_name) + '</div><span class="bubble__text">' + esc(r.raw_text) + '</span><span class="bubble__time">' + bt + '</span></div></div>';
 }
-function renderRideCard(r) {
+function landingDistanceNote(r) {
+  if (r.pickup_km == null) return '';
+  var txt = r.pickup_km < 1 ? 'Near you' : (r.pickup_km + ' km from you');
+  return '<p class="match-note">' + icon('pin') + '<span>' + esc(txt) + '</span></p>';
+}
+function renderRideCard(r, landingOpts) {
   if (!r.parsed) return renderRawCard(r);
   var req = r.role === 'passenger';
-  var details = '<div class="ride-card__top"><span class="ride-card__tags">' + matchBadge(r) + (r.is_business ? riderTag(r) : '') + '</span><span class="ride-card__ago">' + (req ? 'Needs ride · ' : '') + 'posted ' + ago(r.posted_at) + '</span></div>' +
+  var badge = (landingOpts && landingOpts.hideBadge) ? '' : matchBadge(r);
+  var note = (landingOpts && landingOpts.distanceNote) ? landingDistanceNote(r) : matchNote(r);
+  var details = '<div class="ride-card__top"><span class="ride-card__tags">' + badge + (r.is_business ? riderTag(r) : '') + '</span><span class="ride-card__ago">' + (req ? 'Needs ride · ' : '') + 'posted ' + ago(r.posted_at) + '</span></div>' +
     '<div class="ride-card__main"><div class="route">' +
     '<div class="route__stop route__stop--from"><span class="route__dot"></span><span class="route__city">' + esc(cityOf(r.origin_label)) + '</span></div>' +
     '<div class="route__stop route__stop--to"><span class="route__dot"></span><span class="route__city">' + esc(cityOf(r.dest_label)) + '</span></div>' +
-    '</div>' + whenBlock(r) + '</div>' + matchNote(r) + metaList(r);
+    '</div>' + whenBlock(r) + '</div>' + note + metaList(r);
   var swipe = r.raw_text && r.source !== 'poparide';
   var body = swipe
     ? '<div class="ride-card__swipe" data-swipe><div class="swipe-track"><div class="swipe-pane swipe-pane--details">' + details + '</div>' + messagePane(r) + '</div></div>' +
@@ -897,10 +1020,10 @@ function resultsHead(rows) {
     '<label class="sort"><select class="js-sort" aria-label="Sort"><option value="best"' + (state.sort === 'best' ? ' selected' : '') + '>Best match</option><option value="soonest"' + (state.sort === 'soonest' ? ' selected' : '') + '>Soonest</option><option value="cheapest"' + (state.sort === 'cheapest' ? ' selected' : '') + '>Cheapest</option></select>' + icon('chev') + '</label></div>' +
     (info ? '<p class="info-line">' + icon('info') + '<span>No direct rides — these drivers pass close to your route</span></p>' : '') + '</div>';
 }
-function listHTML(rows) {
-  var main = rows.filter(function (r) { return r.parsed; }).map(renderRideCard).join('');
+function listHTML(rows, landingOpts) {
+  var main = rows.filter(function (r) { return r.parsed; }).map(function (r) { return renderRideCard(r, landingOpts); }).join('');
   var raw = rows.filter(function (r) { return !r.parsed; });
-  var fb = raw.length ? ('<h3 class="list-section">' + icon('info') + 'Posts we couldn\'t match <small>· details as written</small></h3>' + raw.map(renderRideCard).join('')) : '';
+  var fb = raw.length ? ('<h3 class="list-section">' + icon('info') + 'Posts we couldn\'t match <small>· details as written</small></h3>' + raw.map(function (r) { return renderRideCard(r, landingOpts); }).join('')) : '';
   return main + fb;
 }
 function emptyState() {
@@ -923,7 +1046,61 @@ function errorCard() {
     '<h2 class="empty__title">Couldn\'t load rides</h2><p class="empty__text">Something went wrong reaching Pathfynder. Check your connection and try again.</p>' +
     '<div class="empty__actions"><button type="button" class="btn btn--outline js-retry">Retry</button></div></div>';
 }
+function locationCard() {
+  if (state.loc.status === 'unsupported' || state.loc.status === 'granted' || state.loc.status === 'locating' || state.loc.status === 'checking') return '';
+  if (state.loc.status === 'denied' || state.loc.status === 'error') {
+    return '<p style="margin:0 2px;padding:0;font-size:13px;color:var(--text-2)">Location off — pick From and To to find rides on your route</p>';
+  }
+  return '<div class="prefill">' + icon('pin') +
+    '<div class="prefill__text"><span class="prefill__eyebrow">See rides near you</span>' +
+    '<span class="prefill__query" style="font-size:13px;font-weight:400;color:var(--text-2)">Uses your location once — never saved</span></div>' +
+    '<button type="button" class="btn-text js-use-location">' + icon('search') + 'Use my location</button></div>';
+}
+function landingResultsHead(rows) {
+  var n = rows.length;
+  var subject = state.mode === 'passenger' ? 'Passengers' : 'Drivers';
+  var noun, dateLine;
+  if (state.landingMode === 'near') {
+    noun = subject + ' near ' + esc(state.loc.nearestName || 'you');
+    dateLine = 'Within 25 km · next 3 days';
+  } else {
+    noun = 'Upcoming ' + (state.mode === 'passenger' ? 'passenger requests' : 'rides');
+    dateLine = 'Today + next 3 days';
+  }
+  var info = state.landingInfo === 'no-near' ? ('<p class="info-line">' + icon('info') + '<span>No rides within 25 km of you right now — showing all upcoming rides</span></p>') : '';
+  return '<div class="results-head"><div class="results-bar"><h2 class="results-title"><span>' + noun + '</span><span class="results-title__date">' + esc(dateLine) + '</span></h2>' +
+    '<label class="sort"><select class="js-sort" aria-label="Sort"><option value="best"' + (state.sort === 'best' ? ' selected' : '') + '>Best match</option><option value="soonest"' + (state.sort === 'soonest' ? ' selected' : '') + '>Soonest</option><option value="cheapest"' + (state.sort === 'cheapest' ? ' selected' : '') + '>Cheapest</option></select>' + icon('chev') + '</label></div>' +
+    info + '</div>';
+}
+function landingEmpty() {
+  return '<div class="empty-card"><div class="empty__art" aria-hidden="true">' + icon('car') + '</div>' +
+    '<h2 class="empty__title">No upcoming rides right now</h2>' +
+    '<p class="empty__text">Check back soon, or search a specific route above.</p></div>';
+}
+function renderLanding() {
+  var app = document.getElementById('app');
+  var foot = '<footer class="app-footer"><p><strong>Rideshare you know, now organized.</strong></p><a href="https://pathfynder.ca">pathfynder.ca</a></footer>';
+  var top = searchPanel();
+  var card = locationCard();
+  if (state.loading) {
+    app.innerHTML = appBar('Finding rides…') + '<div class="app__col">' + top + card +
+      '<div class="results-head"><div class="skel-row"><div class="skel" style="width:190px;height:15px"></div><div class="skel" style="width:84px;height:12px"></div></div></div>' +
+      '<div class="ride-list">' + [1,2,3].map(skeletonCard).join('') + '</div></div>';
+  } else if (state.error) {
+    app.innerHTML = appBar('—') + '<div class="app__col">' + top + card + '<div class="ride-list" style="padding-top:12px">' + errorCard() + '</div>' + foot + '</div>';
+  } else if (!state.rows.length) {
+    app.innerHTML = appBar('0 rides') + '<div class="app__col">' + top + card + '<div class="ride-list" style="padding-top:12px">' + landingEmpty() + '</div>' + foot + '</div>';
+  } else {
+    var rows = sortedRows();
+    var landingOpts = { hideBadge: true, distanceNote: state.landingMode === 'near' };
+    app.innerHTML = appBar(plural(state.rows.length, 'ride')) + '<div class="app__col">' + top + card + landingResultsHead(rows) + '<div class="ride-list">' + listHTML(rows, landingOpts) + '</div>' + foot + '</div>';
+  }
+  wireApp();
+  checkClamps();
+  restoreSwipe();
+}
 function render() {
+  if (state.landingEnabled && !(state.fromPlace && state.toPlace)) { renderLanding(); return; }
   var app = document.getElementById('app');
   var foot = '<footer class="app-footer"><p><strong>Rideshare you know, now organized.</strong></p><a href="https://pathfynder.ca">pathfynder.ca</a></footer>';
   var top = state.editing ? searchPanel() : prefillBar();
@@ -1179,8 +1356,14 @@ function setSearchInputs() {
     state.to = place.name; state.toPlace = place; state.unresolved.to = null; toEl.value = place.name;
     maybeSearch();
   });
-  fromEl.addEventListener('change', function () { state.from = fromEl.value; });
-  toEl.addEventListener('change', function () { state.to = toEl.value; });
+  fromEl.addEventListener('change', function () {
+    state.from = fromEl.value;
+    if (!fromEl.value.trim()) { state.fromPlace = null; searchOrRender(); }
+  });
+  toEl.addEventListener('change', function () {
+    state.to = toEl.value;
+    if (!toEl.value.trim()) { state.toPlace = null; searchOrRender(); }
+  });
 }
 function maybeSearch() {
   if (state.fromPlace && state.toPlace) {
@@ -1196,7 +1379,7 @@ function wireApp() {
   if (picker) picker.addEventListener('change', function () {
     if (!picker.value) return;
     state.date = picker.value; state.dateChip = 'Pick';
-    if (state.fromPlace && state.toPlace) runSearch(); else render();
+    searchOrRender();
   });
 }
 document.addEventListener('click', function (e) {
@@ -1218,20 +1401,23 @@ document.addEventListener('click', function (e) {
   if (dot) { var box = dot.closest('.ride-card').querySelector('[data-swipe]'); setSwipe(box, dot.parentElement.querySelectorAll('.swipe-dot')[1] === dot); return; }
 
   var seg = t.closest('.js-seg');
-  if (seg) { state.mode = seg.getAttribute('data-value'); state.rows = []; if (state.fromPlace && state.toPlace) runSearch(); else render(); return; }
+  if (seg) { state.mode = seg.getAttribute('data-value'); state.rows = []; searchOrRender(); return; }
 
   var swap = t.closest('.js-swap');
   if (swap) {
     var f = state.from, tp = state.fromPlace; state.from = state.to; state.fromPlace = state.toPlace; state.to = f; state.toPlace = tp;
-    if (state.fromPlace && state.toPlace) runSearch(); else render();
+    searchOrRender();
     return;
   }
+
+  var useLoc = t.closest('.js-use-location');
+  if (useLoc) { getLocation(); return; }
 
   var dateChip = t.closest('.js-date');
   if (dateChip) {
     var v = dateChip.getAttribute('data-value');
     state.dateChip = v; state.date = v === 'Today' ? todayStr(0) : todayStr(1);
-    if (state.fromPlace && state.toPlace) runSearch(); else render();
+    searchOrRender();
     return;
   }
   var datePick = t.closest('.js-date-pick');
@@ -1251,7 +1437,7 @@ document.addEventListener('click', function (e) {
   var removeF = t.closest('.js-remove-filter');
   if (removeF) { removeFilter(removeF.getAttribute('data-key')); return; }
   var clearF = t.closest('.js-clear-filters');
-  if (clearF) { state.filters = { sources: ['whatsapp', 'poparide'], match: null, time_of_day: [], verified_only: false, hide_business: false, luggage_ok: false }; state.time = null; state.flex = null; runSearch(); return; }
+  if (clearF) { state.filters = { sources: ['whatsapp', 'poparide'], match: null, time_of_day: [], verified_only: false, hide_business: false, luggage_ok: false }; state.time = null; state.flex = null; searchOrRender(); return; }
 
   var fMatch = t.closest('.js-f-match');
   if (fMatch) { pendingFilters.match = fMatch.getAttribute('data-value') || null; document.getElementById('sheetBody').innerHTML = renderFiltersSheet(); updateFiltersCount(); return; }
@@ -1273,19 +1459,19 @@ document.addEventListener('click', function (e) {
   var resetF = t.closest('.js-reset-filters, .js-clear-pending');
   if (resetF) { pendingFilters = { sources: ['whatsapp', 'poparide'], match: null, time_of_day: [], verified_only: false, hide_business: false, luggage_ok: false }; document.getElementById('sheetBody').innerHTML = renderFiltersSheet(); updateFiltersCount(); return; }
   var applyF = t.closest('.js-apply-filters');
-  if (applyF) { state.filters = pendingFilters; closeSheetLayer(); runSearch(); return; }
+  if (applyF) { state.filters = pendingFilters; closeSheetLayer(); searchOrRender(); return; }
 
   var flexChip = t.closest('.js-flex');
   if (flexChip) { pendingTime.flexMin = Number(flexChip.getAttribute('data-value')); document.getElementById('sheetBody').innerHTML = renderTimeSheet(); wireTimeWheels(); return; }
   var clearTime = t.closest('.js-clear-time');
-  if (clearTime) { state.time = null; state.flex = null; closeSheetLayer(); if (state.fromPlace && state.toPlace) runSearch(); else render(); return; }
+  if (clearTime) { state.time = null; state.flex = null; closeSheetLayer(); searchOrRender(); return; }
   var setTime = t.closest('.js-set-time');
   if (setTime) {
     var h24 = to24h(pendingTime.hour, pendingTime.ampm);
     state.time = String(h24).padStart(2, '0') + ':' + String(pendingTime.minute).padStart(2, '0');
     state.flex = pendingTime.flexMin;
     closeSheetLayer();
-    if (state.fromPlace && state.toPlace) runSearch(); else render();
+    searchOrRender();
     return;
   }
 
@@ -1293,7 +1479,7 @@ document.addEventListener('click', function (e) {
   if (nearbyDate) { state.date = nearbyDate.getAttribute('data-date'); state.dateChip = 'Pick'; runSearch(); return; }
 
   var retry = t.closest('.js-retry');
-  if (retry) { runSearch(); return; }
+  if (retry) { searchOrRender(); return; }
 });
 document.addEventListener('change', function (e) {
   if (e.target.classList.contains('js-sort')) { state.sort = e.target.value; render(); }
@@ -1301,6 +1487,7 @@ document.addEventListener('change', function (e) {
 
 /* ---------- Boot ---------- */
 function boot() {
+  if (state.landingEnabled) { bootLanding(); return; }
   render();
   var jobs = [];
   if (state.from) jobs.push(resolvePlace(state.from).then(function (p) {
