@@ -9,6 +9,11 @@ var SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 var FALLBACK_URL = 'https://www.pathfynder.ca/explore';
 var TARGET_PREFIX = 'https://www.pathfynder.ca/';
 var CODE_RE = /^[A-Za-z0-9]{8}$/;
+// Same logo explore.html already uses for og:image, served from the repo root.
+var OG_IMAGE_URL = 'https://www.pathfynder.ca/logo.png';
+var OG_IMAGE_TYPE = 'image/png';
+var OG_IMAGE_WIDTH = 301;
+var OG_IMAGE_HEIGHT = 303;
 
 function escHtml(s) {
   return String(s).replace(/[&<>"']/g, function (c) {
@@ -59,7 +64,6 @@ module.exports = async function handler(req, res) {
   var title = row.title || 'Pathfynder';
   var description = row.description || '';
   var pageUrl = 'https://www.pathfynder.ca/r/' + code;
-  // index.html has no og:image/social image to reuse — omitted (see CLAUDE.md / task notes).
 
   var html = '<!doctype html><html lang="en"><head><meta charset="utf-8">' +
     '<title>' + escHtml(title) + '</title>' +
@@ -68,7 +72,13 @@ module.exports = async function handler(req, res) {
     '<meta property="og:url" content="' + escHtml(pageUrl) + '">' +
     '<meta property="og:type" content="website">' +
     '<meta property="og:site_name" content="Pathfynder">' +
-    '<meta http-equiv="refresh" content="0;url=' + escHtml(target) + '">' +
+    '<meta property="og:image" content="' + escHtml(OG_IMAGE_URL) + '">' +
+    '<meta property="og:image:secure_url" content="' + escHtml(OG_IMAGE_URL) + '">' +
+    '<meta property="og:image:type" content="' + escHtml(OG_IMAGE_TYPE) + '">' +
+    '<meta property="og:image:width" content="' + OG_IMAGE_WIDTH + '">' +
+    '<meta property="og:image:height" content="' + OG_IMAGE_HEIGHT + '">' +
+    '<meta property="og:image:alt" content="Pathfynder">' +
+    '<meta name="twitter:card" content="summary">' +
     '</head><body>' +
     '<a href="' + escHtml(target) + '">Open on Pathfynder</a>' +
     '<script>location.replace(' + escJsString(target) + ');</script>' +
