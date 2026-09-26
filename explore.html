@@ -1356,7 +1356,7 @@ function removeFilter(key) {
 /* ---------- Page shell ---------- */
 function appBar(sub) {
   return '<header class="app-bar"><div class="app-bar__inner">' +
-    '<a class="brand" href="https://pathfynder.ca" aria-label="Pathfynder home">' + icon('pin') + '</a>' +
+    '<a class="brand js-explore-home" href="/explore" aria-label="Explore rides — start over">' + icon('pin') + '</a>' +
     '<div class="app-bar__titles"><h1 class="app-bar__title">Explore rides</h1><p class="app-bar__sub"><b>Pathfynder</b> · <span>' + sub + '</span></p></div>' +
     '<!-- TODO: ride-alert bot link not built yet --><button class="icon-btn" data-action="noop" aria-label="Get ride alerts">' + icon('bell') + '</button>' +
     '</div></header>';
@@ -1847,6 +1847,16 @@ document.addEventListener('click', function (e) {
 
   var noop = t.closest('[data-action="noop"]');
   if (noop) { e.preventDefault(); return; }
+
+  var exploreHome = t.closest('.js-explore-home');
+  if (exploreHome) {
+    e.preventDefault();
+    try {
+      Object.keys(sessionStorage).forEach(function (k) { if (k.indexOf('pf_explore_') === 0) sessionStorage.removeItem(k); });
+    } catch (e2) {}
+    window.location.assign('/explore');
+    return;
+  }
 
   var newRidesPill = t.closest('#newRidesPill');
   if (newRidesPill) { applyPendingRows(); return; }
