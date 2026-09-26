@@ -1106,7 +1106,7 @@ function renderRideCard(r, landingOpts) {
     '<div class="route__stop route__stop--from"><span class="route__dot"></span><span class="route__city">' + esc(cityOf(r.origin_label)) + '</span></div>' +
     '<div class="route__stop route__stop--to"><span class="route__dot"></span><span class="route__city">' + esc(cityOf(r.dest_label)) + '</span></div>' +
     '</div>' + whenBlock(r) + '</div>' + note + metaList(r);
-  var swipe = r.raw_text && r.source !== 'poparide';
+  var swipe = !!r.raw_text;
   var body = swipe
     ? '<div class="ride-card__swipe" data-swipe><div class="swipe-track"><div class="swipe-pane swipe-pane--details">' + details + '</div>' + messagePane(r) + '</div></div>' +
       '<div class="swipe-dots"><button class="swipe-dot is-on" aria-label="Show ride details"></button><button class="swipe-dot" aria-label="Show original message"></button><span class="swipe-hint">Swipe for original message</span></div>'
@@ -1508,7 +1508,7 @@ function renderRideDetail(r) {
   var strip = (r.role === 'driver' && r.match_type === 'along_route' && r.route_km != null && r.pickup_pct != null && r.dropoff_pct != null)
     ? ('<section class="sheet-block"><h3 class="sheet-block__label">How this ride fits your trip</h3>' + routeStrip(r) + '</section>') : '';
   var description = r.description
-    ? ('<section class="sheet-block"><h3 class="sheet-block__label">From the driver</h3><blockquote class="raw-post raw-post--desc"><p class="raw-post__text">' + esc(r.description) + '</p><button class="raw-post__more" type="button">Read more</button></blockquote></section>') : '';
+    ? ('<section class="sheet-block"><h3 class="sheet-block__label">From the ' + (r.role === 'passenger' ? 'rider' : 'driver') + '</h3><blockquote class="raw-post raw-post--desc"><p class="raw-post__text">' + esc(r.description) + '</p><button class="raw-post__more" type="button">Read more</button></blockquote></section>') : '';
   return '<div class="sheet__grabber"></div><div class="sheet__body">' +
     '<div class="sheet__head">' + matchBadge(r) + '<button type="button" class="icon-btn js-close-sheet" aria-label="Close">' + icon('x') + '</button></div>' +
     '<div><h2 class="sheet__title">' + esc(cityOf(r.origin_label)) + ' → ' + esc(cityOf(r.dest_label)) + '</h2>' +
