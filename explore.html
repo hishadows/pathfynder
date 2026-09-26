@@ -565,6 +565,7 @@ var state = {
   landingMode: 'browse', landingInfo: null,
   loc: { status: 'checking', coords: null, nearestName: null },
   groupCard: { collapsed: false, message: null, messageKind: null, submitting: false },
+  pendingRows: null, refreshInFlight: false,
 };
 if (initial_.date) {
   var dd = dayDiff(initial_.date);
@@ -721,7 +722,7 @@ function runSearch(opts) {
   }).then(function (rows) {
     dbg('explore_search (matched) rows:', rows.length);
     if (seq !== searchSeq) return rows;
-    state.rows = rows; state.loading = false; state.error = false;
+    state.rows = rows; state.loading = false; state.error = false; state.pendingRows = null;
     if (!opts.silent) { render(); syncUrl(); loadNearby(); }
     return rows;
   }).catch(function (err) {
@@ -810,6 +811,7 @@ function performLandingSearch(mode, isFallback) {
     state.landingMode = mode;
     if (!isFallback) state.landingInfo = null;
     state.rows = rows;
+    state.pendingRows = null;
     render();
   }).catch(function (err) {
     if (seq !== searchSeq) return;
@@ -818,6 +820,96 @@ function performLandingSearch(mode, isFallback) {
     render();
   });
 }
+
+/* ---------- Auto-refresh: new WhatsApp posts without reloading ---------- */
+function isSheetOpen() {
+  var layer = document.getElementById('sheetLayer');
+  return !!(layer && layer.classList.contains('is-open'));
+}
+function activeSearchParams() {
+  if (state.fromPlace && state.toPlace) return rpcParams();
+  if (state.landingEnabled) {
+    var coords = state.landingMode === 'near' ? state.loc.coords : null;
+    return {
+      p_mode: state.mode === 'passenger' ? 'passengers' : 'drivers',
+      p_o_lat: coords ? coords.lat : null,
+      p_o_lng: coords ? coords.lng : null,
+      p_d_lat: null, p_d_lng: null, p_date: null,
+      p_filters: buildFilters(state.filters),
+    };
+  }
+  return null;
+}
+function showNewRidesPill(n) {
+  var list = document.querySelector('.ride-list');
+  if (!list) return;
+  var pill = document.getElementById('newRidesPill');
+  if (!pill) {
+    pill = document.createElement('button');
+    pill.type = 'button';
+    pill.id = 'newRidesPill';
+    pill.className = 'btn-text';
+    pill.style.margin = '2px 6px 8px';
+    list.insertBefore(pill, list.firstChild);
+  }
+  pill.textContent = '↑ ' + plural(n, 'new ride');
+}
+function applyPendingRows() {
+  if (!state.pendingRows) return;
+  state.rows = state.pendingRows;
+  state.pendingRows = null;
+  render();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function backgroundRefresh() {
+  if (state.refreshInFlight) return;
+  if (document.visibilityState !== 'visible') return;
+  if (isSheetOpen()) return;
+  if (!db || state.loading || state.error) return;
+  var params = activeSearchParams();
+  if (!params) return;
+  state.refreshInFlight = true;
+  dbg('explore_search (auto-refresh) params:', params);
+  db.rpc('explore_search', params).then(function (res) {
+    if (res.error) throw res.error;
+    return res.data || [];
+  }).catch(function (err) {
+    if (err && (err.code === '42883' || /does not exist/i.test(err.message || ''))) {
+      return window.EXPLORE_MOCK ? window.EXPLORE_MOCK.search(params) : [];
+    }
+    throw err;
+  }).then(function (rows) {
+    dbg('explore_search (auto-refresh) rows:', rows.length);
+    var existingIds = {};
+    state.rows.forEach(function (r) { existingIds[r.id] = true; });
+    var newCount = rows.filter(function (r) { return !existingIds[r.id]; }).length;
+    if (newCount > 0) { state.pendingRows = rows; showNewRidesPill(newCount); }
+  }).catch(function (err) { dbg('explore_search (auto-refresh) failed:', err); })
+    .finally(function () { state.refreshInFlight = false; });
+}
+var refreshTimer = null;
+function startAutoRefresh() {
+  stopAutoRefresh();
+  refreshTimer = setInterval(function () {
+    if (document.visibilityState === 'visible' && !isSheetOpen()) backgroundRefresh();
+  }, 60000);
+}
+function stopAutoRefresh() {
+  if (refreshTimer) { clearInterval(refreshTimer); refreshTimer = null; }
+}
+var hiddenAt = null;
+document.addEventListener('visibilitychange', function () {
+  if (document.visibilityState === 'hidden') {
+    hiddenAt = Date.now();
+    stopAutoRefresh();
+  } else if (document.visibilityState === 'visible') {
+    var wasHiddenLong = hiddenAt != null && (Date.now() - hiddenAt) > 60000;
+    hiddenAt = null;
+    startAutoRefresh();
+    if (wasHiddenLong && !isSheetOpen()) backgroundRefresh();
+  }
+});
+
 var popularPlacesPromise = null;
 function fetchPopularPlaces() {
   if (popularPlacesPromise) return popularPlacesPromise;
@@ -1619,6 +1711,9 @@ document.addEventListener('click', function (e) {
   var noop = t.closest('[data-action="noop"]');
   if (noop) { e.preventDefault(); return; }
 
+  var newRidesPill = t.closest('#newRidesPill');
+  if (newRidesPill) { applyPendingRows(); return; }
+
   var closeSheet = t.closest('[data-action="close-sheet"], .js-close-sheet, .js-cancel-time');
   if (closeSheet) { closeSheetLayer(); return; }
 
@@ -1764,6 +1859,7 @@ function boot() {
   });
 }
 if (db) boot(); else render();
+if (db && document.visibilityState === 'visible') startAutoRefresh();
 })();
 </script>
 </body>
