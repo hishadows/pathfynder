@@ -1210,13 +1210,15 @@ function pfToggleTheme(){
     function renderSources(d) {
       var box = document.getElementById('srcBars');
       if (!d.sources) { document.getElementById('srcCard').hidden = true; return; }
-      box.innerHTML = [['rides', 'Rides offered', 'rides_total'], ['requests', 'Ride requests', 'requests_total']].map(function (r) {
+      box.innerHTML = [['rides', 'Rides offered', 'rides_total', 1], ['requests', 'Ride requests', 'requests_total', 7]].map(function (r) {
         var o = d.sources[r[0]] || {};
+        var div = r[3];
         var tot = SRC.reduce(function (a, x) { return a + num(o[x[0]]); }, 0);
-        return '<div class="src-row"><div class="src-top"><span>' + r[1] + '</span><span class="src-total" data-stat="' + r[2] + '">' + fmt(d[r[2]] != null ? d[r[2]] : tot) + '</span></div>' +
-          '<div class="src-bar" role="img" aria-label="' + r[1] + ': ' + SRC.map(function (x) { return x[1] + ' ' + num(o[x[0]]); }).join(', ') + '">' +
+        var totDisp = Math.round((d[r[2]] != null ? d[r[2]] : tot) / div);
+        return '<div class="src-row"><div class="src-top"><span>' + r[1] + '</span><span class="src-total" data-stat="' + r[2] + '">' + fmt(totDisp) + '</span></div>' +
+          '<div class="src-bar" role="img" aria-label="' + r[1] + ': ' + SRC.map(function (x) { return x[1] + ' ' + Math.round(num(o[x[0]]) / div); }).join(', ') + '">' +
           SRC.map(function (x) { var v = num(o[x[0]]); return v ? '<span style="flex:' + v + ' 1 0;min-width:4px;background:' + x[2] + '"></span>' : ''; }).join('') + '</div>' +
-          '<div class="src-counts">' + SRC.map(function (x) { return '<span><i style="background:' + x[2] + '"></i>' + x[1] + ' <b data-stat="sources.' + r[0] + '.' + x[0] + '">' + fmt(num(o[x[0]])) + '</b></span>'; }).join('') + '</div></div>';
+          '<div class="src-counts">' + SRC.map(function (x) { return '<span><i style="background:' + x[2] + '"></i>' + x[1] + ' <b data-stat="sources.' + r[0] + '.' + x[0] + '">' + fmt(Math.round(num(o[x[0]]) / div)) + '</b></span>'; }).join('') + '</div></div>';
       }).join('');
     }
 
