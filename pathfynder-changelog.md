@@ -81,6 +81,32 @@
   - **Explore**: header bell now opens /notifications (unread dot when notifications are off); "Get pinged for new drivers/passengers" turn-on banner above results / empty state (session-dismissable); empty-state copy + button switched to "Turn on notifications"; `syncUrl()` keeps `t`.
   - **/notifications**: restyled to Explore's light/dark palette with header + back to Explore, toggle row, "Sent to you" history list, footer, and a no-token message.
   - Files: explore.html, notifications.html, manifest.webmanifest, api/manifest.js (new), js/pf-notify-v2.js (new), pathfynder-changelog.md.
+- 2026-09-27 — Real-time ride-match notifications with a 2-alert limit per request (DB only, migration `notify_realtime_two_stage_alerts`):
+  - `notify_requests.alert_stage` (0 none / 1 first alert / 2 done) and `notify_seen.seeded` (existing rows marked seeded). `notify_create_request` seeds with `seeded = true` and resets `alert_stage` to 0 when a route/date change triggers a reseed.
+  - `notify_check_new_matches`: takes an advisory lock so only one run at a time; new matches counted as unseeded `notify_seen` rows. Stage 0 + 1–2 new → "New driver available" / "2 drivers available" (`match1:<token>`); ≥3 new (stage 0 or 1) → "{n} drivers available now" (`match2:<token>`); stage 2 never sends again. Body = request label. The 3-hour bucket and 22:00–07:00 quiet hours are removed.
+  - New `notify_on_new_rides()` AFTER INSERT FOR EACH STATEMENT triggers on `extracted_data_01` and `muse_ride_posts` (the tables explore_search actually reads). Errors only RAISE WARNING. pg_cron `pf-notify-matches` moved from every 10 min to hourly as a backup.
+  - Files: pathfynder-changelog.md (DB-only change).
+- 2026-09-27 — Settings-driven match alerts, single "still looking" check, 1-hour reminder (DB only, migration `notify_settings_open_check_reminders`):
+  - `notify_settings` table (RLS, no policies) + `notify_setting(key)`: first_alert_min=1, second_alert_min=3, reminder_minutes_before=60, reminder_enabled, match_alerts_enabled. No thresholds hard-coded in functions.
+  - `notify_requests.starts_at` / `reminder_sent_at`. starts_at comes from `requested_datetime` / `departure_datetime`, falling back to date + time read as America/Toronto; existing rows backfilled without reseeding. `notify_create_request` takes `p_starts_at`; a route/date/time change reseeds and resets alert_stage + reminder_sent_at.
+  - `notify_request_open(source_ref)`: the only place that decides whether a request still needs alerts (passenger: pending + date ≥ today; driver: active + open + date ≥ today + not full). `full` is always false for now: there's no seats-taken column, and available_seats is often 0.
+  - `notify_check_new_matches(p_scope default 'all')`: kill switch, advisory lock, alerts driven by the settings table (match1 / match2, max 2 per request). New `notify_explore_url(token)` helper.
+  - One `notify_rt_*` AFTER INSERT statement trigger each on extracted_data_01, passenger_requests, driver_routines, muse_ride_posts (fires after the existing row triggers).
+  - `notify_send_reminders()` + cron `pf-notify-reminders` every 5 min. `pf-notify-matches` stays hourly as a backup.
+  - Files: pathfynder-changelog.md (DB-only change).
+- 2026-09-27 — Removed the ~1.6 s insert delay from real-time notify checks, plus reminder wording (DB only, migration `notify_dirty_queue_and_reminder_time_left`):
+  - New single-row `notify_queue` (RLS, no policies). `notify_on_new_rides()` (the 4 `notify_rt_*` statement triggers) now only sets `dirty = true`; warm inserts cost ~3 ms, same as with no trigger.
+  - New `notify_run_if_dirty()` (service-role only) claims the flag atomically and runs `notify_check_new_matches('all')`, putting the flag back if the check errors. pg_cron `pf-notify-dirty` runs it every 30 seconds (pg_cron 1.6.4). `pf-notify-matches` (hourly) and `pf-notify-reminders` (every 5 min) unchanged.
+  - `notify_send_reminders()`: the title now uses the real time left, rounded up to 5 min ("in 45 min"; "in 1 hour" only at ≥ 60 min).
+  - `notify_create_request` unchanged: a starts_at change already resets reminder_sent_at.
+  - Files: pathfynder-changelog.md (DB-only change).
+- 2026-09-27 — Fixed duplicate push notifications (DB only, migration `notify_group_by_trip_one_push_per_person`). Before, one push went out per notify_requests row: a driver with 6 duplicate bot posts got 6 identical pushes.
+  - `notify_request_open` also closes requests whose `notify_requests.ride_date` is before today (Toronto).
+  - New `notify_open_trips()`: groups a person's open requests into trips (same wa_id + mode + ride_date, pickup AND dropoff within `trip_group_km` = 2 km). New settings `trip_group_km` and `alert_threshold` (3).
+  - `notify_check_new_matches`: counts DISTINCT parsed rides per trip, not per request. Unparsed Facebook posts no longer count; they match every route. At most one push per person per run: the biggest trip, plus " · +N more rides" when other trips also have new rides. Title uses the trip's real available count ("25 passengers available"). Stage is stored on every request of the trip. dedupe_key = `match:<wa_id>:<trip>:<stage>`. Matches processed in a run are marked seen.
+  - `notify_send_reminders`: one reminder per trip, one push per person per run, dedupe `reminder:<wa_id>:<trip>`.
+  - All current matches marked as seen before cron was re-enabled (no catch-up burst). Duplicate driver_routines rows were left in place; fixing the bot's duplicate posts is a separate task.
+  - Files: pathfynder-changelog.md (DB-only change).
 - 2026-09-27 — Explore now lists Pathfynder WhatsApp-bot rides, ranked first, with WhatsApp contact.
   - **DB (migration `explore_bot_rides`, applied to prod)**:
     - `explore_search_core` (the logic behind `explore_search`) adds a `pf` source. It returns open `driver_routines` rows (drivers mode) and open `passenger_requests` rows (passengers mode), where open means `notify_request_open(...)->>'open' = 'true'`. Rows need a wa_id and coordinates. They use id `pf:<uuid>` and `source = 'pathfynder'`, and go through the same date/distance/filter rules as the other sources. Seats show only when `available_seats > 0`; fare shows only when > 0 (drivers only). Pathfynder rows sort first; all other rows keep their existing mixed order. `pathfynder` counts as included whenever `whatsapp` is in `sources`. When `p_filters.viewer_token` is set, the viewer's own rides are dropped (matched by the `notify_requests` wa_id). No phone numbers or wa_ids are returned.
