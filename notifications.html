@@ -27,8 +27,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Pathfynder">
-<script src="/js/pf-notify-v4.js" defer></script>
-<script src="/js/pf-install-sheet-v1.js" defer></script>
+<script src="/js/pf-notify-v5.js" defer></script>
+<script src="/js/pf-install-sheet-v2.js" defer></script>
 <style>
   /* Explore palette (WhatsApp light/dark) */
   :root {
@@ -152,11 +152,20 @@
 
   function subText(isOn) { return isOn ? 'On — you\u2019ll get notifications' : 'Off — no notifications'; }
 
-  function renderNoToken() {
-    card.innerHTML = '<p class="note">Open Pathfynder from your WhatsApp link to turn on notifications.</p>';
+  /* No token (didn't come from a WhatsApp link): same toggle, then the
+     "Last step: link your WhatsApp" sheet so the device gets tied to a number. */
+  function openLinkStep() {
+    var P = window.PFNotify;
+    var show = function () {
+      var code = P.linkCode && P.linkCode();
+      if (code && window.PFInstall && window.PFInstall.openLink) window.PFInstall.openLink(code, legacyBoot);
+      else legacyBoot();
+    };
+    if (P.linkCode && P.linkCode()) { show(); return; }
+    P.enable(null).then(show).catch(legacyBoot);
   }
 
-  function renderToggle(label, isOn, name, hasDevice) {
+  function renderToggle(label, isOn, name, hasDevice, needsLink) {
     var alertsFor = label ? (name ? esc(name) + ' · ' : '') + esc(label) : '';
     card.innerHTML =
       (alertsFor ? '<p class="label-line">Alerts for ' + alertsFor + '</p>' : '') +
@@ -164,10 +173,13 @@
         '<div><p class="toggle-row__title">Ride notifications</p><p class="toggle-row__sub" id="pillText">' + subText(isOn) + '</p></div>' +
         '<button type="button" class="toggle' + (isOn ? ' is-on' : '') + '" id="toggleBtn" aria-pressed="' + isOn + '" aria-label="Ride notifications"></button>' +
       '</div>' +
+      (needsLink ? '<p class="note" style="margin:10px 0 0">One more step: <button type="button" class="btn btn--ghost" id="linkBtn" style="padding:6px 12px;margin-left:4px">Link on WhatsApp</button></p>' : '') +
       '<p class="section-title">Sent to you</p>' +
       '<div id="history"><p class="note">Loading…</p></div>' +
       FOOTER;
     renderHistory();
+    var linkBtn = document.getElementById('linkBtn');
+    if (linkBtn) linkBtn.addEventListener('click', openLinkStep);
 
     var btn = document.getElementById('toggleBtn');
     var pillText = document.getElementById('pillText');
@@ -201,6 +213,7 @@
       P.enable(token).then(function (newState) {
         setPill(newState === 'granted');
         done();
+        if (!token && newState === 'granted' && P.linkCode && P.linkCode()) openLinkStep();
       }).catch(done);
     });
   }
@@ -240,15 +253,13 @@
     });
   }
 
-  function render(label, state, isOn, name) {
-    if (!token) {
-      renderNoToken();
-    } else if (state === 'ios-needs-install' || state === 'ios-too-old') {
+  function render(label, state, isOn, name, needsLink) {
+    if (state === 'ios-needs-install' || state === 'ios-too-old') {
       renderIOSInstall(state === 'ios-too-old');
     } else if (state === 'denied' || state === 'in-app-browser' || state === 'unsupported') {
       renderBlocked(state === 'in-app-browser');
     } else {
-      renderToggle(label, isOn, name);
+      renderToggle(label, isOn, name, false, needsLink);
     }
   }
 
@@ -267,7 +278,9 @@
   function legacyBoot() {
     var state = window.PFNotify.state();
     window.PFNotify.status(token).then(function (data) {
-      render(data && data.label, state, !!(data && data.on), data && data.name);
+      var needsLink = !token && !!(data && data.on) && data.linked === false;
+      if (needsLink && data.link_code && window.PFNotify.setLinkCode) window.PFNotify.setLinkCode(data.link_code);
+      render(data && data.label, state, !!(data && data.on), data && data.name, needsLink);
     }).catch(function () {
       render(null, state, false);
     });
