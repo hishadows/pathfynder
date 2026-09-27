@@ -27,7 +27,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Pathfynder">
-<script src="/js/pf-notify-v3.js" defer></script>
+<script src="/js/pf-notify-v4.js" defer></script>
 <style>
   /* Explore palette (WhatsApp light/dark) */
   :root {
@@ -155,7 +155,7 @@
     card.innerHTML = '<p class="note">Open Pathfynder from your WhatsApp link to turn on notifications.</p>';
   }
 
-  function renderToggle(label, isOn, name) {
+  function renderToggle(label, isOn, name, hasDevice) {
     var alertsFor = label ? (name ? esc(name) + ' · ' : '') + esc(label) : '';
     card.innerHTML =
       (alertsFor ? '<p class="label-line">Alerts for ' + alertsFor + '</p>' : '') +
@@ -180,14 +180,27 @@
     }
 
     btn.addEventListener('click', function () {
+      var P = window.PFNotify;
       btn.disabled = true;
-      var action = on ? window.PFNotify.disable(token) : window.PFNotify.enable(token);
-      action.then(function (newState) {
-        setPill(on ? false : newState === 'granted');
-        btn.disabled = false;
-      }).catch(function () {
-        btn.disabled = false;
-      });
+      var done = function () { btn.disabled = false; };
+      if (on) {
+        // Off from any browser: server-only pause (keeps the device resumable)
+        P.serverOff(token).then(function () { setPill(false); hasDevice = true; done(); }).catch(done);
+        return;
+      }
+      if (hasDevice && !P.isStandalone()) {
+        // Another device of this number is paused: switch it back on server-side
+        P.resume(token).then(function (r) {
+          if (r && r.ok) { setPill(true); done(); }
+          else { legacyBoot(); }
+        }).catch(done);
+        return;
+      }
+      // Home Screen app / no known device: today's local subscribe flow
+      P.enable(token).then(function (newState) {
+        setPill(newState === 'granted');
+        done();
+      }).catch(done);
     });
   }
 
@@ -238,7 +251,19 @@
     }
   }
 
+  // Server-first when a token exists: the server knows every device of this number.
   function boot() {
+    if (!token || !window.PFNotify.serverStatus) { legacyBoot(); return; }
+    window.PFNotify.serverStatus(token).then(function (d) {
+      if (d && (d.on === true || d.has_device === true)) {
+        renderToggle(d.label, d.on === true, d.name, d.has_device === true);
+      } else {
+        legacyBoot();
+      }
+    }).catch(legacyBoot);
+  }
+
+  function legacyBoot() {
     var state = window.PFNotify.state();
     window.PFNotify.status(token).then(function (data) {
       render(data && data.label, state, !!(data && data.on), data && data.name);

@@ -129,3 +129,10 @@
   - explore.html and notifications.html load v3 (sw.js has no cache list; build.sh copies js/ as a whole).
   - push-send already deactivates a subscription on a 404/410 from the push service, so no change there.
   - Files: js/pf-notify-v3.js (new), explore.html, notifications.html, pathfynder-changelog.md.
+- 2026-09-27 — /notifications and Explore trust the server for notification state when a token exists: the bot link opened in Safari or the WhatsApp browser now matches the Home Screen app.
+  - DB (migration `notify_off_reason_resume_has_device`): `notify_subscriptions.off_reason` (null | 'user' | 'gone'). `notify_unsubscribe` sets 'user'. `notify_subscribe` clears it on re-subscribe. New anon `notify_resume(token)` reactivates only 'user'-paused devices, and returns `{ok:false, need_setup:true}` when there are none. `notify_status` also returns `has_device`.
+  - push-send (v8): 404/410 also sets `off_reason = 'gone'`.
+  - New `js/pf-notify-v4.js` (v3 was already live) = v3 + `serverOff()`, `resume()`, `isStandalone()`.
+  - notifications.html: asks `notify_status` first. on → toggle ON + history. Off but has a device → toggle OFF + history, and ON calls `notify_resume`. No device, no token or error → previous flow. OFF is now server-only everywhere, so this browser's push subscription survives and can be resumed.
+  - explore.html: loads v4. The turn-on action resumes a paused device in place instead of sending people to /notifications.
+  - Files: js/pf-notify-v4.js (new), notifications.html, explore.html, pathfynder-changelog.md.

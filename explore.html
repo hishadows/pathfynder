@@ -26,7 +26,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Pathfynder">
-<script src="/js/pf-notify-v3.js" defer></script>
+<script src="/js/pf-notify-v4.js" defer></script>
 <title>Find a ride · Pathfynder</title>
 <meta name="description" content="Find drivers and passengers across Ontario — from WhatsApp groups, Poparide and more.">
 <meta property="og:title" content="Find a ride · Pathfynder">
@@ -1229,7 +1229,7 @@ function refreshNotifyUI() {
 function loadNotifyStatus() {
   if (!window.PFNotify) return;
   function apply(d) {
-    state.notify = { on: !!(d && d.on), mode: (d && d.mode) || null, label: (d && d.label) || null };
+    state.notify = { on: !!(d && d.on), mode: (d && d.mode) || null, label: (d && d.label) || null, hasDevice: !!(d && d.has_device) };
     refreshNotifyUI();
   }
   function localStatus() {
@@ -1247,6 +1247,16 @@ function loadNotifyStatus() {
 }
 function turnOnNotifications(btn) {
   var P = window.PFNotify;
+  /* Server-first: a paused device of this number is switched back on server-side,
+     whatever this browser supports. */
+  if (P && P.resume && window.PF_TOKEN && state.notify.hasDevice && !P.isStandalone()) {
+    if (btn) btn.setAttribute('disabled', '');
+    P.resume(window.PF_TOKEN).then(function (r) {
+      if (r && r.ok) { state.notify.on = true; refreshNotifyUI(); }
+      else window.location.assign(notifyUrl());
+    }).catch(function () { if (btn) btn.removeAttribute('disabled'); });
+    return;
+  }
   if (!P || P.state() !== 'default') { window.location.assign(notifyUrl()); return; }
   if (btn) btn.setAttribute('disabled', '');
   P.enable(window.PF_TOKEN).then(function (st) {
