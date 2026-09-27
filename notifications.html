@@ -4,35 +4,92 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pathfynder — Notifications</title>
-<link rel="manifest" href="/manifest.webmanifest">
-<meta name="theme-color" content="#0F5C43">
+<script>
+/* Personal notify token (?t= from the WhatsApp link) — persisted so the Home Screen app keeps it. Runs before anything else. */
+(function () {
+  var t = null, u = null;
+  try { u = new URL(location.href); t = u.searchParams.get('t'); } catch (e) {}
+  if (t && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(t)) t = null;
+  if (t) { try { localStorage.setItem('pf_token', t); } catch (e) {} }
+  else {
+    try { t = localStorage.getItem('pf_token'); } catch (e) { t = null; }
+    if (t && u) { try { u.searchParams.set('t', t); history.replaceState(history.state, '', u.pathname + u.search + u.hash); } catch (e) {} }
+  }
+  window.PF_TOKEN = t || null;
+  var l = document.createElement('link');
+  l.rel = 'manifest';
+  l.href = t ? '/api/manifest?t=' + encodeURIComponent(t) : '/manifest.webmanifest';
+  document.head.appendChild(l);
+})();
+</script>
+<meta name="theme-color" content="#008069">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon-180.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Pathfynder">
-<script src="/js/pf-notify-v1.js" defer></script>
+<script src="/js/pf-notify-v2.js" defer></script>
 <style>
-  :root { --accent: #0F5C43; --dark: #163C32; --bg: #EEF0EC; }
+  /* Explore palette (WhatsApp light/dark) */
+  :root {
+    --header:#008069; --header-text:#FFFFFF; --header-hover:rgba(255,255,255,.12);
+    --primary:#008069; --bg:#F0F2F5; --card:#FFFFFF;
+    --text:#111B21; --text-2:#667781; --muted:#8696A0; --divider:#E9EDEF;
+    --nt-bg:#E1F5EE; --nt-ink:#085041; --switch-off:#B4B2A9;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --header:#202C33; --header-text:#E9EDEF; --header-hover:rgba(233,237,239,.08);
+      --primary:#00A884; --bg:#0B141A; --card:#202C33;
+      --text:#E9EDEF; --text-2:#8696A0; --muted:#667781; --divider:#2A3942;
+      --nt-bg:rgba(0,168,132,.14); --nt-ink:#9FE1CB;
+    }
+  }
+  :root[data-theme="dark"] {
+    --header:#202C33; --header-text:#E9EDEF; --header-hover:rgba(233,237,239,.08);
+    --primary:#00A884; --bg:#0B141A; --card:#202C33;
+    --text:#E9EDEF; --text-2:#8696A0; --muted:#667781; --divider:#2A3942;
+    --nt-bg:rgba(0,168,132,.14); --nt-ink:#9FE1CB;
+  }
   * { box-sizing: border-box; }
-  html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--dark); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-  body { display: flex; align-items: center; justify-content: center; padding: 24px; }
-  .card { background: #fff; border-radius: 16px; padding: 32px 24px; max-width: 380px; width: 100%; text-align: center; }
-  .label-line { font-size: 14px; color: var(--dark); opacity: 0.7; margin: 0 0 16px; }
-  h1 { font-size: 18px; margin: 0 0 20px; color: var(--dark); }
-  p { font-size: 15px; line-height: 1.5; color: var(--dark); opacity: 0.85; margin: 0 0 20px; }
-  .pill-row { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 8px; }
-  .pill-text { font-size: 15px; font-weight: 600; }
-  .toggle { position: relative; width: 52px; height: 30px; border-radius: 999px; border: none; background: #ccc; cursor: pointer; transition: background 0.2s; flex: none; }
-  .toggle.is-on { background: var(--accent); }
+  html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  .app-bar { position: sticky; top: 0; z-index: 2; background: var(--header); color: var(--header-text); }
+  .app-bar__inner { max-width: 720px; margin: 0 auto; display: flex; align-items: center; gap: 4px; height: 56px; padding: 0 8px; }
+  .back { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; color: inherit; text-decoration: none; }
+  .back:hover { background: var(--header-hover); }
+  .back svg { width: 20px; height: 20px; }
+  .app-bar__title { margin: 0; font-size: 16px; font-weight: 500; color: var(--header-text); }
+  .card { max-width: 720px; margin: 0 auto; padding: 14px; }
+  .label-line { font-size: 12px; color: var(--text-2); margin: 0 0 14px; }
+  h1 { font-size: 16px; font-weight: 500; margin: 0 0 10px; color: var(--text); }
+  p { font-size: 14px; line-height: 1.5; color: var(--text-2); margin: 0 0 14px; }
+  .note { font-size: 13px; color: var(--text-2); }
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: var(--card); border-radius: 10px; padding: 12px 14px; }
+  .toggle-row__title { margin: 0; font-size: 15px; font-weight: 500; color: var(--text); }
+  .toggle-row__sub { margin: 2px 0 0; font-size: 13px; color: var(--text-2); }
+  .toggle { position: relative; width: 52px; height: 30px; border-radius: 999px; border: none; background: var(--switch-off); cursor: pointer; transition: background 0.2s; flex: none; }
+  .toggle.is-on { background: var(--primary); }
   .toggle::after { content: ''; position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: #fff; transition: transform 0.2s; }
   .toggle.is-on::after { transform: translateX(22px); }
   .toggle:disabled { opacity: 0.5; cursor: default; }
-  ol { text-align: left; font-size: 15px; line-height: 1.6; color: var(--dark); padding-left: 20px; margin: 0 0 20px; }
-  .btn { appearance: none; border: none; background: var(--accent); color: #fff; font-size: 15px; font-weight: 600; padding: 12px 24px; border-radius: 999px; cursor: pointer; }
-  .btn--ghost { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+  .section-title { margin: 18px 0 4px; font-size: 13px; font-weight: 500; color: var(--text); }
+  .hist-row { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-top: 0.5px solid var(--divider); color: inherit; text-decoration: none; }
+  .hist-row__ico { width: 32px; height: 32px; border-radius: 50%; flex: none; display: grid; place-items: center; background: var(--nt-bg); color: var(--nt-ink); }
+  .hist-row__ico svg { width: 16px; height: 16px; }
+  .hist-row__main { flex: 1; min-width: 0; }
+  .hist-row__title { margin: 0; font-size: 14px; font-weight: 500; color: var(--text); }
+  .hist-row__body { margin: 2px 0 0; font-size: 12px; color: var(--text-2); }
+  .hist-row__time { flex: none; font-size: 11px; color: var(--muted); text-align: right; }
+  .footer { margin: 18px 0 0; font-size: 12px; color: var(--muted); }
+  ol { text-align: left; font-size: 14px; line-height: 1.6; color: var(--text); padding-left: 20px; margin: 0 0 14px; }
+  .btn { appearance: none; border: none; background: var(--primary); color: #fff; font-size: 14px; font-weight: 500; padding: 10px 18px; border-radius: 8px; cursor: pointer; }
+  .btn--ghost { background: transparent; color: var(--primary); border: 1px solid var(--primary); }
 </style>
 </head>
 <body>
+  <header class="app-bar"><div class="app-bar__inner">
+    <a class="back" id="backLink" href="/explore" aria-label="Back to Explore"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg></a>
+    <h1 class="app-bar__title">Notifications</h1>
+  </div></header>
   <div class="card" id="card">
     <p>Loading…</p>
   </div>
@@ -44,8 +101,47 @@
   function qs(name) {
     return new URLSearchParams(location.search).get(name);
   }
-  var token = qs('t') || null;
+  var token = window.PF_TOKEN || qs('t') || null;
   var card = document.getElementById('card');
+  if (token) document.getElementById('backLink').href = '/explore?t=' + encodeURIComponent(token);
+  var CAR_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path d="M5 17H3v-6l2-5h9l4 5h1a2 2 0 0 1 2 2v4h-2m-4 0H9m-6-6h15m-6 0V6"/></svg>';
+  var FOOTER = '<p class="footer">Alerts stop when your ride date passes or you book.</p>';
+
+  function relTime(iso) {
+    var d = new Date(iso);
+    if (isNaN(d)) return '';
+    var now = new Date();
+    var mins = Math.floor((now - d) / 60000);
+    if (mins < 1) return 'now';
+    if (mins < 60) return mins + 'm';
+    var startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    if (d >= startToday) return Math.floor(mins / 60) + 'h';
+    var startYesterday = new Date(startToday.getTime() - 86400000);
+    if (d >= startYesterday) return 'Yesterday';
+    if (now - d < 6 * 86400000) return d.toLocaleDateString('en-CA', { weekday: 'short' });
+    return d.toLocaleDateString('en-CA', { month: 'short', day: 'numeric' });
+  }
+
+  function safeUrl(u) {
+    if (!u) return null;
+    try { var x = new URL(u, location.origin); return x.origin === location.origin ? x.pathname + x.search + x.hash : null; } catch (e) { return null; }
+  }
+
+  function renderHistory() {
+    var box = document.getElementById('history');
+    if (!box) return;
+    window.PFNotify.history(token).then(function (rows) {
+      if (!rows.length) { box.innerHTML = '<p class="note">No notifications yet.</p>'; return; }
+      box.innerHTML = rows.map(function (r) {
+        var href = safeUrl(r.url);
+        var inner = '<span class="hist-row__ico">' + CAR_SVG + '</span>' +
+          '<span class="hist-row__main"><p class="hist-row__title">' + esc(r.title || 'Pathfynder') + '</p>' +
+          (r.body ? '<p class="hist-row__body">' + esc(r.body) + '</p>' : '') + '</span>' +
+          '<span class="hist-row__time">' + esc(relTime(r.created_at)) + '</span>';
+        return href ? '<a class="hist-row" href="' + esc(href) + '">' + inner + '</a>' : '<div class="hist-row">' + inner + '</div>';
+      }).join('');
+    }).catch(function () { box.innerHTML = '<p class="note">No notifications yet.</p>'; });
+  }
 
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
@@ -53,15 +149,24 @@
     });
   }
 
-  function renderToggle(label, isOn) {
+  function subText(isOn) { return isOn ? 'On — you\u2019ll get notifications' : 'Off — no notifications'; }
+
+  function renderNoToken() {
+    card.innerHTML = '<p class="note">Open Pathfynder from your WhatsApp link to turn on notifications.</p>';
+  }
+
+  function renderToggle(label, isOn, name) {
+    var alertsFor = label ? (name ? esc(name) + ' · ' : '') + esc(label) : '';
     card.innerHTML =
-      (label ? '<p class="label-line">Alerts for ' + esc(label) + '</p>' : '') +
-      '<h1>Ride alerts</h1>' +
-      '<div class="pill-row">' +
-        '<span class="pill-text" id="pillText">' + (isOn ? "You're on" : "Turn on alerts") + '</span>' +
-        '<button type="button" class="toggle' + (isOn ? ' is-on' : '') + '" id="toggleBtn" aria-pressed="' + isOn + '"></button>' +
+      (alertsFor ? '<p class="label-line">Alerts for ' + alertsFor + '</p>' : '') +
+      '<div class="toggle-row">' +
+        '<div><p class="toggle-row__title">Ride notifications</p><p class="toggle-row__sub" id="pillText">' + subText(isOn) + '</p></div>' +
+        '<button type="button" class="toggle' + (isOn ? ' is-on' : '') + '" id="toggleBtn" aria-pressed="' + isOn + '" aria-label="Ride notifications"></button>' +
       '</div>' +
-      '<p>Get a WhatsApp-style notification the moment a matching ride is posted.</p>';
+      '<p class="section-title">Sent to you</p>' +
+      '<div id="history"><p class="note">Loading…</p></div>' +
+      FOOTER;
+    renderHistory();
 
     var btn = document.getElementById('toggleBtn');
     var pillText = document.getElementById('pillText');
@@ -71,7 +176,7 @@
       on = isOn;
       btn.classList.toggle('is-on', on);
       btn.setAttribute('aria-pressed', on);
-      pillText.textContent = on ? "You're on" : 'Turn on alerts';
+      pillText.textContent = subText(on);
     }
 
     btn.addEventListener('click', function () {
@@ -121,20 +226,22 @@
     });
   }
 
-  function render(label, state, isOn) {
-    if (state === 'ios-needs-install' || state === 'ios-too-old') {
+  function render(label, state, isOn, name) {
+    if (!token) {
+      renderNoToken();
+    } else if (state === 'ios-needs-install' || state === 'ios-too-old') {
       renderIOSInstall(state === 'ios-too-old');
     } else if (state === 'denied' || state === 'in-app-browser' || state === 'unsupported') {
       renderBlocked(state === 'in-app-browser');
     } else {
-      renderToggle(label, isOn);
+      renderToggle(label, isOn, name);
     }
   }
 
   function boot() {
     var state = window.PFNotify.state();
     window.PFNotify.status(token).then(function (data) {
-      render(data && data.label, state, !!(data && data.on));
+      render(data && data.label, state, !!(data && data.on), data && data.name);
     }).catch(function () {
       render(null, state, false);
     });
