@@ -39,7 +39,7 @@ The dispatch app (app.pathfynder.ca) and the Telegram mini app (pathfynder-form)
 - Read only the files the task needs.
 - Plain HTML has no tsc/build — verify inline JS with `node --check` on the extracted script.
 - Update `pathfynder-changelog.md` after functional changes (date, what, files).
-- Git: in cloud sessions, commit and push to the session's `claude/*` branch after each finished task. Never push to `main` — Pranay reviews and merges himself.
+- Git: in cloud sessions, commit and push to the session's `claude/*` branch after each finished task. Never push to `main` directly. When Pranay says "merge", open a PR from the `claude/*` branch and merge it into `main`.
 - When a requirement is unclear, ask instead of guessing.
 - For bugs: show the exact file + line causing it before fixing.
 - Never render raw phone numbers.
