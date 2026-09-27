@@ -670,7 +670,7 @@ html.light .tag-need{color:#B45309}
       </div>
       <div class="where-card" id="hoursCard">
         <div class="card-h">When people ride</div>
-        <div class="card-sub">Pickups by hour · last 30 days</div>
+        <div class="card-sub" id="hoursSub">Pickups by hour · last 30 days</div>
         <div class="hours-chart" id="hoursChart"></div>
         <div class="hours-axis" id="hoursAxis"></div>
         <div class="day-pills" id="dayPills"></div>
@@ -1147,6 +1147,16 @@ function pfToggleTheme(){
     (raw.by_hour || []).forEach(function (r) { if (r && r.hour >= 0 && r.hour <= 23) hours[r.hour] = +r.count || 0; });
     var weekdays = zeroFill(7);
     (raw.by_weekday || []).forEach(function (r) { if (r && r.weekday >= 1 && r.weekday <= 7) weekdays[r.weekday - 1] = +r.count || 0; });
+    // Optional (needs an RPC field not shipped everywhere yet): hourly pickups
+    // broken out per weekday, so selecting a day can redraw the hour chart for
+    // just that day instead of only relabeling the "busiest day" note.
+    var hoursByWeekday = null;
+    if (Array.isArray(raw.by_weekday_hour) && raw.by_weekday_hour.length) {
+      hoursByWeekday = []; for (var i = 0; i < 7; i++) hoursByWeekday.push(zeroFill(24));
+      raw.by_weekday_hour.forEach(function (r) {
+        if (r && r.weekday >= 1 && r.weekday <= 7 && r.hour >= 0 && r.hour <= 23) hoursByWeekday[r.weekday - 1][r.hour] = +r.count || 0;
+      });
+    }
     return {
       updated_at: raw.updated_at,
       rides_total: sumSource(raw.rides_next7),
@@ -1158,7 +1168,8 @@ function pfToggleTheme(){
       sources: { rides: raw.rides_next7 || {}, requests: raw.requests_next7 || {} },
       routes: Array.isArray(raw.top_routes) ? raw.top_routes : [],
       hours: hours,
-      weekdays: weekdays
+      weekdays: weekdays,
+      hoursByWeekday: hoursByWeekday
     };
   }
 
@@ -1236,9 +1247,10 @@ function pfToggleTheme(){
       }).join('');
     }
 
-    function renderHours(d) {
-      var hrs = Array.isArray(d.hours) ? d.hours.slice(0, 24).map(num) : [];
-      if (hrs.length !== 24) { document.getElementById('hoursCard').hidden = true; return; }
+    // Draws the hour-of-day bar chart from a 24-length array — used both for
+    // the all-days aggregate and, when the RPC provides per-weekday hourly
+    // data, for whichever single day is selected below.
+    function drawHourBars(hrs) {
       var max = Math.max.apply(null, hrs) || 1;
       var top = hrs.map(function (v, h) { return [v, h]; }).sort(function (a, b) { return b[0] - a[0]; }).slice(0, 3).map(function (x) { return x[1]; });
       // merge adjacent busiest hours into one label (e.g. "5–6 PM") so labels never collide
@@ -1253,24 +1265,44 @@ function pfToggleTheme(){
       });
       document.getElementById('hoursChart').innerHTML = hrs.map(function (v, h) {
         var pct = Math.max(2, v / max * 100).toFixed(1), isTop = top.indexOf(h) > -1;
-        return '<div class="hr' + (isTop ? ' hr-top' : '') + '" style="--h:' + pct + '%" data-stat="hours.' + h + '" data-value="' + v + '" title="' + hr12(h) + ' · ' + fmt(v) + ' pickups">' +
+        return '<div class="hr' + (isTop ? ' hr-top' : '') + '" style="--h:' + pct + '%" data-value="' + v + '" title="' + hr12(h) + ' · ' + fmt(v) + ' pickups">' +
           '<span class="hr-bar" style="height:' + pct + '%;animation-delay:' + (h * 25) + 'ms"></span>' + (labels[h] ? '<span class="hr-lab">' + labels[h] + '</span>' : '') + '</div>';
       }).join('');
       document.getElementById('hoursAxis').innerHTML = hrs.map(function (_, h) { return '<span>' + (h % 6 === 0 ? hrShort(h) : '') + '</span>'; }).join('');
+    }
+
+    function renderHours(d) {
+      var hrs = Array.isArray(d.hours) ? d.hours.slice(0, 24).map(num) : [];
+      if (hrs.length !== 24) { document.getElementById('hoursCard').hidden = true; return; }
+      drawHourBars(hrs);
       var wd = Array.isArray(d.weekdays) && d.weekdays.length === 7 ? d.weekdays.map(num) : null;
       if (wd) {
         var bi = wd.indexOf(Math.max.apply(null, wd));
         var dayPills = document.getElementById('dayPills');
+        var hoursSub = document.getElementById('hoursSub');
+        var byDay = d.hoursByWeekday;
         dayPills.innerHTML = wd.map(function (v, i) {
           return '<button type="button" class="day' + (i === bi ? ' day-top' : '') + '" data-stat="weekdays.' + i + '" data-value="' + v + '" data-day="' + i + '" title="' + fmt(v) + ' pickups">' + DAYS[i] + '</button>';
         }).join('');
         document.getElementById('dayNote').innerHTML = 'Busiest day: <b>' + DAYS_FULL[bi] + '</b>';
         dayPills.querySelectorAll('.day').forEach(function (btn) {
           btn.addEventListener('click', function () {
-            dayPills.querySelectorAll('.day').forEach(function (b) { b.classList.remove('day-selected'); });
-            btn.classList.add('day-selected');
             var i = Number(btn.dataset.day);
+            var alreadySelected = btn.classList.contains('day-selected');
+            dayPills.querySelectorAll('.day').forEach(function (b) { b.classList.remove('day-selected'); });
+            if (alreadySelected) {
+              // tap the selected day again to go back to the all-days view
+              drawHourBars(hrs);
+              if (hoursSub) hoursSub.textContent = 'Pickups by hour · last 30 days';
+              document.getElementById('dayNote').innerHTML = 'Busiest day: <b>' + DAYS_FULL[bi] + '</b>';
+              return;
+            }
+            btn.classList.add('day-selected');
             document.getElementById('dayNote').innerHTML = DAYS_FULL[i] + ': <b>' + fmt(wd[i]) + ' pickups</b>';
+            if (byDay && byDay[i]) {
+              drawHourBars(byDay[i]);
+              if (hoursSub) hoursSub.textContent = 'Pickups by hour · ' + DAYS_FULL[i] + 's, last 30 days';
+            }
           });
         });
       }
