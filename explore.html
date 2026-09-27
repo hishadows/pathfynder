@@ -1101,6 +1101,9 @@ function geoAttemptedBefore() {
 function markGeoFailed() {
   try { localStorage.setItem('pf_geo_failed', '1'); } catch (e) {}
 }
+function clearGeoFailed() {
+  try { localStorage.removeItem('pf_geo_failed'); } catch (e) {}
+}
 function canUseGpsForFrom() {
   /* Never overwrite a From the user typed or that a shared link set. */
   return !state.from && !state.fromPlace && !initial_.from && !initial_.oCoords;
@@ -1123,10 +1126,10 @@ function reverseGeocode(lat, lng) {
     .catch(function () { return null; });
 }
 function trySilentLocation() {
-  if (geoAttemptedBefore()) return;
   if (!('geolocation' in navigator)) return;
   if (!canUseGpsForFrom()) return;
   var attempt = function () {
+    if (!canUseGpsForFrom()) return;
     navigator.geolocation.getCurrentPosition(function (pos) {
       var lat = pos.coords.latitude, lng = pos.coords.longitude;
       state.loc.coords = { lat: lat, lng: lng };
@@ -1140,17 +1143,25 @@ function trySilentLocation() {
         state.origin = 'gps';
         searchOrRender();
       });
-    }, function () {
-      markGeoFailed();
+    }, function (err) {
+      /* Only a real denial means "never ask again" — a timeout or no fix
+         yet must not block every future visit. */
+      if (err && err.code === 1) markGeoFailed();
     }, { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 });
   };
+  var fallback = function () { if (!geoAttemptedBefore()) attempt(); };
   if (navigator.permissions && navigator.permissions.query) {
     navigator.permissions.query({ name: 'geolocation' }).then(function (st) {
+      /* User turns location on while the page is open → use it right away. */
+      st.onchange = function () {
+        if (st.state === 'granted') { clearGeoFailed(); attempt(); }
+      };
       if (st.state === 'denied') return; /* never prompt */
-      attempt();
-    }).catch(attempt);
+      if (st.state === 'granted') { clearGeoFailed(); attempt(); return; } /* old flag no longer applies */
+      fallback();
+    }).catch(fallback);
   } else {
-    attempt();
+    fallback();
   }
 }
 
