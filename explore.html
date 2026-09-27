@@ -611,7 +611,7 @@ var state = {
   origin: initial_.from ? 'typed' : null,
   landingEnabled: !(initial_.from || initial_.to),
   landingMode: 'browse', landingInfo: null,
-  loc: { status: 'checking', coords: null, nearestName: null },
+  loc: { coords: null },
   groupCard: { collapsed: false, message: null, messageKind: null, submitting: false, sentUrl: null },
   pendingRows: null, refreshInFlight: false,
 };
@@ -791,6 +791,8 @@ function wireAutocomplete(input, listEl, onPick) {
 
 /* ---------- Search ---------- */
 var searchSeq = 0;
+var searchController = null;
+var searchInFlightKey = null;
 function buildFilters(f, originPlace, destPlace) {
   var out = {};
   if (f.sources && f.sources.length) out.sources = f.sources;
@@ -830,15 +832,38 @@ function rpcParams(filters) {
     p_filters: buildFilters(filters || state.filters, state.fromPlace, state.toPlace),
   };
 }
+function isAbortError(err) {
+  return !!err && (err.name === 'AbortError' || /aborted|abortcontroller/i.test(err.message || ''));
+}
 function runSearch(opts) {
+  /* Single search entry point for every mode (matched route, near-from,
+     GPS near-me, and browse). Every call gets an incrementing request id
+     (seq) so a superseded response/error is ignored; identical in-flight
+     params are de-duped instead of firing a second request; and a stale
+     request is aborted so its rejection never reaches the UI as a real
+     failure. This replaces two near-duplicate call sites (matched vs.
+     landing) that used to independently set state.error — a render
+     exception thrown inside either one's success handler used to be
+     caught by that same handler's own .catch and misreported as a
+     network failure ("Couldn't load rides") even though the RPC had
+     already returned 200; see listHTML()'s per-card try/catch. */
   opts = opts || {};
-  if (!state.fromPlace) return Promise.resolve([]);
+  var hadFromPlace = !!state.fromPlace;
+  var wasNear = state.origin === 'gps' && !state.toPlace;
+  var params = rpcParams();
+  var key = JSON.stringify(params);
+  if (!opts.isWidenFallback && key === searchInFlightKey) return Promise.resolve(state.rows);
+  if (searchController) { try { searchController.abort(); } catch (e) {} }
+  var controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+  searchController = controller;
+  searchInFlightKey = key;
   var seq = ++searchSeq;
   state.loading = true; state.error = false;
   if (!opts.silent) render();
-  var params = rpcParams();
-  dbg('explore_search (matched) seq:', seq, 'params:', params);
-  return db.rpc('explore_search', params).then(function (res) {
+  dbg('explore_search seq:', seq, 'params:', params);
+  var req = db.rpc('explore_search', params);
+  if (controller && typeof req.abortSignal === 'function') { try { req = req.abortSignal(controller.signal); } catch (e) {} }
+  return req.then(function (res) {
     if (res.error) throw res.error;
     return res.data || [];
   }).catch(function (err) {
@@ -847,13 +872,25 @@ function runSearch(opts) {
     }
     throw err;
   }).then(function (rows) {
-    dbg('explore_search (matched) rows:', rows.length);
+    if (searchInFlightKey === key) searchInFlightKey = null;
+    dbg('explore_search rows:', rows.length);
     if (seq !== searchSeq) return rows;
+    /* A GPS-derived near-me search with zero results widens to browse
+       (all rides) once — a typed/matched From with zero results is a
+       real empty state and is never auto-widened. */
+    if (wasNear && rows.length === 0 && !opts.isWidenFallback) {
+      state.landingMode = 'browse'; state.landingInfo = 'no-near';
+      state.fromPlace = null; state.origin = null;
+      return runSearch({ silent: opts.silent, isWidenFallback: true });
+    }
     state.rows = rows; state.loading = false; state.error = false; state.pendingRows = null;
-    if (!opts.silent) { render(); loadNearby(); }
+    if (!opts.isWidenFallback) state.landingInfo = wasNear ? state.landingInfo : null;
+    if (!opts.silent) { render(); if (hadFromPlace) loadNearby(); }
     return rows;
   }).catch(function (err) {
+    if (searchInFlightKey === key) searchInFlightKey = null;
     if (seq !== searchSeq) return;
+    if (isAbortError(err)) { dbg('explore_search aborted (superseded)'); return; }
     console.error('explore_search failed:', err);
     state.loading = false; state.error = true; state.rows = [];
     if (!opts.silent) render();
@@ -885,7 +922,7 @@ function syncUrl() {
   if (matched) {
     if (state.from) p.set('from', state.from);
     if (state.to) p.set('to', state.to);
-  } else if (state.landingEnabled && state.landingMode === 'near' && state.loc.status === 'granted' && state.loc.coords) {
+  } else if (state.landingEnabled && state.origin === 'gps' && state.loc.coords) {
     p.set('near', '1');
   }
   if (state.fromPlace && state.origin !== 'gps') p.set('o', state.fromPlace.lat.toFixed(5) + ',' + state.fromPlace.lng.toFixed(5));
@@ -926,49 +963,9 @@ function searchOrRender() {
   else refreshLanding();
 }
 function refreshLanding() {
-  var mode = (state.loc.status === 'granted' && state.loc.coords) ? 'near' : 'browse';
-  state.landingMode = mode;
+  state.landingMode = (state.origin === 'gps' && state.loc.coords) ? 'near' : 'browse';
   state.landingInfo = null;
-  performLandingSearch(mode, false);
-}
-function performLandingSearch(mode, isFallback) {
-  var seq = ++searchSeq;
-  state.loading = true; state.error = false;
-  render();
-  var params = rpcParams();
-  dbg('explore_search (' + mode + ') seq:', seq, 'params:', params);
-  db.rpc('explore_search', params).then(function (res) {
-    if (res.error) throw res.error;
-    return res.data || [];
-  }).catch(function (err) {
-    if (err && (err.code === '42883' || /does not exist/i.test(err.message || ''))) {
-      return window.EXPLORE_MOCK ? window.EXPLORE_MOCK.search(params) : [];
-    }
-    throw err;
-  }).then(function (rows) {
-    dbg('explore_search (' + mode + ') rows:', rows.length);
-    if (seq !== searchSeq) return;
-    state.loading = false; state.error = false;
-    /* Only a GPS-derived near-me search with zero results widens to browse
-       (all rides) — a typed From with zero results is a real empty state,
-       never auto-widened. */
-    if (mode === 'near' && state.origin === 'gps' && rows.length === 0) {
-      state.landingMode = 'browse'; state.landingInfo = 'no-near';
-      state.fromPlace = null; state.origin = null;
-      performLandingSearch('browse', true);
-      return;
-    }
-    state.landingMode = mode;
-    if (!isFallback) state.landingInfo = null;
-    state.rows = rows;
-    state.pendingRows = null;
-    render();
-  }).catch(function (err) {
-    if (seq !== searchSeq) return;
-    console.error('explore_search failed:', err);
-    state.loading = false; state.error = true; state.rows = [];
-    render();
-  });
+  runSearch();
 }
 
 /* ---------- Auto-refresh: new WhatsApp posts without reloading ---------- */
@@ -1045,73 +1042,68 @@ document.addEventListener('visibilitychange', function () {
   }
 });
 
-var popularPlacesPromise = null;
-function fetchPopularPlaces() {
-  if (popularPlacesPromise) return popularPlacesPromise;
-  popularPlacesPromise = db
-    ? db.from('places').select('name,lat,lng').gte('popularity', 20).then(function (res) { return res.data || []; }).catch(function () { return []; })
-    : Promise.resolve([]);
-  return popularPlacesPromise;
+/* ---------- Location: silent GPS assist ----------
+   Never blocks results, never shows a prompt/banner. Coordinates live only
+   in state.loc.coords (memory) and, once resolved, in state.fromPlace —
+   never in the URL or storage. On any failure/denial we remember it in
+   localStorage and never ask again this browser. */
+function geoAttemptedBefore() {
+  try { return localStorage.getItem('pf_geo_failed') === '1'; } catch (e) { return false; }
 }
-function haversineKm(lat1, lng1, lat2, lng2) {
-  var R = 6371, toRad = Math.PI / 180;
-  var dLat = (lat2 - lat1) * toRad, dLng = (lng2 - lng1) * toRad;
-  var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(lat1 * toRad) * Math.cos(lat2 * toRad) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+function markGeoFailed() {
+  try { localStorage.setItem('pf_geo_failed', '1'); } catch (e) {}
 }
-function resolveNearestPlace() {
-  return fetchPopularPlaces().then(function (places) {
-    if (!places.length || !state.loc.coords) return;
-    var best = null, bestD = Infinity;
-    places.forEach(function (p) {
-      if (p.lat == null || p.lng == null) return;
-      var d = haversineKm(state.loc.coords.lat, state.loc.coords.lng, p.lat, p.lng);
-      if (d < bestD) { bestD = d; best = p; }
-    });
-    if (best) {
-      state.loc.nearestName = best.name;
-      state.from = best.name;
-      state.fromPlace = { name: best.name, lat: best.lat, lng: best.lng };
-      state.unresolved.from = null;
-      state.origin = 'gps';
-    }
-  });
+function canUseGpsForFrom() {
+  /* Never overwrite a From the user typed or that a shared link set. */
+  return !state.from && !state.fromPlace && !initial_.from && !initial_.oCoords;
 }
-function getLocation() {
-  /* No sheets or modals — every outcome is reflected inline in locationCard(). */
-  state.loc.status = 'locating';
-  navigator.geolocation.getCurrentPosition(function (pos) {
-    state.loc.coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-    state.loc.status = 'granted';
-    resolveNearestPlace().then(function () { refreshLanding(); });
-  }, function (err) {
-    if (err && err.code === 1) {
-      state.loc.status = 'denied';
-      render();
-    } else {
-      state.loc.status = 'prompt';
-      render();
-      toast('Couldn’t get your location — try again or pick From/To');
-    }
-  }, { enableHighAccuracy: false, timeout: 8000, maximumAge: 600000 });
+function reverseGeocode(lat, lng) {
+  if (!MAPBOX_TOKEN || typeof fetch !== 'function') return Promise.resolve(null);
+  var params = new URLSearchParams();
+  params.set('longitude', String(lng));
+  params.set('latitude', String(lat));
+  params.set('types', 'address,street,neighborhood,locality,place');
+  params.set('limit', '1');
+  params.set('access_token', MAPBOX_TOKEN);
+  return fetch('https://api.mapbox.com/search/geocode/v6/reverse?' + params.toString())
+    .then(function (res) { return res.ok ? res.json() : null; })
+    .then(function (json) {
+      var f = json && json.features && json.features[0];
+      var addr = f && f.properties && f.properties.full_address;
+      return addr || null;
+    })
+    .catch(function () { return null; });
 }
-function checkGeoPermission() {
-  if (!('geolocation' in navigator)) { state.loc.status = 'unsupported'; render(); return; }
+function trySilentLocation() {
+  if (geoAttemptedBefore()) return;
+  if (!('geolocation' in navigator)) return;
+  if (!canUseGpsForFrom()) return;
+  var attempt = function () {
+    navigator.geolocation.getCurrentPosition(function (pos) {
+      var lat = pos.coords.latitude, lng = pos.coords.longitude;
+      state.loc.coords = { lat: lat, lng: lng };
+      if (!canUseGpsForFrom()) return; /* From changed while we were waiting on GPS */
+      reverseGeocode(lat, lng).then(function (address) {
+        if (!canUseGpsForFrom()) return;
+        var label = address || 'Current location';
+        state.from = label;
+        state.fromPlace = { name: label, lat: lat, lng: lng, label: label };
+        state.unresolved.from = null;
+        state.origin = 'gps';
+        searchOrRender();
+      });
+    }, function () {
+      markGeoFailed();
+    }, { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 });
+  };
   if (navigator.permissions && navigator.permissions.query) {
     navigator.permissions.query({ name: 'geolocation' }).then(function (st) {
-      if (st.state === 'granted') { getLocation(); return; }
-      state.loc.status = st.state === 'denied' ? 'denied' : 'prompt';
-      render();
-    }).catch(function () {
-      state.loc.status = 'prompt'; render();
-    });
+      if (st.state === 'denied') return; /* never prompt */
+      attempt();
+    }).catch(attempt);
   } else {
-    state.loc.status = 'prompt'; render();
+    attempt();
   }
-}
-function bootLanding() {
-  refreshLanding();
-  checkGeoPermission();
 }
 
 /* ---------- Contact (RPC only — no numbers ever reach the client) ---------- */
@@ -1447,10 +1439,21 @@ function resultsHead(rows) {
     '<label class="sort"><select class="js-sort" aria-label="Sort"><option value="best"' + (state.sort === 'best' ? ' selected' : '') + '>Best match</option><option value="soonest"' + (state.sort === 'soonest' ? ' selected' : '') + '>Soonest</option><option value="cheapest"' + (state.sort === 'cheapest' ? ' selected' : '') + '>Cheapest</option></select>' + icon('chev') + '</label></div>' +
     (info ? '<p class="info-line">' + icon('info') + '<span>' + (state.mode === 'passenger' ? 'No direct passengers — these passengers are close to your route' : 'No direct rides — these drivers pass close to your route') + '</span></p>' : '') + '</div>';
 }
+function renderRideCardSafe(r, landingOpts) {
+  /* A single malformed row must never take down the whole list — or, worse,
+     bubble up into the search promise chain and get misreported as a
+     network failure (see runSearch()'s comment). */
+  try {
+    return renderRideCard(r, landingOpts);
+  } catch (e) {
+    console.warn('Skipping ride card, id=' + (r && r.id), e);
+    return '';
+  }
+}
 function listHTML(rows, landingOpts) {
-  var main = rows.filter(function (r) { return r.parsed; }).map(function (r) { return renderRideCard(r, landingOpts); }).join('');
+  var main = rows.filter(function (r) { return r.parsed; }).map(function (r) { return renderRideCardSafe(r, landingOpts); }).join('');
   var raw = rows.filter(function (r) { return !r.parsed; });
-  var fb = raw.length ? ('<h3 class="list-section">' + icon('info') + 'Posts we couldn\'t match <small>· details as written</small></h3>' + raw.map(function (r) { return renderRideCard(r, landingOpts); }).join('')) : '';
+  var fb = raw.length ? ('<h3 class="list-section">' + icon('info') + 'Posts we couldn\'t match <small>· details as written</small></h3>' + raw.map(function (r) { return renderRideCardSafe(r, landingOpts); }).join('')) : '';
   return main + fb;
 }
 function emptyState() {
@@ -1480,28 +1483,11 @@ function errorCard() {
     '<h2 class="empty__title">Couldn\'t load rides</h2><p class="empty__text">Something went wrong reaching Pathfynder. Check your connection and try again.</p>' +
     '<div class="empty__actions"><button type="button" class="btn btn--outline js-retry">Retry</button></div></div>';
 }
-function locationCard() {
-  /* Inline only — no sheets/modals. */
-  if (state.loc.status === 'unsupported' || state.loc.status === 'locating' || state.loc.status === 'checking') return '';
-  /* Near-me is currently driving the results — the results heading already
-     says "near …", so the card (and its old "Showing rides near you" line)
-     stays hidden entirely. It only comes back once From is cleared, a typed
-     pick replaces it, or location fails — same as the checks below. */
-  if (state.loc.status === 'granted' && state.fromPlace && state.origin === 'gps') return '';
-  if (state.loc.status === 'denied') {
-    return '<div class="prefill"><span class="prefill__text" style="font-size:13px;line-height:1.4;color:var(--text-2)">Location is blocked. iPhone: aA → Website Settings → Location → Allow. Android: lock icon → Permissions → Location → Allow. In WhatsApp/Instagram: ⋯ → Open in browser.</span>' +
-      '<button type="button" class="btn-text js-loc-retry">Try again</button></div>';
-  }
-  return '<div class="prefill">' + icon('pin') +
-    '<div class="prefill__text"><span class="prefill__eyebrow">See rides near you</span>' +
-    '<span class="prefill__query" style="font-size:13px;font-weight:400;color:var(--text-2)">Uses your location once — never saved</span></div>' +
-    '<button type="button" class="btn-text js-use-location">' + icon('search') + 'Use my location</button></div>';
-}
 function landingResultsHead(rows) {
   var n = rows.length;
   var subject = state.mode === 'passenger' ? 'Passengers' : 'Drivers';
   var noun, dateLine;
-  var nearLabel = state.fromPlace ? state.fromPlace.name : (state.landingMode === 'near' ? state.loc.nearestName : null);
+  var nearLabel = state.fromPlace ? state.fromPlace.name : null;
   if (nearLabel) {
     noun = subject + ' near ' + esc(nearLabel);
     dateLine = 'Within 25 km · next 3 days';
@@ -1523,19 +1509,18 @@ function renderLanding() {
   var app = document.getElementById('app');
   var foot = '<footer class="app-footer"><p><strong>Rideshare you know, now organized.</strong></p><a href="https://pathfynder.ca">pathfynder.ca</a></footer>';
   var top = searchPanel();
-  var card = locationCard();
   if (state.loading) {
-    app.innerHTML = appBar('Finding rides…') + '<div class="app__col">' + top + card +
+    app.innerHTML = appBar('Finding rides…') + '<div class="app__col">' + top +
       '<div class="results-head"><div class="skel-row"><div class="skel" style="width:190px;height:15px"></div><div class="skel" style="width:84px;height:12px"></div></div></div>' +
       '<div class="ride-list">' + [1,2,3].map(skeletonCard).join('') + '</div></div>';
   } else if (state.error) {
-    app.innerHTML = appBar('—') + '<div class="app__col">' + top + card + '<div class="ride-list" style="padding-top:12px">' + errorCard() + '</div>' + foot + '</div>';
+    app.innerHTML = appBar('—') + '<div class="app__col">' + top + '<div class="ride-list" style="padding-top:12px">' + errorCard() + '</div>' + foot + '</div>';
   } else if (!state.rows.length) {
-    app.innerHTML = appBar('0 rides') + '<div class="app__col">' + top + card + '<div class="ride-list" style="padding-top:12px">' + (shouldShowGroupCard(state.rows) ? groupLinkCard() : '') + (state.fromPlace ? emptyState() : landingEmpty()) + '</div>' + foot + '</div>';
+    app.innerHTML = appBar('0 rides') + '<div class="app__col">' + top + '<div class="ride-list" style="padding-top:12px">' + (state.fromPlace ? emptyState() : landingEmpty()) + (shouldShowGroupCard(state.rows) ? groupLinkCard() : '') + '</div>' + foot + '</div>';
   } else {
     var rows = sortedRows();
-    var landingOpts = { hideBadge: true, distanceNote: !!(state.fromPlace || state.landingMode === 'near') };
-    app.innerHTML = appBar(plural(state.rows.length, 'ride')) + '<div class="app__col">' + top + card + landingResultsHead(rows) + '<div class="ride-list">' + (shouldShowGroupCard(state.rows) ? groupLinkCard() : '') + listHTML(rows, landingOpts) + '</div>' + foot + '</div>';
+    var landingOpts = { hideBadge: true, distanceNote: !!state.fromPlace };
+    app.innerHTML = appBar(plural(state.rows.length, 'ride')) + '<div class="app__col">' + top + landingResultsHead(rows) + '<div class="ride-list">' + (shouldShowGroupCard(state.rows) ? groupLinkCard() : '') + listHTML(rows, landingOpts) + '</div>' + foot + '</div>';
   }
   wireApp();
   checkClamps();
@@ -1555,7 +1540,7 @@ function render() {
   } else if (state.error) {
     app.innerHTML = appBar('—') + '<div class="app__col">' + top + '<div class="ride-list" style="padding-top:12px">' + errorCard() + '</div>' + foot + '</div>';
   } else if (!state.rows.length) {
-    app.innerHTML = appBar('0 rides') + '<div class="app__col">' + top + '<div class="ride-list" style="padding-top:12px">' + (shouldShowGroupCard(state.rows) ? groupLinkCard() : '') + emptyState() + '</div>' + foot + '</div>';
+    app.innerHTML = appBar('0 rides') + '<div class="app__col">' + top + '<div class="ride-list" style="padding-top:12px">' + emptyState() + (shouldShowGroupCard(state.rows) ? groupLinkCard() : '') + '</div>' + foot + '</div>';
   } else {
     var rows = sortedRows();
     app.innerHTML = appBar(plural(state.rows.length, 'ride')) + '<div class="app__col">' + top + resultsHead(rows) + '<div class="ride-list">' + (shouldShowGroupCard(state.rows) ? groupLinkCard() : '') + listHTML(rows) + '</div>' + foot + '</div>';
@@ -1897,12 +1882,6 @@ document.addEventListener('click', function (e) {
     return;
   }
 
-  var useLoc = t.closest('.js-use-location');
-  if (useLoc) { getLocation(); return; }
-
-  var locRetry = t.closest('.js-loc-retry');
-  if (locRetry) { getLocation(); return; }
-
   var dateChip = t.closest('.js-date');
   if (dateChip) {
     var v = dateChip.getAttribute('data-value');
@@ -2023,7 +2002,8 @@ document.addEventListener('change', function (e) {
 
 /* ---------- Boot ---------- */
 function boot() {
-  if (state.landingEnabled) { bootLanding(); return; }
+  trySilentLocation();
+  if (state.landingEnabled) { refreshLanding(); return; }
   render();
   var cache = loadPlacesCache();
   var jobs = [];
