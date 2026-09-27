@@ -27,6 +27,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Pathfynder">
 <script src="/js/pf-notify-v4.js" defer></script>
+<script src="/js/pf-install-sheet-v1.js" defer></script>
 <title>Find a ride · Pathfynder</title>
 <meta name="description" content="Find drivers and passengers across Ontario — from WhatsApp groups, Poparide and more.">
 <meta property="og:title" content="Find a ride · Pathfynder">
@@ -1253,10 +1254,13 @@ function turnOnNotifications(btn) {
     if (btn) btn.setAttribute('disabled', '');
     P.resume(window.PF_TOKEN).then(function (r) {
       if (r && r.ok) { state.notify.on = true; refreshNotifyUI(); }
+      else if (window.PFInstall && window.PFInstall.needed()) { if (btn) btn.removeAttribute('disabled'); window.PFInstall.open(); }
       else window.location.assign(notifyUrl());
     }).catch(function () { if (btn) btn.removeAttribute('disabled'); });
     return;
   }
+  /* iPhone Safari outside the Home Screen app: push can't work here, show how to add it */
+  if (window.PFInstall && window.PFInstall.needed()) { window.PFInstall.open(); return; }
   if (!P || P.state() !== 'default') { window.location.assign(notifyUrl()); return; }
   if (btn) btn.setAttribute('disabled', '');
   P.enable(window.PF_TOKEN).then(function (st) {

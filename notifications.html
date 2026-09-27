@@ -28,6 +28,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Pathfynder">
 <script src="/js/pf-notify-v4.js" defer></script>
+<script src="/js/pf-install-sheet-v1.js" defer></script>
 <style>
   /* Explore palette (WhatsApp light/dark) */
   :root {
@@ -213,11 +214,11 @@
     }
     card.innerHTML =
       '<h1>Add Pathfynder to your Home Screen</h1>' +
-      '<ol>' +
-        '<li>Tap the Share button in Safari</li>' +
-        '<li>Choose "Add to Home Screen"</li>' +
-        '<li>Open Pathfynder from your Home Screen, then come back here to turn on alerts</li>' +
-      '</ol>';
+      '<p>On iPhone, notifications only work when Pathfynder is opened from your Home Screen.</p>' +
+      '<button type="button" class="btn" id="installHowBtn">Show me how</button>';
+    document.getElementById('installHowBtn').addEventListener('click', function () {
+      if (window.PFInstall) window.PFInstall.open();
+    });
   }
 
   function renderBlocked(reasonInApp) {

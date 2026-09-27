@@ -38,10 +38,11 @@ One task per session. Status: todo / done / parked.
    - Done when: anon can no longer select from `extracted_data_01` and the Telegram mini app still works.
    - Status: parked (the Telegram mini app depends on it)
 
-10. **Notifications: "Add to Home Screen" pop-up** — when someone taps "Turn on notifications", show a polished pop-up (bottom sheet): notifications only work once Pathfynder is added to the Home Screen, with step-by-step instructions for iPhone (Safari) and Android (Chrome).
-   - Done when: tapping any "Turn on notifications" outside the installed app opens the pop-up with iPhone + Android steps (current device's tab first), looks right in light + dark at 390px, and closes cleanly.
-   - Status: todo
+10. **Notifications: iPhone "Add to Home Screen" pop-up** — when someone on iPhone Safari taps "Turn on notifications", show a polished bottom sheet: notifications only work once Pathfynder is added to the Home Screen, with step-by-step iPhone instructions. Not shown on Android (push works in Chrome) or inside the installed app.
+   - Done when: on iPhone outside the installed app, "Turn on notifications" opens the sheet; Android and the installed app keep the old flow; looks right in light + dark at 390px and closes cleanly.
+   - Status: done (2026-09-27)
 
 ## Session notes
 
 - 2026-09-27 — Setup: rewrote CLAUDE.md (short, general facts only) and created plan.md. Open: task 4 was already done in index.html but has no changelog entry; header nav still says "Join on Telegram".
+- 2026-09-27 — Task 10: new `js/pf-install-sheet-v1.js` bottom sheet, opened from Explore's "Turn on notifications" on iPhone Safari and from a "Show me how" button on /notifications. Open: not yet checked on a real iPhone (Playwright emulation only).
