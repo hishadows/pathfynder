@@ -46,3 +46,4 @@ One task per session. Status: todo / done / parked.
 
 - 2026-09-27 — Setup: rewrote CLAUDE.md (short, general facts only) and created plan.md. Open: task 4 was already done in index.html but has no changelog entry; header nav still says "Join on Telegram".
 - 2026-09-27 — Task 10: new `js/pf-install-sheet-v1.js` bottom sheet, opened from Explore's "Turn on notifications" on iPhone Safari and from a "Show me how" button on /notifications. Open: not yet checked on a real iPhone (Playwright emulation only).
+- 2026-09-27 — Bug: live location ignored on /explore — stale `pf_geo_failed` flag from any past GPS timeout blocked it forever. Now only a real denial is remembered, granted permission clears it, and enabling location mid-session triggers near-me. Open: not yet checked on a real phone.
