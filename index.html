@@ -64,6 +64,9 @@ nav.scrolled{box-shadow:0 4px 40px rgba(0,0,0,0.4)}
 .btn-telegram{display:flex;align-items:center;gap:8px;padding:15px 28px;border-radius:50px;background:rgba(41,182,246,0.1);border:1px solid rgba(41,182,246,0.3);color:#29B6F6;font-size:15px;font-weight:600;text-decoration:none;cursor:pointer;font-family:'Inter',sans-serif;transition:all .25s}
 .btn-telegram:hover{background:rgba(41,182,246,0.18);box-shadow:0 0 30px rgba(41,182,246,0.2);transform:translateY(-2px)}
 .btn-telegram svg{width:18px;height:18px}
+.btn-whatsapp{display:flex;align-items:center;gap:8px;padding:15px 28px;background:#25D366;color:#111B21;border:0;border-radius:50px;font-size:15px;font-weight:700;text-decoration:none;cursor:pointer;font-family:'Inter',sans-serif;transition:all .25s;box-shadow:0 8px 30px rgba(37,211,102,0.3)}
+.btn-whatsapp:hover{background:#1EBE5A;transform:translateY(-2px)}
+.btn-whatsapp svg{width:20px;height:20px}
 .scroll-hint{position:absolute;bottom:36px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;color:var(--muted);font-size:11px;letter-spacing:1px;text-transform:uppercase;animation:float 2.5s ease-in-out infinite}
 @keyframes float{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(6px)}}
 .scroll-arrow{width:20px;height:20px;border-right:1.5px solid var(--muted);border-bottom:1.5px solid var(--muted);transform:rotate(45deg)}
@@ -147,9 +150,13 @@ nav.scrolled{box-shadow:0 4px 40px rgba(0,0,0,0.4)}
 .tg-pills{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-bottom:40px}
 .tg-pill{display:flex;align-items:center;gap:6px;padding:8px 16px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:50px;font-size:13px;color:var(--text2)}
 .tg-pill::before{content:'✓';color:var(--teal);font-weight:700;font-size:11px}
-.btn-tg-big{display:inline-flex;align-items:center;gap:10px;padding:18px 40px;border-radius:50px;background:linear-gradient(135deg,#29B6F6,#0288D1);color:#fff;font-size:16px;font-weight:700;text-decoration:none;transition:all .3s;box-shadow:0 8px 40px rgba(41,182,246,0.3)}
-.btn-tg-big:hover{transform:translateY(-3px);box-shadow:0 16px 60px rgba(41,182,246,0.45)}
+.btn-tg-big{display:inline-flex;align-items:center;gap:10px;padding:14px 28px;border-radius:50px;background:transparent;border:1px solid rgba(41,182,246,0.4);color:#29B6F6;font-size:15px;font-weight:600;text-decoration:none;transition:all .3s;box-shadow:none;margin-top:20px}
+.btn-tg-big:hover{transform:translateY(-3px)}
 .btn-tg-big svg{width:22px;height:22px}
+.btn-wa-big{display:inline-flex;align-items:center;gap:10px;padding:18px 40px;border-radius:50px;background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;font-size:16px;font-weight:700;text-decoration:none;transition:all .3s;box-shadow:0 8px 40px rgba(37,211,102,0.3)}
+.btn-wa-big:hover{transform:translateY(-3px);box-shadow:0 16px 60px rgba(37,211,102,0.45)}
+.btn-wa-big svg{width:22px;height:22px}
+.tg-wa-hint{font-size:13px;opacity:.75;margin-top:8px}
 
 /* ── FOOTER ── */
 footer{background:var(--bg);border-top:1px solid var(--border);padding:50px 40px}
@@ -178,6 +185,10 @@ footer{background:var(--bg);border-top:1px solid var(--border);padding:50px 40px
   .why-grid{grid-template-columns:1fr}
   .footer-inner{flex-direction:column;align-items:flex-start}
   .ride-card,.match-card{display:none}
+}
+@media(max-width:600px){
+  .hero-actions{gap:10px}
+  .btn-wa-big,.btn-tg-big{display:flex;width:100%;justify-content:center}
 }
 @media(prefers-reduced-motion:reduce){
   .reveal{opacity:1;transform:none}
@@ -595,9 +606,13 @@ html.light .tag-need{color:#B45309}
     <p class="hero-sub">You're already sharing rides — just through group chats. Pathfynder brings matching, timing, and coordination to one place so every trip takes minutes, not a thread.</p>
     <div class="hero-actions">
       <a href="/explore" class="btn-primary btn-xl">Explore rides <span aria-hidden="true">→</span></a>
+      <a href="https://wa.me/916356600421?text=Hi" class="btn-whatsapp" target="_blank" rel="noopener" aria-label="Chat with Pathfynder on WhatsApp">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21h.004c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.87 9.87 0 0012.04 2zm5.8 14.13c-.24.68-1.4 1.32-1.93 1.4-.53.08-1.06.29-3.56-.74-2.99-1.23-4.93-4.24-5.08-4.44-.15-.2-1.22-1.62-1.22-3.1 0-1.47.77-2.19 1.05-2.49.28-.3.6-.37.8-.37.2 0 .4 0 .58.01.19.01.44-.07.68.53.25.6.85 2.08.92 2.23.07.15.12.33.02.53-.1.2-.15.33-.3.5-.15.18-.31.4-.44.53-.15.15-.3.31-.13.6.17.3.76 1.25 1.63 2.03 1.12 1 2.06 1.31 2.36 1.46.3.15.47.13.65-.08.17-.2.74-.86.94-1.16.2-.3.4-.25.67-.15.28.1 1.75.83 2.05.98.3.15.5.22.57.35.08.13.08.75-.16 1.43z"/></svg>
+        Find a ride on WhatsApp
+      </a>
       <a href="https://t.me/PathfynderBot" class="btn-secondary btn-tg-outline" target="_blank">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.18 13.946l-2.96-.924c-.643-.203-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.968.613z"/></svg>
-        Join on Telegram
+        Telegram group
       </a>
     </div>
     <a href="https://t.me/PathfynderBot" class="hero-post-link" target="_blank">Driving somewhere? <b>Post a Ride →</b></a>
@@ -838,9 +853,14 @@ html.light .tag-need{color:#B45309}
       <div class="tg-pill">Free forever</div>
       <div class="tg-pill">Ontario corridors</div>
     </div>
+    <a href="https://wa.me/916356600421?text=Hi" class="btn-wa-big" target="_blank" rel="noopener" aria-label="Chat with Pathfynder on WhatsApp">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21h.004c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.87 9.87 0 0012.04 2zm5.8 14.13c-.24.68-1.4 1.32-1.93 1.4-.53.08-1.06.29-3.56-.74-2.99-1.23-4.93-4.24-5.08-4.44-.15-.2-1.22-1.62-1.22-3.1 0-1.47.77-2.19 1.05-2.49.28-.3.6-.37.8-.37.2 0 .4 0 .58.01.19.01.44-.07.68.53.25.6.85 2.08.92 2.23.07.15.12.33.02.53-.1.2-.15.33-.3.5-.15.18-.31.4-.44.53-.15.15-.3.31-.13.6.17.3.76 1.25 1.63 2.03 1.12 1 2.06 1.31 2.36 1.46.3.15.47.13.65-.08.17-.2.74-.86.94-1.16.2-.3.4-.25.67-.15.28.1 1.75.83 2.05.98.3.15.5.22.57.35.08.13.08.75-.16 1.43z"/></svg>
+      Chat with our WhatsApp bot
+    </a>
+    <p class="tg-wa-hint">Tell the bot where and when — it finds drivers and passengers for you.</p>
     <a href="https://t.me/PathfynderBot" class="btn-tg-big" target="_blank">
-      <svg viewBox="0 0 24 24" fill="white"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.18 13.946l-2.96-.924c-.643-.203-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.968.613z"/></svg>
-      Open Pathfynder on Telegram
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.18 13.946l-2.96-.924c-.643-.203-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.968.613z"/></svg>
+      Or join our Telegram group
     </a>
   </div>
 </section>
@@ -859,6 +879,7 @@ html.light .tag-need{color:#B45309}
       <a href="/explore">Explore rides</a>
       <a href="#">Find a Ride</a>
       <a href="#">Post a Ride</a>
+      <a href="https://wa.me/916356600421?text=Hi" target="_blank" rel="noopener" aria-label="Chat with Pathfynder on WhatsApp">WhatsApp bot</a>
       <a href="https://t.me/PathfynderBot" target="_blank">Telegram Bot</a>
       <a href="https://wa.me/12262805014">Contact</a>
     </div>
