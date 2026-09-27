@@ -33,6 +33,7 @@ The dispatch app (app.pathfynder.ca) and the Telegram mini app (pathfynder-form)
 
 ## Working rules
 - Before making any change, first write a short plan (files to touch, what changes, how I'll test it) and wait for Pranay's "yes". Only then build it.
+- Workflow: you (main model) plan and review only. After I say yes, delegate the whole implementation to the builder subagent, passing the full approved plan plus the relevant file paths and the spec file. When builder reports back, review its changes briefly, then tick plan.md and update the changelog.
 - Mobile-first.
 - Surgical, line-level edits only. Never rewrite whole files unless asked.
 - One task at a time from `plan.md`. After finishing, add 1–3 lines under "Session notes" in `plan.md`.
