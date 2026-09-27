@@ -1093,17 +1093,19 @@ document.addEventListener('visibilitychange', function () {
 /* ---------- Location: silent GPS assist ----------
    Never blocks results, never shows a prompt/banner. Coordinates live only
    in state.loc.coords (memory) and, once resolved, in state.fromPlace —
-   never in the URL or storage. On any failure/denial we remember it in
-   localStorage and never ask again this browser. */
+   never in the URL or storage. Only a real denial is remembered in
+   localStorage (pf_geo_denied) so we never ask again this browser. The old
+   pf_geo_failed key was also set on timeouts and is ignored + removed. */
 function geoAttemptedBefore() {
-  try { return localStorage.getItem('pf_geo_failed') === '1'; } catch (e) { return false; }
+  try { return localStorage.getItem('pf_geo_denied') === '1'; } catch (e) { return false; }
 }
 function markGeoFailed() {
-  try { localStorage.setItem('pf_geo_failed', '1'); } catch (e) {}
+  try { localStorage.setItem('pf_geo_denied', '1'); } catch (e) {}
 }
 function clearGeoFailed() {
-  try { localStorage.removeItem('pf_geo_failed'); } catch (e) {}
+  try { localStorage.removeItem('pf_geo_denied'); } catch (e) {}
 }
+try { localStorage.removeItem('pf_geo_failed'); } catch (e) {}
 function canUseGpsForFrom() {
   /* Never overwrite a From the user typed or that a shared link set. */
   return !state.from && !state.fromPlace && !initial_.from && !initial_.oCoords;
