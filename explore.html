@@ -556,6 +556,8 @@ var icon = function (n) { return '<svg class="i" aria-hidden="true"><use href="#
 var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]; }); };
 var SOURCE_LABEL = { whatsapp:'WhatsApp', poparide:'Poparide', facebook:'Facebook' };
 var SOURCE_DOMAIN = { poparide:'poparide.com', facebook:'facebook.com' };
+/* Pathfynder bot rides render and contact exactly like WhatsApp-group rides */
+function isWa(r) { return !!r && (r.source === 'whatsapp' || r.source === 'pathfynder'); }
 var plural = function (n, w) { return n + ' ' + w + (n === 1 ? '' : 's'); };
 
 function dayDiff(dateStr) {
@@ -848,6 +850,9 @@ function buildFilters(f, originPlace, destPlace) {
   if (f.daily) out.daily = true;
   if (originPlace) out.from_name = originPlace.name;
   if (destPlace) out.to_name = destPlace.name;
+  /* excludes the viewer's own Pathfynder bot rides server-side */
+  var viewerToken = (window.PFNotify && window.PFNotify.token && window.PFNotify.token()) || window.PF_TOKEN;
+  if (viewerToken) out.viewer_token = viewerToken;
   return out;
 }
 function rpcParams(filters) {
@@ -1158,14 +1163,16 @@ function toast(msg) {
 function contact(id, btn) {
   if (btn) btn.setAttribute('disabled', 'disabled');
   var srcRow = state.rows.find(function (r) { return r.id === id; });
-  var isWhatsapp = srcRow && srcRow.source === 'whatsapp';
+  var isWhatsapp = isWa(srcRow) || /^pf:/.test(id);
   var popup = null;
   if (!isWhatsapp) {
     /* mobile browsers block window.open() called after an await — open it
        synchronously inside this tap handler, then redirect it once we know the URL */
     try { popup = window.open('about:blank', '_blank'); } catch (e) { popup = null; }
   }
-  db.rpc('explore_contact', { p_id: id }).then(function (res) {
+  var contactParams = { p_id: id };
+  if (/^pf:/.test(id)) contactParams.p_mode = (srcRow ? srcRow.role === 'passenger' : state.mode === 'passenger') ? 'passengers' : 'drivers';
+  db.rpc('explore_contact', contactParams).then(function (res) {
     if (res.error) throw res.error;
     var row = Array.isArray(res.data) ? res.data[0] : res.data;
     if (!row || !row.url) throw new Error('empty');
@@ -1330,7 +1337,7 @@ function rideTypeTags(r) {
   return out;
 }
 function sourceBadge(r) {
-  if (r.source === 'whatsapp') return '';
+  if (isWa(r)) return '';
   return '<span class="source-badge source-badge--' + r.source + '">' + SOURCE_LABEL[r.source] + '</span>';
 }
 function whenBlock(r) {
@@ -1354,12 +1361,13 @@ function metaList(r) {
 }
 function posterSub(r) {
   if (r.rating) return ratingHTML(r);
-  if (r.source === 'whatsapp' && r.groups && r.groups.length) {
+  if (isWa(r) && r.groups && r.groups.length) {
     return r.groups.length > 1
       ? '<button class="poster__groups" data-action="groups">' + icon('groups') + 'Posted in ' + r.groups.length + ' groups</button>'
       : ('<span>from ' + esc(r.groups[0].name) + '</span>');
   }
   if (r.source === 'facebook' && r.groups && r.groups.length) return '<span>from ' + esc(r.groups[0].name) + '</span>';
+  if (isWa(r)) return '';
   return r.source === 'poparide' ? 'Poparide member' : ('Facebook post · ' + ago(r.posted_at));
 }
 function poster(r, extra) {
@@ -1371,10 +1379,10 @@ function poster(r, extra) {
   return '<div class="poster ' + extra + '">' + av +
     '<div class="poster__text"><span class="poster__line"><span class="poster__name">' + esc(r.display_name) + '</span>' +
     (r.verified ? '<span class="verified" title="Verified">' + icon('verified') + '</span>' : '') + '</span>' +
-    '<span class="poster__sub">' + subInline + '</span></div>' + sourceBadge(r) + '</div>';
+    (subInline ? '<span class="poster__sub">' + subInline + '</span>' : '') + '</div>' + sourceBadge(r) + '</div>';
 }
 function cta(r, label) {
-  if (r.source === 'whatsapp')
+  if (isWa(r))
     return '<div class="ride-card__cta"><button type="button" class="btn btn--wa" data-action="contact" data-id="' + r.id + '">' + icon('chat') + (label || 'Message on WhatsApp') + '</button></div>';
   return '<div class="ride-card__cta"><button type="button" class="btn btn--outline" data-action="contact" data-id="' + r.id + '">View on ' + SOURCE_LABEL[r.source] + icon('external') + '</button><p class="btn__hint">Opens ' + SOURCE_DOMAIN[r.source] + ' · you\'ll leave Pathfynder</p></div>';
 }
@@ -1811,8 +1819,8 @@ function renderRideDetail(r) {
       '<span class="wa-chat__day">' + (dayDiff(r.groups[0].posted_at.slice(0, 10)) === -1 ? 'YESTERDAY' : 'TODAY') + '</span>' +
       '<div class="bubble"><div class="bubble__name">' + esc(r.display_name) + '</div><span class="bubble__text">' + esc(r.raw_text) + '</span><span class="bubble__time">' + bt + '</span></div></div></section>';
   }
-  var ctaHTML = r.source === 'whatsapp'
-    ? '<button type="button" class="btn btn--wa" data-action="contact" data-id="' + r.id + '">' + icon('chat') + 'Message ' + esc(r.display_name.split(' ')[0]) + ' on WhatsApp</button><p class="btn__hint">Opens WhatsApp with a message ready to send</p>'
+  var ctaHTML = isWa(r)
+    ? '<button type="button" class="btn btn--wa" data-action="contact" data-id="' + r.id + '">' + icon('chat') + 'Message ' + esc(r.display_name.split(' ')[0]) + ' on WhatsApp</button><p class="btn__hint">' + (r.source === 'pathfynder' ? 'Opens WhatsApp · Confirm the ride there · Pay in the car' : 'Opens WhatsApp with a message ready to send') + '</p>'
     : '<button type="button" class="btn btn--outline btn--strong" data-action="contact" data-id="' + r.id + '">View on ' + SOURCE_LABEL[r.source] + icon('external') + '</button><p class="btn__hint">Opens ' + SOURCE_DOMAIN[r.source] + ' to book · you\'ll leave Pathfynder</p>';
   var strip = (r.role === 'driver' && r.match_type === 'along_route' && r.route_km != null && r.pickup_pct != null && r.dropoff_pct != null)
     ? ('<section class="sheet-block"><h3 class="sheet-block__label">How this ride fits your trip</h3>' + routeStrip(r) + '</section>') : '';

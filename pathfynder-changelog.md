@@ -81,3 +81,19 @@
   - **Explore**: header bell now opens /notifications (unread dot when notifications are off); "Get pinged for new drivers/passengers" turn-on banner above results / empty state (session-dismissable); empty-state copy + button switched to "Turn on notifications"; `syncUrl()` keeps `t`.
   - **/notifications**: restyled to Explore's light/dark palette with header + back to Explore, toggle row, "Sent to you" history list, footer, and a no-token message.
   - Files: explore.html, notifications.html, manifest.webmanifest, api/manifest.js (new), js/pf-notify-v2.js (new), pathfynder-changelog.md.
+- 2026-09-27 — Explore now lists Pathfynder WhatsApp-bot rides, ranked first, with WhatsApp contact.
+  - **DB (migration `explore_bot_rides`, applied to prod)**:
+    - `explore_search_core` (the logic behind `explore_search`) adds a `pf` source. It returns open `driver_routines` rows (drivers mode) and open `passenger_requests` rows (passengers mode), where open means `notify_request_open(...)->>'open' = 'true'`. Rows need a wa_id and coordinates. They use id `pf:<uuid>` and `source = 'pathfynder'`, and go through the same date/distance/filter rules as the other sources. Seats show only when `available_seats > 0`; fare shows only when > 0 (drivers only). Pathfynder rows sort first; all other rows keep their existing mixed order. `pathfynder` counts as included whenever `whatsapp` is in `sources`. When `p_filters.viewer_token` is set, the viewer's own rides are dropped (matched by the `notify_requests` wa_id). No phone numbers or wa_ids are returned.
+    - `explore_contact(p_id, p_mode)`: the signature is unchanged. It gains a `pf:` branch, and `p_mode` picks which table to read. It returns a wa.me link with a prefilled "…on Pathfynder" message. Other sources are unchanged.
+    - `notify_check_new_matches` passes `viewer_token` = the request's own token (commented so a rewrite keeps it).
+    - `bot_match_reply` body ends with "Your ride is now listed on Explore. People will message you on WhatsApp to confirm, and payment is in the car."
+    - All currently open bot rides were seeded into `notify_seen` (`seeded = true`) for every notify request.
+    - Grants and volatility are unchanged.
+  - **explore.html**:
+    - New `isWa(r)` helper, true for whatsapp + pathfynder. Bot rides use the exact WhatsApp card: no source badge, same CTA, same detail sheet. An empty `poster__sub` line is now omitted.
+    - Contact passes `p_mode` for `pf:` ids.
+    - `p_filters.viewer_token` is sent when a notify token exists.
+    - Detail-sheet hint for Pathfynder rows only: "Opens WhatsApp · Confirm the ride there · Pay in the car".
+    - Bot rides don't count as WhatsApp rows for the group-link card.
+    - Verified with `node --check`.
+  - Files: explore.html (+ Supabase functions above).
