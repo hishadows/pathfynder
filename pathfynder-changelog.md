@@ -123,3 +123,9 @@
     - Bot rides don't count as WhatsApp rows for the group-link card.
     - Verified with `node --check`.
   - Files: explore.html (+ Supabase functions above).
+- 2026-09-27 — Fixed Explore showing "Turn on notifications" to people who already have notifications on (e.g. opening the bot link in Safari or the WhatsApp browser while the Home Screen app is subscribed). `PFNotify.status()` read this browser's `reg.pushManager` before asking the server. In a Safari tab or in-app browser pushManager is missing, so it threw, the server was never asked, and the status stayed unknown.
+  - New `js/pf-notify-v3.js` = v2 + `PFNotify.serverStatus(token)` (calls `notify_status` with no service-worker/push lookup). `status()` now tolerates a missing pushManager.
+  - `explore.html` `loadNotifyStatus()`: with a token, asks the server first. `on: true` → banner hidden and bell dot off, whatever this browser's state is. Otherwise, or on error, the previous logic runs unchanged. No token → unchanged. No visual changes.
+  - explore.html and notifications.html load v3 (sw.js has no cache list; build.sh copies js/ as a whole).
+  - push-send already deactivates a subscription on a 404/410 from the push service, so no change there.
+  - Files: js/pf-notify-v3.js (new), explore.html, notifications.html, pathfynder-changelog.md.

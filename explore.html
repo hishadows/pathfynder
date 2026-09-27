@@ -26,7 +26,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Pathfynder">
-<script src="/js/pf-notify-v2.js" defer></script>
+<script src="/js/pf-notify-v3.js" defer></script>
 <title>Find a ride · Pathfynder</title>
 <meta name="description" content="Find drivers and passengers across Ontario — from WhatsApp groups, Poparide and more.">
 <meta property="og:title" content="Find a ride · Pathfynder">
@@ -1228,10 +1228,22 @@ function refreshNotifyUI() {
 }
 function loadNotifyStatus() {
   if (!window.PFNotify) return;
-  window.PFNotify.status(window.PF_TOKEN).then(function (d) {
+  function apply(d) {
     state.notify = { on: !!(d && d.on), mode: (d && d.mode) || null, label: (d && d.label) || null };
     refreshNotifyUI();
-  }).catch(function () {});
+  }
+  function localStatus() {
+    window.PFNotify.status(window.PF_TOKEN).then(apply).catch(function () {});
+  }
+  /* With a token, trust the server first: if this person has notifications on anywhere
+     (e.g. the Home Screen app), hide the banner whatever this browser's local state is. */
+  if (window.PF_TOKEN && window.PFNotify.serverStatus) {
+    window.PFNotify.serverStatus(window.PF_TOKEN).then(function (d) {
+      if (d && d.on === true) apply(d); else localStatus();
+    }).catch(localStatus);
+  } else {
+    localStatus();
+  }
 }
 function turnOnNotifications(btn) {
   var P = window.PFNotify;
