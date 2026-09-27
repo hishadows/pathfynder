@@ -3,6 +3,30 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>
+/* Personal notify token (?t= from the WhatsApp link) — persisted so the Home Screen app keeps it. Runs before anything else. */
+(function () {
+  var t = null, u = null;
+  try { u = new URL(location.href); t = u.searchParams.get('t'); } catch (e) {}
+  if (t && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(t)) t = null;
+  if (t) { try { localStorage.setItem('pf_token', t); } catch (e) {} }
+  else {
+    try { t = localStorage.getItem('pf_token'); } catch (e) { t = null; }
+    if (t && u) { try { u.searchParams.set('t', t); history.replaceState(history.state, '', u.pathname + u.search + u.hash); } catch (e) {} }
+  }
+  window.PF_TOKEN = t || null;
+  var l = document.createElement('link');
+  l.rel = 'manifest';
+  l.href = t ? '/api/manifest?t=' + encodeURIComponent(t) : '/manifest.webmanifest';
+  document.head.appendChild(l);
+})();
+</script>
+<meta name="theme-color" content="#008069">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Pathfynder">
+<script src="/js/pf-notify-v2.js" defer></script>
 <title>Find a ride · Pathfynder</title>
 <meta name="description" content="Find drivers and passengers across Ontario — from WhatsApp groups, Poparide and more.">
 <meta property="og:title" content="Find a ride · Pathfynder">
@@ -85,6 +109,21 @@ body.no-scroll{overflow:hidden}
 .app-bar__sub b{font-weight:600}
 .icon-btn{width:40px;height:40px;border-radius:50%;border:0;background:transparent;color:inherit;display:grid;place-items:center;cursor:pointer;flex:none}
 .icon-btn:hover{background:var(--header-hover)}
+/* Notifications: bell dot + turn-on banner */
+:root{--nt-bg:#E1F5EE;--nt-ink:#085041;--nt-sub:#0F6E56;--nt-btn:#008069;--nt-dot:#25D366}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--nt-bg:rgba(0,168,132,.14);--nt-ink:#9FE1CB;--nt-sub:#5DCAA5;--nt-btn:#00A884;--nt-dot:#00A884}}
+:root[data-theme="dark"]{--nt-bg:rgba(0,168,132,.14);--nt-ink:#9FE1CB;--nt-sub:#5DCAA5;--nt-btn:#00A884;--nt-dot:#00A884}
+.pf-bell{position:relative;width:44px;height:44px}
+.pf-bell .i{width:22px;height:22px}
+.pf-bell__dot{position:absolute;top:10px;right:10px;width:8px;height:8px;border-radius:50%;background:var(--nt-dot);border:1.5px solid var(--header);box-sizing:content-box}
+.pf-banner{position:relative;display:flex;gap:10px;padding:12px;border-radius:10px;background:var(--nt-bg);color:var(--nt-ink)}
+.pf-banner__ico{width:20px;height:20px;flex:none;color:var(--nt-ink)}
+.pf-banner__body{flex:1;min-width:0;padding-right:18px}
+.pf-banner__title{margin:0;font-size:14px;font-weight:500;color:var(--nt-ink)}
+.pf-banner__sub{margin:2px 0 0;font-size:12px;color:var(--nt-sub)}
+.pf-banner__btn{margin-top:8px;border:0;border-radius:8px;padding:8px 14px;background:var(--nt-btn);color:#FFFFFF;font:inherit;font-size:14px;font-weight:500;cursor:pointer}
+.pf-banner__x{position:absolute;top:8px;right:8px;width:24px;height:24px;border:0;background:none;padding:0;color:var(--nt-ink);display:grid;place-items:center;cursor:pointer}
+.pf-banner__x .i{width:16px;height:16px}
 
 .app__col{display:flex;flex-direction:column}
 
@@ -468,6 +507,7 @@ body.no-scroll{overflow:hidden}
   <symbol id="i-tag" viewBox="0 0 24 24"><path d="M3.5 12.3 12 3.8h7.7a.5.5 0 0 1 .5.5V12l-8.5 8.5a1 1 0 0 1-1.4 0l-6.8-6.8a1 1 0 0 1 0-1.4z"/><circle cx="15.8" cy="8.2" r="1.3"/></symbol>
   <symbol id="i-chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
   <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M4 20h4L19.3 8.7a1.4 1.4 0 0 0 0-2l-2-2a1.4 1.4 0 0 0-2 0L4 16z"/><path d="m13.5 6.5 4 4"/></symbol>
+  <symbol id="i-bell-ringing" viewBox="0 0 24 24"><path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6"/><path d="M9 17v1a3 3 0 0 0 6 0v-1"/><path d="M21 6.727a11.05 11.05 0 0 0 -2.794 -3.727"/><path d="M3 6.727a11.05 11.05 0 0 1 2.792 -3.727"/></symbol>
   <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 1.5h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></symbol>
   <symbol id="i-chat" viewBox="0 0 24 24"><path d="M3.8 20.2 5 16.4A8.3 8.3 0 1 1 8 19.3z"/><path d="M8.5 11.5h7M8.5 14.5h4.5"/></symbol>
   <symbol id="i-external" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></symbol>
@@ -614,6 +654,7 @@ var state = {
   loc: { coords: null },
   groupCard: { collapsed: false, message: null, messageKind: null, submitting: false, sentUrl: null },
   pendingRows: null, refreshInFlight: false,
+  notify: { on: null, mode: null, label: null },
 };
 if (state.date && state.date < torontoTodayStr(0)) state.date = torontoTodayStr(0);
 if (initial_.date) {
@@ -941,6 +982,7 @@ function syncUrl() {
   if (f.verified_only) p.set('v', '1');
   if (f.hide_business) p.set('nb', '1');
   if (f.luggage_ok) p.set('lug', '1');
+  if (window.PF_TOKEN) p.set('t', window.PF_TOKEN);
   history.replaceState(null, '', location.pathname + '?' + p.toString());
 }
 function savePlacesCache() {
@@ -1148,6 +1190,53 @@ function shouldShowGroupCard(rows) {
      successful submit; a fresh page load always shows the card normally. */
   return !rows.some(function (r) { return r.source === 'whatsapp'; });
 }
+/* ---------- Notifications: bell dot, turn-on banner ---------- */
+function notifyUrl() {
+  return window.PF_TOKEN ? '/notifications?t=' + encodeURIComponent(window.PF_TOKEN) : '/notifications';
+}
+function bannerDismissed() {
+  try { return sessionStorage.getItem('pf_banner_x') === '1'; } catch (e) { return false; }
+}
+function notifyBanner() {
+  var n = state.notify;
+  if (!window.PF_TOKEN || n.on !== false || bannerDismissed()) return '';
+  return '<div class="pf-banner" role="region" aria-label="Notifications">' +
+    '<svg class="i pf-banner__ico" aria-hidden="true"><use href="#i-bell-ringing"/></svg>' +
+    '<div class="pf-banner__body"><p class="pf-banner__title">Get pinged for new ' + (n.mode === 'passengers' ? 'passengers' : 'drivers') + '</p>' +
+    (n.label ? '<p class="pf-banner__sub">' + esc(n.label) + '</p>' : '') +
+    '<button type="button" class="pf-banner__btn js-notify-on">Turn on notifications</button></div>' +
+    '<button type="button" class="pf-banner__x js-banner-x" aria-label="Dismiss">' + icon('x') + '</button></div>';
+}
+function refreshNotifyUI() {
+  var on = state.notify.on;
+  document.querySelectorAll('.pf-bell__dot').forEach(function (d) { d.hidden = on !== false; });
+  var banner = document.querySelector('.pf-banner');
+  var html = notifyBanner();
+  if (!html) { if (banner) banner.remove(); }
+  else if (!banner && !state.loading && !state.error) {
+    var list = document.querySelector('.ride-list');
+    if (list) list.insertAdjacentHTML('afterbegin', html);
+  }
+  if (on === true) document.querySelectorAll('.empty__actions .js-notify-on').forEach(function (b) { b.remove(); });
+}
+function loadNotifyStatus() {
+  if (!window.PFNotify) return;
+  window.PFNotify.status(window.PF_TOKEN).then(function (d) {
+    state.notify = { on: !!(d && d.on), mode: (d && d.mode) || null, label: (d && d.label) || null };
+    refreshNotifyUI();
+  }).catch(function () {});
+}
+function turnOnNotifications(btn) {
+  var P = window.PFNotify;
+  if (!P || P.state() !== 'default') { window.location.assign(notifyUrl()); return; }
+  if (btn) btn.setAttribute('disabled', '');
+  P.enable(window.PF_TOKEN).then(function (st) {
+    if (st === 'granted') { state.notify.on = true; refreshNotifyUI(); }
+    else if (btn) btn.removeAttribute('disabled');
+  }).catch(function () { if (btn) btn.removeAttribute('disabled'); });
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', loadNotifyStatus);
+else loadNotifyStatus();
 function renderEmptyState(rows, s) {
   /* Single render for every zero-results screen (initial load from URL
      params/bot links, a normal search, near-me, browse, after a filter/
@@ -1365,7 +1454,7 @@ function appBar(sub) {
   return '<header class="app-bar"><div class="app-bar__inner">' +
     '<a class="brand js-explore-home" href="/explore" aria-label="Explore rides — start over">' + icon('pin') + '</a>' +
     '<div class="app-bar__titles"><h1 class="app-bar__title">Explore rides</h1><p class="app-bar__sub"><b>Pathfynder</b> · <span>' + sub + '</span></p></div>' +
-    '<!-- TODO: ride-alert bot link not built yet --><button class="icon-btn" data-action="noop" aria-label="Get ride alerts">' + icon('bell') + '</button>' +
+    '<button type="button" class="icon-btn pf-bell js-notify-bell" aria-label="Notifications">' + icon('bell') + '<span class="pf-bell__dot"' + (state.notify.on === false ? '' : ' hidden') + '></span></button>' +
     '</div></header>';
 }
 function searchPanel() {
@@ -1468,14 +1557,14 @@ function emptyState() {
     ? ('No ' + (state.mode === 'driver' ? 'drivers' : 'passengers') + ' going your way yet')
     : ('No ' + (state.mode === 'driver' ? 'drivers' : 'passengers') + ' from ' + esc(c.from) + ' yet');
   var body = hasTo
-    ? ('Nobody has posted ' + esc(c.from) + ' → ' + esc(c.to) + (c.date ? (' for ' + esc(dayLabel(c.date))) : '') + '. We\'ll message you on WhatsApp as soon as one does.')
-    : ('Nobody has posted from ' + esc(c.from) + (c.date ? (' for ' + esc(dayLabel(c.date))) : '') + ' yet. We\'ll message you on WhatsApp as soon as one does.');
+    ? ('Nobody has posted ' + esc(c.from) + ' → ' + esc(c.to) + (c.date ? (' for ' + esc(dayLabel(c.date))) : '') + '. Turn on notifications and we\'ll ping you as soon as one does.')
+    : ('Nobody has posted from ' + esc(c.from) + (c.date ? (' for ' + esc(dayLabel(c.date))) : '') + ' yet. Turn on notifications and we\'ll ping you as soon as one does.');
   return '<div class="empty-card"><div class="empty__art" aria-hidden="true">' +
     '<svg width="52" height="52" viewBox="0 0 52 52" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="14" cy="38" r="4"/><path d="M38 22s-7-6.5-7-11.5a7 7 0 0 1 14 0C45 15.5 38 22 38 22z"/><circle cx="38" cy="10.5" r="2"/><path d="M18 38h10a6 6 0 0 0 0-12h-2a6 6 0 0 1 0-12h1" stroke-dasharray="3 4"/></svg></div>' +
     '<h2 class="empty__title">' + title + '</h2>' +
     '<p class="empty__text">' + body + '</p>' +
     '<div class="empty__actions">' +
-    '<!-- TODO: ride-alert bot link not built yet --><a class="btn btn--wa" href="#" data-action="noop">' + icon('bell') + 'Get a WhatsApp alert when one appears</a>' +
+    (state.notify.on === true ? '' : '<button type="button" class="btn btn--wa js-notify-on">' + icon('bell') + 'Turn on notifications</button>') +
     '<!-- TODO: post-in-group bot link not built yet --><a class="btn btn--outline" href="#" data-action="noop">' + icon('plus') + 'Post in our WhatsApp group</a>' +
     '</div>' + nearbyHTML +
     "<!-- TODO: \"Close routes\" suggestions need nearby-route data we don't have yet --></div>";
@@ -1518,11 +1607,11 @@ function renderLanding() {
   } else if (state.error) {
     app.innerHTML = appBar('—') + '<div class="app__col">' + top + '<div class="ride-list" style="padding-top:12px">' + errorCard() + '</div>' + foot + '</div>';
   } else if (!state.rows.length) {
-    app.innerHTML = appBar('0 rides') + '<div class="app__col">' + top + '<div class="ride-list" style="padding-top:12px">' + renderEmptyState(state.rows, state) + '</div>' + foot + '</div>';
+    app.innerHTML = appBar('0 rides') + '<div class="app__col">' + top + '<div class="ride-list" style="padding-top:12px">' + notifyBanner() + renderEmptyState(state.rows, state) + '</div>' + foot + '</div>';
   } else {
     var rows = sortedRows();
     var landingOpts = { hideBadge: true, distanceNote: !!state.fromPlace };
-    app.innerHTML = appBar(plural(state.rows.length, 'ride')) + '<div class="app__col">' + top + landingResultsHead(rows) + '<div class="ride-list">' + (shouldShowGroupCard(state.rows) ? groupLinkCard() : '') + listHTML(rows, landingOpts) + '</div>' + foot + '</div>';
+    app.innerHTML = appBar(plural(state.rows.length, 'ride')) + '<div class="app__col">' + top + landingResultsHead(rows) + '<div class="ride-list">' + notifyBanner() + (shouldShowGroupCard(state.rows) ? groupLinkCard() : '') + listHTML(rows, landingOpts) + '</div>' + foot + '</div>';
   }
   wireApp();
   checkClamps();
@@ -1542,10 +1631,10 @@ function render() {
   } else if (state.error) {
     app.innerHTML = appBar('—') + '<div class="app__col">' + top + '<div class="ride-list" style="padding-top:12px">' + errorCard() + '</div>' + foot + '</div>';
   } else if (!state.rows.length) {
-    app.innerHTML = appBar('0 rides') + '<div class="app__col">' + top + '<div class="ride-list" style="padding-top:12px">' + renderEmptyState(state.rows, state) + '</div>' + foot + '</div>';
+    app.innerHTML = appBar('0 rides') + '<div class="app__col">' + top + '<div class="ride-list" style="padding-top:12px">' + notifyBanner() + renderEmptyState(state.rows, state) + '</div>' + foot + '</div>';
   } else {
     var rows = sortedRows();
-    app.innerHTML = appBar(plural(state.rows.length, 'ride')) + '<div class="app__col">' + top + resultsHead(rows) + '<div class="ride-list">' + (shouldShowGroupCard(state.rows) ? groupLinkCard() : '') + listHTML(rows) + '</div>' + foot + '</div>';
+    app.innerHTML = appBar(plural(state.rows.length, 'ride')) + '<div class="app__col">' + top + resultsHead(rows) + '<div class="ride-list">' + notifyBanner() + (shouldShowGroupCard(state.rows) ? groupLinkCard() : '') + listHTML(rows) + '</div>' + foot + '</div>';
   }
   wireApp();
   checkClamps();
@@ -1847,6 +1936,15 @@ document.addEventListener('click', function (e) {
 
   var noop = t.closest('[data-action="noop"]');
   if (noop) { e.preventDefault(); return; }
+
+  if (t.closest('.js-notify-bell')) { window.location.assign(notifyUrl()); return; }
+  var notifyOn = t.closest('.js-notify-on');
+  if (notifyOn) { turnOnNotifications(notifyOn); return; }
+  if (t.closest('.js-banner-x')) {
+    try { sessionStorage.setItem('pf_banner_x', '1'); } catch (e2) {}
+    var bx = document.querySelector('.pf-banner'); if (bx) bx.remove();
+    return;
+  }
 
   var exploreHome = t.closest('.js-explore-home');
   if (exploreHome) {
