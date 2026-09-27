@@ -402,8 +402,11 @@ html.light .live-num,html.light .where-big strong{background:linear-gradient(135
 .hours-axis{display:grid;grid-template-columns:repeat(24,1fr);gap:3px;margin-top:8px;font-size:10px;color:var(--muted)}
 .hours-axis span{white-space:nowrap;overflow:visible}
 .day-pills{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:22px}
-.day{padding:7px 0;text-align:center;border-radius:50px;border:1px solid var(--border);background:var(--card2);font-size:12px;font-weight:600;color:var(--muted)}
+.day{appearance:none;-webkit-appearance:none;padding:7px 0;text-align:center;border-radius:50px;border:1px solid var(--border);background:var(--card2);font-size:12px;font-weight:600;color:var(--muted);font-family:inherit;cursor:pointer;transition:all .2s}
+.day:hover{border-color:var(--indigo);color:var(--text)}
+.day:focus-visible{outline:2px solid var(--indigo);outline-offset:2px}
 .day-top{border-color:rgba(0,212,170,.5);color:var(--teal);background:rgba(0,212,170,.1);box-shadow:0 0 18px rgba(0,212,170,.15)}
+.day-selected{border-color:var(--indigo);color:var(--indigo);background:rgba(99,102,241,.12);box-shadow:0 0 18px rgba(99,102,241,.18)}
 .day-note{font-size:12px;color:var(--muted);margin-top:10px}
 .day-note b{color:var(--text2)}
 .routes-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:10px}
@@ -1246,10 +1249,19 @@ function pfToggleTheme(){
       var wd = Array.isArray(d.weekdays) && d.weekdays.length === 7 ? d.weekdays.map(num) : null;
       if (wd) {
         var bi = wd.indexOf(Math.max.apply(null, wd));
-        document.getElementById('dayPills').innerHTML = wd.map(function (v, i) {
-          return '<span class="day' + (i === bi ? ' day-top' : '') + '" data-stat="weekdays.' + i + '" data-value="' + v + '" title="' + fmt(v) + ' pickups">' + DAYS[i] + '</span>';
+        var dayPills = document.getElementById('dayPills');
+        dayPills.innerHTML = wd.map(function (v, i) {
+          return '<button type="button" class="day' + (i === bi ? ' day-top' : '') + '" data-stat="weekdays.' + i + '" data-value="' + v + '" data-day="' + i + '" title="' + fmt(v) + ' pickups">' + DAYS[i] + '</button>';
         }).join('');
         document.getElementById('dayNote').innerHTML = 'Busiest day: <b>' + DAYS_FULL[bi] + '</b>';
+        dayPills.querySelectorAll('.day').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            dayPills.querySelectorAll('.day').forEach(function (b) { b.classList.remove('day-selected'); });
+            btn.classList.add('day-selected');
+            var i = Number(btn.dataset.day);
+            document.getElementById('dayNote').innerHTML = DAYS_FULL[i] + ': <b>' + fmt(wd[i]) + ' pickups</b>';
+          });
+        });
       }
     }
 
