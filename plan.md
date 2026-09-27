@@ -38,6 +38,10 @@ One task per session. Status: todo / done / parked.
    - Done when: anon can no longer select from `extracted_data_01` and the Telegram mini app still works.
    - Status: parked (the Telegram mini app depends on it)
 
+10. **Notifications: "Add to Home Screen" pop-up** — when someone taps "Turn on notifications", show a polished pop-up (bottom sheet): notifications only work once Pathfynder is added to the Home Screen, with step-by-step instructions for iPhone (Safari) and Android (Chrome).
+   - Done when: tapping any "Turn on notifications" outside the installed app opens the pop-up with iPhone + Android steps (current device's tab first), looks right in light + dark at 390px, and closes cleanly.
+   - Status: todo
+
 ## Session notes
 
 - 2026-09-27 — Setup: rewrote CLAUDE.md (short, general facts only) and created plan.md. Open: task 4 was already done in index.html but has no changelog entry; header nav still says "Join on Telegram".
