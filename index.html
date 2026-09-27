@@ -163,7 +163,7 @@ footer{background:var(--bg);border-top:1px solid var(--border);padding:50px 40px
 .footer-inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap}
 .footer-logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--text)}
 .footer-tagline{font-size:13px;color:var(--muted);margin-top:6px}
-.footer-links{display:flex;gap:28px}
+.footer-links{display:flex;flex-wrap:wrap;row-gap:10px;column-gap:28px}
 .footer-links a{font-size:13px;color:var(--muted);text-decoration:none;transition:color .2s}
 .footer-links a:hover{color:var(--teal)}
 .footer-copy{font-size:12px;color:var(--muted);text-align:center;width:100%;margin-top:28px;padding-top:28px;border-top:1px solid var(--border)}
@@ -184,6 +184,7 @@ footer{background:var(--bg);border-top:1px solid var(--border);padding:50px 40px
   .how-grid{grid-template-columns:1fr;gap:2px}
   .why-grid{grid-template-columns:1fr}
   .footer-inner{flex-direction:column;align-items:flex-start}
+  .footer-links{column-gap:18px}
   .ride-card,.match-card{display:none}
 }
 @media(max-width:600px){
