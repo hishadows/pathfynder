@@ -1140,19 +1140,22 @@ function contact(id, btn) {
 }
 
 /* ---------- WhatsApp group-link card ---------- */
-function groupCardDoneRecently() {
-  try {
-    var v = localStorage.getItem('pf_group_card_done');
-    if (!v) return false;
-    return (Date.now() - Number(v)) < 7 * 24 * 60 * 60 * 1000;
-  } catch (e) { return false; }
-}
-function markGroupCardDone() {
-  try { localStorage.setItem('pf_group_card_done', String(Date.now())); } catch (e) {}
-}
 function shouldShowGroupCard(rows) {
-  if (groupCardDoneRecently()) return false;
+  /* No cross-session/localStorage suppression — the only thing that hides
+     this is a WhatsApp row already present in the current results. The
+     "Thanks, we'll check this group" confirmation (state.groupCard.collapsed)
+     is in-memory only, for the current page session right after a
+     successful submit; a fresh page load always shows the card normally. */
   return !rows.some(function (r) { return r.source === 'whatsapp'; });
+}
+function renderEmptyState(rows, s) {
+  /* Single render for every zero-results screen (initial load from URL
+     params/bot links, a normal search, near-me, browse, after a filter/
+     date/time change, and after a background refresh lands zero rows) —
+     the empty message always comes with the WhatsApp group-link card
+     directly under it, since zero rows can never include a WhatsApp row. */
+  var message = s.fromPlace ? emptyState() : landingEmpty();
+  return message + groupLinkCard();
 }
 function groupLinkCard() {
   var gc = state.groupCard;
@@ -1198,7 +1201,6 @@ function submitGroupLink() {
     if (status === 'ok' || status === 'duplicate') {
       state.groupCard.collapsed = true;
       state.groupCard.message = message || (status === 'duplicate' ? 'Thanks! We already have this group' : 'Thanks! We’ll add rides from this group soon');
-      markGroupCardDone();
     } else {
       state.groupCard.messageKind = status;
       state.groupCard.message = message || 'That link doesn’t look right — please check and try again.';
@@ -1516,7 +1518,7 @@ function renderLanding() {
   } else if (state.error) {
     app.innerHTML = appBar('—') + '<div class="app__col">' + top + '<div class="ride-list" style="padding-top:12px">' + errorCard() + '</div>' + foot + '</div>';
   } else if (!state.rows.length) {
-    app.innerHTML = appBar('0 rides') + '<div class="app__col">' + top + '<div class="ride-list" style="padding-top:12px">' + (state.fromPlace ? emptyState() : landingEmpty()) + (shouldShowGroupCard(state.rows) ? groupLinkCard() : '') + '</div>' + foot + '</div>';
+    app.innerHTML = appBar('0 rides') + '<div class="app__col">' + top + '<div class="ride-list" style="padding-top:12px">' + renderEmptyState(state.rows, state) + '</div>' + foot + '</div>';
   } else {
     var rows = sortedRows();
     var landingOpts = { hideBadge: true, distanceNote: !!state.fromPlace };
@@ -1540,7 +1542,7 @@ function render() {
   } else if (state.error) {
     app.innerHTML = appBar('—') + '<div class="app__col">' + top + '<div class="ride-list" style="padding-top:12px">' + errorCard() + '</div>' + foot + '</div>';
   } else if (!state.rows.length) {
-    app.innerHTML = appBar('0 rides') + '<div class="app__col">' + top + '<div class="ride-list" style="padding-top:12px">' + emptyState() + (shouldShowGroupCard(state.rows) ? groupLinkCard() : '') + '</div>' + foot + '</div>';
+    app.innerHTML = appBar('0 rides') + '<div class="app__col">' + top + '<div class="ride-list" style="padding-top:12px">' + renderEmptyState(state.rows, state) + '</div>' + foot + '</div>';
   } else {
     var rows = sortedRows();
     app.innerHTML = appBar(plural(state.rows.length, 'ride')) + '<div class="app__col">' + top + resultsHead(rows) + '<div class="ride-list">' + (shouldShowGroupCard(state.rows) ? groupLinkCard() : '') + listHTML(rows) + '</div>' + foot + '</div>';
