@@ -59,3 +59,4 @@ One task per session. Status: todo / done / parked.
 - 2026-09-28 — Manage ride layout rework: bottom bar is "Invite passengers" + Start trip → End trip (both confirm); "Full route in Maps" card under the hero; passenger cards drop price/seats/status tag, get a WhatsApp contact button, "Remove passenger" before start (pop-up nudges the driver to message them first), I'm outside/Picked up only after start. Open: real-phone test pending.
 - 2026-09-28 — Manage page: "Your route" hero slide now on a white card (dark mode: #202C33 card), green start/destination dots.
 - 2026-09-28 — Manage ride: every action button has a leading icon (new `ico()` helper, inline stroke SVGs): Start/End trip, Invite passengers, I'm outside, Picked up, Dropped off, Remove passenger, and the pop-up confirm buttons. Bottom-bar labels kept on one line (fits 360px).
+- 2026-09-28 — Manage ride: "I'm outside" icon changed from map pin to a ringing bell (Pranay's reference).

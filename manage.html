@@ -806,7 +806,7 @@ function passengerCard(b, trip) {
     } else if (!dropped) {
       var pendingPicked = STATE.pendingKey === 'picked_up:' + b.id;
       actions = '<div class="pax-actions">' +
-          '<a class="btn btn-secondary" href="' + outsideHref + '" target="_blank" rel="noopener">' + ico('pin') + 'I’m outside</a>' +
+          '<a class="btn btn-secondary" href="' + outsideHref + '" target="_blank" rel="noopener">' + ico('bellRing') + 'I’m outside</a>' +
           '<button type="button" class="btn btn-cta" data-action="picked_up" data-id="' + b.id + '"' + (pendingPicked ? ' disabled' : '') + '>' + ico('userCheck') + 'Picked up</button>' +
         '</div>';
     }
@@ -831,7 +831,7 @@ var PATHS = {
   userPlus: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M19 8v6M16 11h6"/>',
   userMinus: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 11h6"/>',
   userCheck: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="m16 11 2 2 4-4"/>',
-  pin: '<path d="M12 21s-6.5-6.1-6.5-11a6.5 6.5 0 0 1 13 0c0 4.9-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/>',
+  bellRing: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/><path d="M4 2C2.8 3.7 2 5.7 2 8"/><path d="M22 8c0-2.3-.8-4.3-2-6"/>',
   checkCircle: '<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>'
 };
 function ico(name) {
