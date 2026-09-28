@@ -54,6 +54,7 @@
   --skeleton:#E9EDEF; --skeleton-hi:#F7F8FA;
   --overlay:rgba(11,20,26,.42);
   --on-primary:#FFFFFF; --notice-bg:#FFEECD; --notice-fg:#54656F; --star:#F5B400;
+  --card-shadow:0 1px 2px rgba(11,20,26,.06),0 1px 3px rgba(11,20,26,.05);
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
@@ -69,6 +70,7 @@
     --skeleton:#2A3942; --skeleton-hi:#34454F;
     --overlay:rgba(0,0,0,.62);
     --on-primary:#111B21; --notice-bg:#182229; --notice-fg:#FFD279; --star:#FFC933;
+    --card-shadow:none;
   }
 }
 :root[data-theme="dark"]{
@@ -84,6 +86,7 @@
   --skeleton:#2A3942; --skeleton-hi:#34454F;
   --overlay:rgba(0,0,0,.62);
   --on-primary:#111B21; --notice-bg:#182229; --notice-fg:#FFD279; --star:#FFC933;
+  --card-shadow:none;
 }
 *{box-sizing:border-box}
 html,body{margin:0;overflow-x:hidden}
@@ -187,16 +190,16 @@ body.no-scroll{overflow:hidden}
 .sort .i{position:absolute;right:0;width:16px;height:16px;color:var(--primary);pointer-events:none}
 
 /* Ride list */
-.ride-list{display:flex;flex-direction:column;gap:8px;padding:8px 10px 12px}
+.ride-list{display:flex;flex-direction:column;gap:14px;padding:8px 10px 12px}
 .list-section{display:flex;align-items:center;gap:6px;margin:14px 6px 0;font-size:13px;font-weight:600;color:var(--text-2)}
 .list-section .i{width:16px;height:16px}
 .list-section small{font-weight:400}
 
 /* Ride card */
-.ride-card{display:flex;flex-direction:column;gap:10px;padding:12px 14px 14px;border-radius:12px;background:var(--card);cursor:pointer;outline:none}
+.ride-card{display:flex;flex-direction:column;gap:12px;padding:14px 16px 16px;border-radius:12px;background:var(--card);box-shadow:var(--card-shadow);cursor:pointer;outline:none}
 .ride-card:focus-visible{box-shadow:0 0 0 2px var(--primary)}
-.ride-card__top{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.ride-card__ago{font-size:12.5px;color:var(--text-2);white-space:nowrap}
+.ride-card__top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.ride-card__ago{flex:none;font-size:12.5px;line-height:24px;color:var(--text-2);white-space:nowrap}
 .role-badge{display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 9px 0 7px;border-radius:6px;font-size:12.5px;font-weight:600;white-space:nowrap}
 .role-badge .i{width:15px;height:15px}
 .role-badge--driver{background:var(--chip-soft);color:var(--chip-soft-text)}
@@ -219,7 +222,7 @@ body.no-scroll{overflow:hidden}
 .ride-meta__item .i{width:15px;height:15px;color:var(--text-2)}
 .ride-meta__item--price{font-weight:600}
 .ride-meta__item--note{color:var(--text-2)}
-.ride-card__foot{display:flex;flex-direction:column;gap:10px;padding-top:10px;border-top:1px solid var(--divider)}
+.ride-card__foot{display:flex;flex-direction:column;gap:12px;padding-top:12px;border-top:1px solid var(--divider)}
 .poster{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
 .avatar{width:36px;height:36px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:15px;font-weight:600;color:var(--av);background:color-mix(in srgb,var(--av) 16%,var(--card))}
 .avatar--1{--av:#1FA855}.avatar--2{--av:#0A8FD6}.avatar--3{--av:#E0762B}.avatar--4{--av:#C0548A}.avatar--5{--av:#7C6BE0}
@@ -318,16 +321,19 @@ body.no-scroll{overflow:hidden}
 .poster__line .poster__name{flex:0 1 auto}
 .verified{display:inline-flex;color:var(--primary);flex:none}
 .verified .i{width:17px;height:17px}
-.tag{flex:none;display:inline-flex;align-items:center;gap:4px;height:20px;margin-left:4px;padding:0 6px;border-radius:5px;font-size:11.5px;font-weight:600;background:var(--surface);color:var(--text-2);white-space:nowrap}
+.tag{flex:none;display:inline-flex;align-items:center;gap:4px;height:24px;margin:0;padding:0 8px;border-radius:6px;font-size:12px;font-weight:600;background:var(--surface);color:var(--text-2);white-space:nowrap}
 .tag .i{width:12px;height:12px;stroke-width:2}
-.ride-card__tags{display:flex;align-items:center;gap:2px;min-width:0}
+.ride-card__tags{display:flex;align-items:center;flex:1;flex-wrap:wrap;gap:6px;min-width:0}
 .tag--regular{background:var(--chip-soft);color:var(--chip-soft-text)}
 .tag--coordinator{background:var(--pass-bg);color:var(--pass-fg)}
+.tag--need{background:var(--pass-bg);color:var(--pass-fg)}
 .rating{display:inline-flex;align-items:center;gap:3px;font-weight:600;color:var(--text)}
 .rating .star{width:14px;height:14px;fill:var(--star);stroke:var(--star)}
 .rating__count{font-weight:400;color:var(--text-2)}
 .avatar--biz{border-radius:9px;--av:#667781;color:var(--text-2);background:var(--surface)}
 .avatar--biz .i{width:19px;height:19px}
+.avatar--anon{--av:#667781;color:var(--text-2);background:var(--surface)}
+.avatar--anon .i{width:18px;height:18px}
 .search-row{display:flex;align-items:center;gap:8px}
 .search-row .chip-group{flex:1;min-width:0;margin:0;padding:0}
 .filter-btn{flex:none;display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 10px 0 12px;border-radius:999px;border:1px solid var(--line-strong);background:var(--card);color:var(--text);font-size:14px;font-weight:600;cursor:pointer}
@@ -403,13 +409,13 @@ body.no-scroll{overflow:hidden}
 .ride-card__swipe.is-swiped .swipe-track{transform:translateX(calc(-100% - 14px))}
 .ride-card__swipe.is-dragging .swipe-track{transition:none}
 .ride-card__swipe.is-dragging{user-select:none;-webkit-user-select:none}
-.swipe-pane--details{display:flex;flex-direction:column;gap:10px}
+.swipe-pane--details{display:flex;flex-direction:column;gap:12px}
 .swipe-pane--message{position:absolute;top:0;bottom:0;left:calc(100% + 14px);width:100%;overflow-y:auto;scrollbar-width:none;
   padding:8px 10px 18px 18px;border-radius:8px;background:var(--wallpaper);
   -webkit-mask-image:linear-gradient(to bottom,#000 calc(100% - 18px),transparent);mask-image:linear-gradient(to bottom,#000 calc(100% - 18px),transparent)}
 .swipe-pane--message::-webkit-scrollbar{display:none}
 .bubble--card{max-width:100%;font-size:14px}
-.swipe-dots{display:flex;align-items:center;gap:5px;margin:-2px 0 -4px}
+.swipe-dots{display:flex;align-items:center;gap:5px;margin:2px 0 0}
 .swipe-dot{width:6px;height:6px;padding:0;border:0;border-radius:3px;background:var(--line-strong);cursor:pointer;transition:width .2s,background .2s}
 .swipe-dot.is-on{width:14px;background:var(--primary)}
 .swipe-hint{margin-left:6px;font-size:11.5px;color:var(--text-2)}
@@ -483,8 +489,8 @@ body.no-scroll{overflow:hidden}
   .search-row .chip-group{flex:0 1 auto}
   .info-line{margin:8px 0 0}
   .results-head{padding:16px 2px 2px}
-  .ride-list{padding:8px 0 16px;gap:10px}
-  .ride-card{padding:14px 18px 16px}
+  .ride-list{padding:8px 0 16px;gap:16px}
+  .ride-card{padding:16px 20px 18px}
   .ride-card__foot{flex-direction:row;align-items:center;gap:16px}
   .ride-card__cta{width:260px;flex:none}
   .prefill{border:1px solid var(--divider);border-radius:12px}
@@ -596,6 +602,7 @@ function torontoTodayStr(offsetDays) {
 }
 function avatarClass(name) { var h = 0, i; for (i = 0; i < name.length; i++) h = (h * 31 + name.codePointAt(i)) >>> 0; return 'avatar--' + (h % 5 + 1); }
 function initial(name) { var m = (name || '').match(/\p{L}/u); return m ? m[0].toUpperCase() : '•'; }
+function displayName(r) { var n = (r.display_name || '').trim(); if (/[\p{L}\p{N}]/u.test(n)) return n; return isWa(r) ? 'WhatsApp member' : 'Member'; }
 function cityOf(label) { return String(label || '').split(',')[0].trim(); }
 function normPlace(s) { return String(s || '').toLowerCase().replace(/\./g, '').replace(/\s+/g, ' ').trim(); }
 
@@ -1440,12 +1447,16 @@ function posterSub(r) {
 }
 function poster(r, extra) {
   extra = extra || '';
+  var dn = displayName(r);
+  var anon = initial((r.display_name || '').trim()) === '•';
   var av = r.is_business
     ? '<span class="avatar avatar--biz" aria-hidden="true">' + icon('building') + '</span>'
-    : '<span class="avatar ' + avatarClass(r.display_name) + '" aria-hidden="true">' + esc(initial(r.display_name)) + '</span>';
+    : anon
+      ? '<span class="avatar avatar--anon" aria-hidden="true">' + icon('user') + '</span>'
+      : '<span class="avatar ' + avatarClass(dn) + '" aria-hidden="true">' + esc(initial(dn)) + '</span>';
   var subInline = (!r.is_business && (r.is_regular || r.is_coordinator)) ? riderTag(r) : posterSub(r);
   return '<div class="poster ' + extra + '">' + av +
-    '<div class="poster__text"><span class="poster__line"><span class="poster__name">' + esc(r.display_name) + '</span>' +
+    '<div class="poster__text"><span class="poster__line"><span class="poster__name">' + esc(dn) + '</span>' +
     (r.verified ? '<span class="verified" title="Verified">' + icon('verified') + '</span>' : '') + '</span>' +
     (subInline ? '<span class="poster__sub">' + subInline + '</span>' : '') + '</div>' + sourceBadge(r) + '</div>';
 }
@@ -1457,7 +1468,7 @@ function cta(r, label) {
 function messagePane(r) {
   var at = new Date((r.groups && r.groups[0] && r.groups[0].posted_at) || r.posted_at);
   var bt = at.toLocaleTimeString('en-CA', { hour:'numeric', minute:'2-digit' }).replace(/\./g, '').toUpperCase();
-  return '<div class="swipe-pane swipe-pane--message" aria-label="Original message"><div class="bubble bubble--card"><div class="bubble__name">' + esc(r.display_name) + '</div><span class="bubble__text">' + esc(r.raw_text) + '</span><span class="bubble__time">' + bt + '</span></div></div>';
+  return '<div class="swipe-pane swipe-pane--message" aria-label="Original message"><div class="bubble bubble--card"><div class="bubble__name">' + esc(displayName(r)) + '</div><span class="bubble__text">' + esc(r.raw_text) + '</span><span class="bubble__time">' + bt + '</span></div></div>';
 }
 function landingDistanceNote(r) {
   if (r.pickup_km == null) return '';
@@ -1469,7 +1480,7 @@ function renderRideCard(r, landingOpts) {
   var req = r.role === 'passenger';
   var badge = (landingOpts && landingOpts.hideBadge) ? '' : matchBadge(r);
   var note = (landingOpts && landingOpts.distanceNote) ? landingDistanceNote(r) : matchNote(r);
-  var details = '<div class="ride-card__top"><span class="ride-card__tags">' + badge + (r.is_business ? riderTag(r) : '') + rideTypeTags(r) + '</span><span class="ride-card__ago">' + (req ? 'Needs ride · ' : '') + 'posted ' + ago(r.posted_at) + '</span></div>' +
+  var details = '<div class="ride-card__top"><span class="ride-card__tags">' + badge + (req ? '<span class="tag tag--need">Needs ride</span>' : '') + (r.is_business ? riderTag(r) : '') + rideTypeTags(r) + '</span><span class="ride-card__ago">' + ago(r.posted_at) + '</span></div>' +
     '<div class="ride-card__main"><div class="route">' +
     '<div class="route__stop route__stop--from"><span class="route__dot"></span><span class="route__city">' + esc(cityOf(r.origin_label)) + '</span></div>' +
     '<div class="route__stop route__stop--to"><span class="route__dot"></span><span class="route__city">' + esc(cityOf(r.dest_label)) + '</span></div>' +
@@ -1885,10 +1896,10 @@ function renderRideDetail(r) {
     var bt = first.toLocaleTimeString('en-CA', { hour:'numeric', minute:'2-digit' }).replace(/\./g, '').toUpperCase();
     bubble = '<section class="sheet-block"><h3 class="sheet-block__label">Original message</h3><div class="wa-chat">' +
       '<span class="wa-chat__day">' + (dayDiff(r.groups[0].posted_at.slice(0, 10)) === -1 ? 'YESTERDAY' : 'TODAY') + '</span>' +
-      '<div class="bubble"><div class="bubble__name">' + esc(r.display_name) + '</div><span class="bubble__text">' + esc(r.raw_text) + '</span><span class="bubble__time">' + bt + '</span></div></div></section>';
+      '<div class="bubble"><div class="bubble__name">' + esc(displayName(r)) + '</div><span class="bubble__text">' + esc(r.raw_text) + '</span><span class="bubble__time">' + bt + '</span></div></div></section>';
   }
   var ctaHTML = isWa(r)
-    ? '<button type="button" class="btn btn--wa" data-action="contact" data-id="' + r.id + '">' + icon('chat') + 'Message ' + esc(r.display_name.split(' ')[0]) + ' on WhatsApp</button><p class="btn__hint">' + (r.source === 'pathfynder' ? 'Opens WhatsApp · Confirm the ride there · Pay in the car' : 'Opens WhatsApp with a message ready to send') + '</p>'
+    ? '<button type="button" class="btn btn--wa" data-action="contact" data-id="' + r.id + '">' + icon('chat') + 'Message ' + esc(displayName(r).split(' ')[0]) + ' on WhatsApp</button><p class="btn__hint">' + (r.source === 'pathfynder' ? 'Opens WhatsApp · Confirm the ride there · Pay in the car' : 'Opens WhatsApp with a message ready to send') + '</p>'
     : '<button type="button" class="btn btn--outline btn--strong" data-action="contact" data-id="' + r.id + '">View on ' + SOURCE_LABEL[r.source] + icon('external') + '</button><p class="btn__hint">Opens ' + SOURCE_DOMAIN[r.source] + ' to book · you\'ll leave Pathfynder</p>';
   var strip = (r.role === 'driver' && r.match_type === 'along_route' && r.route_km != null && r.pickup_pct != null && r.dropoff_pct != null)
     ? ('<section class="sheet-block"><h3 class="sheet-block__label">How this ride fits your trip</h3>' + routeStrip(r) + '</section>') : '';

@@ -72,6 +72,10 @@
       origin_label: 'Niagara Falls, ON', dest_label: 'Welland, ON', ride_date: '2026-09-26', ride_time: '16:00', seats: 3,
       match_type: 'along_route', pickup_km: 8, groups: [G('Niagara Local Rides', '2026-09-26T03:10'), G('Welland ↔ Niagara Carpool', '2026-09-26T03:12')],
       posted_at: '2026-09-26T03:10', raw_text: '3 people need ride Niagara Falls → Welland 4pm today. Message me for details' },
+    { id: 'dots', source: 'whatsapp', role: 'passenger', parsed: true, display_name: '.....', is_airport: true,
+      origin_label: 'Niagara Falls, ON', dest_label: 'Toronto Pearson Airport, ON', ride_date: '2026-09-26', ride_time: '05:00', seats: 1,
+      match_type: 'along_route', pickup_km: 4, groups: [G('Niagara Local Rides', '2026-09-26T02:00')],
+      posted_at: '2026-09-26T02:00', raw_text: 'Need ride to Pearson early flight tmrw 5am, 1 person, can pay extra for early pickup 🙏' },
   ];
 
   function norm(s) { return String(s || '').toLowerCase(); }
