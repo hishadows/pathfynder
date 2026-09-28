@@ -65,11 +65,11 @@ button{font:inherit}
 .error-page p{margin:0 0 20px;color:var(--text-2);font-size:14.5px;max-width:320px}
 
 /* Buttons */
-.btn{border:0;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;min-height:44px;padding:0 16px;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none}
+.btn{border:0;border-radius:12px;font-size:14.5px;font-weight:600;cursor:pointer;min-height:44px;padding:0 12px;white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none}
 .btn:disabled{opacity:.5;cursor:default}
 .btn-cta{background:var(--cta);color:var(--cta-text);min-height:48px}
 .btn-cta:hover:not(:disabled){background:var(--cta-hover)}
-.btn .i{width:18px;height:18px;flex:none}
+.btn .i{width:17px;height:17px;flex:none}
 .btn-secondary{background:var(--muted-card);color:var(--text);border:1px solid var(--divider)}
 .btn-danger{background:var(--danger);color:#FFFFFF}
 .btn-secondary.btn-danger-text{color:var(--danger)}
@@ -79,7 +79,7 @@ button{font:inherit}
 .hero-wrap{padding:12px 12px 0}
 .hero-track{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;border-radius:16px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
 .hero-track::-webkit-scrollbar{display:none}
-.hero-slide{flex:0 0 100%;scroll-snap-align:start;min-width:100%;background:var(--hero-bg);color:var(--hero-text);padding:16px;border-radius:16px}
+.hero-slide{flex:0 0 100%;scroll-snap-align:start;min-width:100%;background:var(--hero-bg);color:var(--hero-text);padding:14px;border-radius:16px}
 .hero-dots{display:flex;justify-content:center;gap:6px;padding:10px 0 4px}
 .hero-dot{width:7px;height:7px;border-radius:4px;background:var(--divider);border:0;padding:0;cursor:pointer}
 .hero-dot.is-active{width:18px;background:var(--primary)}
@@ -144,24 +144,25 @@ button{font:inherit}
 @keyframes nsPulse{0%,100%{opacity:1}50%{opacity:.5}}
 @media (prefers-reduced-motion:reduce){.ns-seg.is-current{animation:none}.ns-car{transition:none}}
 .ns-pillrow{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
-.ns-pill{display:inline-flex;align-items:center;font-size:12px;font-weight:700;letter-spacing:.03em;padding:5px 10px;border-radius:999px;background:var(--chip-soft);color:var(--chip-soft-text)}
+.ns-pill{display:inline-flex;align-items:center;font-size:11.5px;font-weight:700;letter-spacing:.02em;padding:5px 10px;border-radius:999px;background:var(--chip-soft);color:var(--chip-soft-text)}
 .ns-eta{font-size:13px;color:var(--text-2);font-weight:600;white-space:nowrap}
 .ns-addr__label{display:block;font-size:12px;font-weight:600;color:var(--text-2);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
 .ns-addr__row{display:flex;align-items:flex-start;gap:8px;margin-bottom:12px}
-.ns-addr__row svg{width:26px;height:26px;flex:none;color:var(--primary);margin-top:-1px}
-.ns-addr__text{font-size:17px;font-weight:700;line-height:1.3;overflow-wrap:anywhere}
+.ns-addr__row svg{width:20px;height:20px;flex:none;color:var(--primary);margin-top:0}
+.ns-addr__text{font-size:15px;font-weight:600;line-height:1.35;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .ns-pax{padding:10px 0;border-top:1px solid var(--divider)}
 .ns-pax__top{display:flex;align-items:center;gap:10px}
 .ns-pax__id{flex:1;min-width:0}
-.ns-pax__name{display:block;font-size:15px;font-weight:700;overflow-wrap:anywhere}
-.ns-pax__seats{display:block;font-size:12.5px;color:var(--text-2)}
-.ns-ic{width:44px;height:44px;border-radius:50%;border:1px solid var(--divider);background:transparent;color:var(--primary);display:grid;place-items:center;flex:none;text-decoration:none}
+.ns-pax__name{display:block;font-size:16px;font-weight:600;overflow-wrap:anywhere}
+.ns-pax__seats{display:block;font-size:13px;color:var(--text-2)}
+.ns-ic{width:40px;height:40px;border-radius:50%;border:1px solid var(--divider);background:transparent;color:var(--primary);display:grid;place-items:center;flex:none;text-decoration:none}
 .ns-ic svg{width:20px;height:20px}
 .ns-note{display:flex;align-items:flex-start;gap:8px;margin-top:8px;padding:8px 10px;border-radius:12px;background:var(--bg);font-size:13.5px;overflow-wrap:anywhere}
 .ns-note svg{width:16px;height:16px;flex:none;margin-top:2px;color:var(--text-2)}
 .ns-btns{display:flex;gap:8px;margin-top:10px}
 .ns-btns .btn{flex:1}
-.ns-btns--main .btn{min-height:48px}
+.ns-btns--main .btn{min-height:44px}
+.hero-slide--next .btn{min-height:44px}
 .ns-done{text-align:center;padding:10px 0 4px}
 .ns-done h3{margin:0 0 6px;font-size:18px}
 .ns-done p{margin:0 0 14px;color:var(--text-2);font-size:14px}
@@ -209,7 +210,10 @@ button{font:inherit}
 /* Sticky action bar */
 .action-bar{position:fixed;left:0;right:0;bottom:0;z-index:4;background:var(--card);border-top:1px solid var(--divider);box-shadow:var(--shadow);padding:10px 12px calc(10px + env(safe-area-inset-bottom))}
 .action-bar__row{display:flex;gap:10px}
-.action-bar__row .btn{flex:1;min-width:0;padding:0 12px;white-space:nowrap}
+.action-bar__row .btn{flex:1 1 0;min-width:0;padding:0 12px;white-space:nowrap}
+.action-bar__row .btn[data-action="share"]{flex-grow:1.3}
+.lbl-short{display:none}
+@media (max-width:374px){.lbl-long{display:none}.lbl-short{display:inline}}
 
 /* Sheet */
 .sheet-layer{position:fixed;inset:0;z-index:10;display:none}
@@ -998,7 +1002,7 @@ function actionBar(payload) {
     '<button type="button" class="btn btn-cta" data-action="open-start-sheet"' + (STATE.pendingKey === 'start' ? ' disabled' : '') + '>' + ico('play') + 'Start trip</button>' :
     '<button type="button" class="btn btn-cta" data-action="open-end-sheet"' + (STATE.pendingKey === 'end' ? ' disabled' : '') + '>' + ico('flag') + 'End trip</button>';
   return '<div class="action-bar"><div class="action-bar__row">' +
-    '<button type="button" class="btn btn-secondary" data-action="share">' + ico('userPlus') + 'Invite passengers</button>' + main +
+    '<button type="button" class="btn btn-secondary" data-action="share">' + ico('userPlus') + '<span class="lbl-long">Invite passengers</span><span class="lbl-short">Invite</span></button>' + main +
   '</div></div>';
 }
 

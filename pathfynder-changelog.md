@@ -177,3 +177,14 @@
 - 2026-09-28 — Manage ride: icons on all action buttons via a new `ico()` helper (inline 18px stroke SVGs that inherit the label colour). The icons are play (Start), flag (End), person-plus (Invite passengers), pin (I'm outside), person-check (Picked up), check-circle (Dropped off) and person-minus (Remove passenger). Pop-up confirm buttons take an optional `confirmIcon`, and Cancel stays plain. Bottom-bar buttons are `nowrap` with 12px side padding so "Invite passengers" stays on one line down to 360px. Verified: `node --check`, Playwright light/dark, no page errors. Files: manage.html.
 - 2026-09-28 — Manage ride: the "I'm outside" button now uses a ringing-bell icon (`bellRing`) instead of the map pin, and the unused `pin` path is removed. Verified: `node --check`, Playwright light/dark. Files: manage.html.
 - 2026-09-28 — Manage ride: new "Next stop" slide as hero slide 1 (then Ride details, Your route), shown in every trip state. Segmented stop progress bar (done / pulsing current / upcoming, sliding car marker, reduced-motion safe), NEXT STOP · PICKUP / DROP-OFF / DESTINATION pill, ~min · km from live GPS, full pickup address as the main info, one row per passenger with round Call (tel:) and Message (wa.me) buttons, optional booking `note`, I'm outside / Picked up / Dropped off (hidden when ended), All stops done → End trip, ended summary. Same stop order as Open in Maps. Passenger cards lose their action buttons; the picked-up pill became "X of Y picked up" with a mini segmented bar. Contract: booking `note` text|null. Verified with `node --check` + Playwright walk-through at 390px light/dark. Files: manage.html, manage-mock.js.
+- 2026-09-28 — Manage ride: fixed cramped sizing seen on iPhone.
+  - Buttons: `.btn` is nowrap with ellipsis, 14.5px text, 12px side padding and 17px icons, so "I'm outside" no longer wraps.
+  - Bottom bar: "Invite passengers" gets a 1.3× share of the bar, and below 375px its label shortens to "Invite" (`.lbl-long` / `.lbl-short`).
+  - Next stop card:
+    - 14px padding.
+    - The address is 15px/600, clamped to 2 lines, with a 20px pin.
+    - The pill is 11.5px.
+    - The passenger name is 16px, the seats line is 13px, and the call/WhatsApp circles are 40px.
+    - In-card action buttons are 44px tall.
+  - Verified: `node --check`, and Playwright at 393/375/360/340px in light/dark found no button overflow and no page errors.
+  - Files: manage.html.
