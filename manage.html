@@ -135,8 +135,21 @@ textarea.pt-input{padding:12px 14px;min-height:88px;resize:vertical}
 .pt-date.is-selected{background:var(--sel-bg);border-color:var(--sel-border)}
 .pt-hint{margin:6px 0 0;font-size:12.5px;color:var(--text-2)}
 .pt-toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:48px;margin-top:6px;font-size:14.5px;font-weight:600}
-.pt-trow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px;font-size:14px}
-.pt-trow .pt-input{width:150px;flex:none}
+.pt-trow{display:grid;grid-template-columns:minmax(0,1fr) 140px;align-items:center;gap:10px;margin-top:8px;font-size:14px;min-width:0}
+.pt-trow>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pt-time{position:relative;display:block;box-sizing:border-box;width:100%;min-width:0;max-width:100%;height:48px;overflow:hidden;border:1px solid var(--divider);border-radius:16px;background:var(--muted-card)}
+.pt-trow .pt-time{width:140px}
+.pt-time::after{content:'';position:absolute;right:14px;top:50%;width:18px;height:18px;margin-top:-9px;pointer-events:none;background:var(--text-2);-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7v5l3 2'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7v5l3 2'/%3E%3C/svg%3E") center/contain no-repeat}
+.pt-time input{appearance:none;-webkit-appearance:none;display:block;box-sizing:border-box;width:100%;min-width:0;max-width:100%;height:100%;margin:0;padding:0 40px 0 14px;border:0;border-radius:0;background:transparent;color:var(--text);font:inherit;font-size:16px;text-align:left;color-scheme:light dark}
+.pt-time input:focus{outline:2px solid var(--primary);outline-offset:-2px}
+.pt-time input::-webkit-date-and-time-value{text-align:left;min-height:1.2em}
+.pt-time input::-webkit-calendar-picker-indicator{position:absolute;inset:0;width:100%;height:100%;margin:0;padding:0;opacity:0;cursor:pointer}
+.ef input[type=time],.ef input[type=date]{-webkit-appearance:none;appearance:none;display:block;min-width:0;max-width:100%;text-align:left}
+.ef input[type=time]::-webkit-date-and-time-value,.ef input[type=date]::-webkit-date-and-time-value{text-align:left}
+.pt-rec{display:block;width:100%;text-align:left;padding:10px 14px;margin-bottom:8px;border:1px solid var(--divider);border-radius:14px;background:var(--muted-card);color:var(--text);font:inherit;cursor:pointer;min-width:0}
+.pt-rec:last-child{margin-bottom:0}
+.pt-rec b{display:block;font-size:14.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pt-rec small{display:block;margin-top:2px;font-size:12.5px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pt-sep{border:0;border-top:1px solid var(--divider);margin:14px 0}
 .pt-err{margin:0;font-size:13px;color:var(--danger)}
 .pt-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
@@ -1843,11 +1856,11 @@ function postInit() {
   var d = new Date(); d.setHours(d.getHours() + 1, 0, 0, 0);
   var t = pad2(d.getHours()) + ':00';
   POST = { step: 1, stops: [], nextKey: 1, seats: 4, dates: [], allTime: t, diffOn: false, times: {},
-    retOn: false, retAll: postShiftTime(t, 3), retDiffOn: false, retTimes: {}, price: '', note: '', busy: false };
+    retOn: false, retAll: postShiftTime(t, 3), retDiffOn: false, retTimes: {}, price: '', note: '', busy: false, recent: [] };
 }
 function postDays() {
   var out = [];
-  for (var i = 0; i < 14; i++) {
+  for (var i = 0; i < 30; i++) {
     var d = new Date(); d.setHours(12, 0, 0, 0); d.setDate(d.getDate() + i);
     out.push({ key: localDateKey(d.toISOString()), wd: d.toLocaleDateString('en-US', { weekday: 'short' }), day: d.getDate(), mon: d.toLocaleDateString('en-US', { month: 'short' }) });
   }
@@ -1888,8 +1901,24 @@ function postToggle(action, on, label) {
 }
 function postTimeList(map, dataPt) {
   return POST.dates.slice().sort().map(function (k) {
-    return '<div class="pt-trow"><span>' + esc(postDateLabel(k)) + '</span><input class="pt-input" type="time" data-pt="' + dataPt + '" data-date="' + k + '" value="' + esc(map[k] || '') + '" aria-label="Time on ' + esc(postDateLabel(k)) + '"></div>';
+    return '<div class="pt-trow"><span>' + esc(postDateLabel(k)) + '</span>' + postTimeInput('', dataPt, k, map[k] || '', 'Time on ' + postDateLabel(k)) + '</div>';
   }).join('');
+}
+function postTimeInput(id, dataPt, date, value, aria) {
+  return '<span class="pt-time"><input type="time"' + (id ? ' id="' + id + '"' : '') + ' data-pt="' + dataPt + '"' + (date ? ' data-date="' + date + '"' : '') + ' value="' + esc(value) + '"' + (aria ? ' aria-label="' + esc(aria) + '"' : '') + '></span>';
+}
+function postSum1Text() {
+  var pv = String(POST.price).trim();
+  return postStopsList().map(function (p) { return shortLabel(p.label); }).join(' → ') + ' · ' + POST.seats + ' seat' + (POST.seats === 1 ? '' : 's') + (pv !== '' && postPriceOk() ? ' · ' + fmtSeatPrice(Number(pv)) : '');
+}
+function postRecentHtml() {
+  var r = POST.recent || [];
+  if (!r.length) return '';
+  return '<section class="pt-card"><h2 class="pt-h">Recent trips</h2>' + r.map(function (x, i) {
+    var via = (x.stops || []).map(function (p) { return shortLabel(p.label); }).join(', ');
+    return '<button type="button" class="pt-rec" data-action="post-recent" data-id="' + i + '"><b>' + esc(shortLabel(x.origin_label) + ' → ' + shortLabel(x.dest_label) + ' · ' + x.seats + ' seat' + (x.seats === 1 ? '' : 's') + (x.price != null ? ' · ' + fmtSeatPrice(x.price) : '')) + '</b>' +
+      (via ? '<small>via ' + esc(via) + '</small>' : '') + '</button>';
+  }).join('') + '</section>';
 }
 function postSummary(text, editAction) {
   return '<section class="pt-card pt-sum"><span class="pt-sum__t">' + esc(text) + '</span><button type="button" class="pt-sum__edit" data-action="' + editAction + '">Edit</button></section>';
@@ -1899,26 +1928,32 @@ function postStep1() {
     return '<div class="pt-stoprow">' + postField(k, '', 'Stop ' + (i + 1), 'Stop ' + (i + 1)) +
       '<button type="button" class="pt-link" data-action="post-stop-del" data-id="' + k + '">Remove</button></div>';
   }).join('');
-  return '<section class="pt-card"><h2 class="pt-h">Route</h2>' + postField('po', 'From', 'Where are you leaving from?') +
+  var chips = POST_PRICES.map(function (v) {
+    return '<button type="button" class="pt-chip' + (String(POST.price).trim() !== '' && Number(POST.price) === v ? ' is-selected' : '') + '" data-action="post-chip" data-id="' + v + '">$' + v + '</button>';
+  }).join('');
+  return '<div id="ptRecent">' + postRecentHtml() + '</div><section class="pt-card"><h2 class="pt-h">Route</h2>' + postField('po', 'From', 'Where are you leaving from?') +
     (POST.stops.length ? '<span class="pt-label">Stops</span>' + stops : '') +
     '<button type="button" class="pt-add" data-action="post-stop-add"' + (POST.stops.length >= 5 ? ' disabled' : '') + '>+ Add stop</button>' +
     postField('pd', 'To', 'Where are you going?') + '</section>' +
     '<section class="pt-card pt-row"><div><h2 class="pt-h" style="margin:0">Seats</h2><p class="pt-hint" style="margin:2px 0 0">Available for passengers</p></div>' +
     '<div class="pt-stepper"><button type="button" data-action="post-seats" data-id="-1" aria-label="Fewer seats"' + (POST.seats <= 1 ? ' disabled' : '') + '>−</button><b>' + POST.seats + '</b>' +
-    '<button type="button" data-action="post-seats" data-id="1" aria-label="More seats"' + (POST.seats >= 8 ? ' disabled' : '') + '>+</button></div></section>';
+    '<button type="button" data-action="post-seats" data-id="1" aria-label="More seats"' + (POST.seats >= 8 ? ' disabled' : '') + '>+</button></div></section>' +
+    '<section class="pt-card"><h2 class="pt-h">Price per seat</h2><div class="pt-chips">' + chips + '</div>' +
+    '<input class="pt-input" id="ptPrice" type="number" inputmode="decimal" min="0" step="0.01" placeholder="Other amount ($)" data-pt="price" aria-label="Price per seat in dollars" value="' + esc(POST.price) + '">' +
+    '<p class="pt-err" id="ptPriceErr" role="alert" style="margin-top:8px"></p></section>';
 }
 function postStep2() {
   var tiles = postDays().map(function (d) {
     var on = POST.dates.indexOf(d.key) >= 0;
     return '<button type="button" class="pt-date' + (on ? ' is-selected' : '') + '" data-action="post-date" data-date="' + d.key + '" aria-pressed="' + on + '" aria-label="' + esc(postDateLabel(d.key)) + '"><small>' + d.wd + '</small><b>' + d.day + '</b><small>' + d.mon + '</small></button>';
   }).join('');
-  var dep = '<label class="pt-label" for="ptAll">Departure time · all days</label><input class="pt-input" id="ptAll" type="time" data-pt="all" value="' + esc(POST.allTime) + '">' +
+  var dep = '<label class="pt-label" for="ptAll">Departure time · all days</label>' + postTimeInput('ptAll', 'all', '', POST.allTime, '') +
     postToggle('post-diff', POST.diffOn, 'Different time on some days') + (POST.diffOn ? postTimeList(POST.times, 'time') : '');
   var ret = postToggle('post-ret', POST.retOn, 'Return ride');
-  if (POST.retOn) ret += '<label class="pt-label" for="ptRAll" style="margin-top:8px">Return time · all days</label><input class="pt-input" id="ptRAll" type="time" data-pt="rall" value="' + esc(POST.retAll) + '">' +
+  if (POST.retOn) ret += '<label class="pt-label" for="ptRAll" style="margin-top:8px">Return time · all days</label>' + postTimeInput('ptRAll', 'rall', '', POST.retAll, '') +
     postToggle('post-rdiff', POST.retDiffOn, 'Different time on some days') + (POST.retDiffOn ? postTimeList(POST.retTimes, 'rtime') : '');
-  return postSummary(postStopsList().map(function (p) { return shortLabel(p.label); }).join(' → ') + ' · ' + POST.seats + ' seat' + (POST.seats === 1 ? '' : 's'), 'post-edit1') +
-    '<section class="pt-card"><h2 class="pt-h">Dates (up to 7)</h2><div class="pt-dates" id="ptDates">' + tiles + '</div><p class="pt-hint" id="ptDateCount"></p></section>' +
+  return postSummary(postSum1Text(), 'post-edit1') +
+    '<section class="pt-card"><h2 class="pt-h">Dates</h2><div class="pt-dates" id="ptDates">' + tiles + '</div><p class="pt-hint" id="ptDateCount"></p></section>' +
     '<section class="pt-card">' + dep + '<hr class="pt-sep">' + ret + '<p class="pt-err" id="ptErr" role="alert" style="margin-top:10px"></p></section>';
 }
 function postReviewHtml() {
@@ -1935,16 +1970,10 @@ function postReviewHtml() {
   return '<dl style="margin:0">' + rows.join('') + '</dl>';
 }
 function postStep3() {
-  var chips = POST_PRICES.map(function (v) {
-    return '<button type="button" class="pt-chip' + (String(POST.price).trim() !== '' && Number(POST.price) === v ? ' is-selected' : '') + '" data-action="post-chip" data-id="' + v + '">$' + v + '</button>';
-  }).join('');
   var ds = POST.dates.slice().sort();
   var when = ds.length + ' date' + (ds.length === 1 ? '' : 's') + ' · ' + ds.map(function (k) { return postDateLabel(k).replace(/^\w+, /, ''); }).join(', ') + (POST.retOn ? ' · return' : '');
-  return postSummary(postStopsList().map(function (p) { return shortLabel(p.label); }).join(' → ') + ' · ' + POST.seats + ' seat' + (POST.seats === 1 ? '' : 's'), 'post-edit1') +
+  return postSummary(postSum1Text(), 'post-edit1') +
     postSummary(when, 'post-edit2') +
-    '<section class="pt-card"><h2 class="pt-h">Price per seat</h2><div class="pt-chips">' + chips + '</div>' +
-    '<input class="pt-input" id="ptPrice" type="number" inputmode="decimal" min="0" step="0.01" placeholder="Other amount ($)" data-pt="price" aria-label="Price per seat in dollars" value="' + esc(POST.price) + '">' +
-    '<p class="pt-err" id="ptPriceErr" role="alert" style="margin-top:8px"></p></section>' +
     '<section class="pt-card"><h2 class="pt-h">Note <span style="font-weight:500;color:var(--text-2)">(optional)</span></h2>' +
     '<textarea class="pt-input" id="ptNote" data-pt="note" maxlength="300" placeholder="Pickup details, luggage, etc." aria-label="Note">' + esc(POST.note) + '</textarea><div class="pt-count" id="ptCount"></div></section>' +
     '<section class="pt-card"><h2 class="pt-h">Review</h2><div id="ptReview"></div></section>';
@@ -1971,26 +2000,27 @@ function postRefreshNav() {
   if (STATE.view !== 'post' || !POST) return;
   var next = document.getElementById('ptNext'); if (!next) return;
   var ok;
-  if (POST.step === 1) ok = postRouteOk();
-  else if (POST.step === 2) {
-    var c = postStep2Check(); ok = c.ok;
-    var e = document.getElementById('ptErr'); if (e) e.textContent = c.msg || '';
-    var n = document.getElementById('ptDateCount'); if (n) n.textContent = POST.dates.length + ' of 7 selected';
-  } else {
-    ok = postPriceOk();
-    var pe = document.getElementById('ptPriceErr'); if (pe) pe.textContent = ok ? '' : 'Enter a valid price.';
-    var cnt = document.getElementById('ptCount'); if (cnt) cnt.textContent = POST.note.length + '/300';
-    var rv = document.getElementById('ptReview'); if (rv) rv.innerHTML = postReviewHtml();
+  if (POST.step === 1) {
+    ok = postRouteOk() && postPriceOk();
+    var pe = document.getElementById('ptPriceErr'); if (pe) pe.textContent = postPriceOk() ? '' : 'Enter a valid price.';
     document.querySelectorAll('.pt-chip').forEach(function (b) {
       b.classList.toggle('is-selected', String(POST.price).trim() !== '' && Number(POST.price) === Number(b.getAttribute('data-id')));
     });
+  } else if (POST.step === 2) {
+    var c = postStep2Check(); ok = c.ok;
+    var e = document.getElementById('ptErr'); if (e) e.textContent = c.msg || '';
+    var n = document.getElementById('ptDateCount'); if (n) n.textContent = POST.dates.length + ' selected';
+  } else {
+    ok = postPriceOk();
+    var cnt = document.getElementById('ptCount'); if (cnt) cnt.textContent = POST.note.length + '/300';
+    var rv = document.getElementById('ptReview'); if (rv) rv.innerHTML = postReviewHtml();
   }
   next.disabled = !ok || POST.busy;
 }
 function postSubmit() {
   var P = POST; if (!P || P.busy) return;
   if (!postStep2Check().ok) { P.step = 2; renderPost(); return; }
-  if (!postPriceOk()) return;
+  if (!postPriceOk()) { P.step = 1; renderPost(); return; }
   var pv = String(P.price).trim(), price = pv === '' ? null : Number(pv);
   var stops = P.stops.map(function (k) { return { label: EF.pts[k].label, lat: EF.pts[k].lat, lng: EF.pts[k].lng }; });
   var ds = P.dates.slice().sort();
@@ -2013,9 +2043,19 @@ function postSubmit() {
     load(true);
   }).catch(function (e) { console.error('[manage] post failed', e); P.busy = false; postRefreshNav(); toast("Couldn't post — try again"); });
 }
+/* Recent routes: fetched when the post view opens; failures are ignored silently. */
+function postLoadRecent() {
+  var P = POST; if (!P) return;
+  var req = STATE.isMock ? window.PF_MANAGE_MOCK.recent(STATE.token) : db.rpc('trip_post_recent', { p_token: STATE.token }).then(function (res) { if (res.error) throw res.error; return res.data; });
+  Promise.resolve(req).then(function (data) {
+    if (POST !== P || !data || data.error || !Array.isArray(data.trips)) return;
+    P.recent = data.trips.slice(0, 3);
+    var box = document.getElementById('ptRecent'); if (box && STATE.view === 'post' && P.step === 1) box.innerHTML = postRecentHtml();
+  }).catch(function () {});
+}
 /* Returns true when handled. */
 function postAction(action, t) {
-  if (action === 'post') { hideToast(); STATE.sheet = null; sheetHtml(); postInit(); STATE.view = 'post'; window.scrollTo(0, 0); renderPost(); return true; }
+  if (action === 'post') { hideToast(); STATE.sheet = null; sheetHtml(); postInit(); STATE.view = 'post'; window.scrollTo(0, 0); renderPost(); postLoadRecent(); return true; }
   if (!POST) return true;
   var id = t.getAttribute('data-id');
   function go(step) { POST.step = step; window.scrollTo(0, 0); renderPost(); }
@@ -2033,10 +2073,21 @@ function postAction(action, t) {
   if (action === 'post-stop-del') {
     POST.stops = POST.stops.filter(function (k) { return k !== id; }); delete EF.pts[id]; delete EF.txt[id]; renderPost(); return true;
   }
+  if (action === 'post-recent') {
+    var r = (POST.recent || [])[Number(id)]; if (!r) return true;
+    Object.keys(EF.pts).forEach(function (k) { if (k !== 'po' && k !== 'pd') { delete EF.pts[k]; delete EF.txt[k]; } });
+    POST.stops = (r.stops || []).slice(0, 5).map(function (x, n) { var k = 'ps' + (POST.nextKey++); EF.pts[k] = { label: x.label, lat: x.lat, lng: x.lng }; EF.txt[k] = x.label; return k; });
+    EF.pts.po = { label: r.origin_label, lat: r.origin_lat, lng: r.origin_lng }; EF.txt.po = r.origin_label;
+    EF.pts.pd = { label: r.dest_label, lat: r.dest_lat, lng: r.dest_lng }; EF.txt.pd = r.dest_label;
+    POST.seats = Math.max(1, Math.min(8, Number(r.seats) || POST.seats));
+    POST.price = r.price == null ? '' : String(r.price);
+    POST.note = r.note || '';
+    renderPost(); toast('Filled from a recent trip'); return true;
+  }
   if (action === 'post-date') {
     var key = t.getAttribute('data-date'), i = POST.dates.indexOf(key);
     if (i >= 0) POST.dates.splice(i, 1);
-    else if (POST.dates.length >= 7) { toast('You can pick up to 7 dates'); return true; }
+    else if (POST.dates.length >= 30) { toast('That is the maximum number of dates'); return true; }
     else { POST.dates.push(key); if (POST.diffOn) POST.times[key] = POST.allTime; if (POST.retDiffOn) POST.retTimes[key] = POST.retAll; }
     renderPost(); return true;
   }
