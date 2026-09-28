@@ -145,10 +145,11 @@ button{font:inherit}
 
 /* Hero */
 .hero-wrap{padding:12px 12px 0}
-.hero-track{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;border-radius:16px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.hero-track{display:flex;align-items:flex-start;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;border-radius:16px;-webkit-overflow-scrolling:touch;scrollbar-width:none;transition:height .25s ease}
+@media (prefers-reduced-motion:reduce){.hero-track{transition:none}}
 .hero-track::-webkit-scrollbar{display:none}
-.hero-slide{flex:0 0 100%;scroll-snap-align:start;min-width:100%;background:var(--hero-bg);color:var(--hero-text);padding:14px;border-radius:16px}
-.hero-dots{display:flex;justify-content:center;gap:6px;padding:10px 0 4px}
+.hero-slide{align-self:flex-start;box-sizing:border-box;flex:0 0 100%;scroll-snap-align:start;min-width:100%;background:var(--hero-bg);color:var(--hero-text);padding:14px;border-radius:16px}
+.hero-dots{display:flex;justify-content:center;gap:6px;padding:12px 0 0;margin:0 0 -4px}
 .hero-dot{width:7px;height:7px;border-radius:4px;background:var(--divider);border:0;padding:0;cursor:pointer}
 .hero-dot.is-active{width:18px;background:var(--primary)}
 
@@ -1160,12 +1161,12 @@ function heroSection(payload) {
 
   var dots = [0, 1, 2].map(function (i) { return '<button type="button" class="hero-dot' + (STATE.heroSlide === i ? ' is-active' : '') + '" data-action="dot" data-index="' + i + '" aria-label="Slide ' + (i + 1) + '"></button>'; }).join('');
 
-  return '<section class="hero-wrap"><div class="hero-track" id="heroTrack">' +
+  return '<div class="hero-dots">' + dots + '</div>' +
+    '<section class="hero-wrap"><div class="hero-track" id="heroTrack">' +
       '<div class="hero-slide hero-slide--route">' + slideRoute + '</div>' +
       '<div class="hero-slide">' + slideDetails + '</div>' +
       '<div class="hero-slide hero-slide--next">' + nextStopSlide(payload) + '</div>' +
     '</div></section>' +
-    '<div class="hero-dots">' + dots + '</div>' +
     mapsCard(payload);
 }
 
@@ -1316,16 +1317,40 @@ function render() {
   }
 
   var track = document.getElementById('heroTrack');
+  if (heroRO) { heroRO.disconnect(); heroRO = null; }
   if (track) {
     track.scrollLeft = STATE.heroSlide * track.clientWidth;
+    fitHero(false);
+    if (window.ResizeObserver) {
+      heroRO = new ResizeObserver(function () { fitHero(true); });
+      track.querySelectorAll('.hero-slide').forEach(function (sl) { heroRO.observe(sl); });
+    }
     track.onscroll = function () {
       var idx = Math.round(track.scrollLeft / Math.max(1, track.clientWidth));
       if (idx !== STATE.heroSlide) {
         STATE.heroSlide = idx;
         document.querySelectorAll('.hero-dot').forEach(function (d, i) { d.classList.toggle('is-active', i === idx); });
+        fitHero(true);
       }
     };
   }
+}
+
+/* Size the hero track to the active slide so short slides leave no empty space */
+var heroRO = null;
+function fitHero(animate) {
+  var track = document.getElementById('heroTrack');
+  if (!track) return;
+  var sl = track.querySelectorAll('.hero-slide')[STATE.heroSlide];
+  if (!sl) return;
+  var h = sl.offsetHeight;
+  if (!h || track.style.height === h + 'px') return;
+  if (animate) { track.style.height = h + 'px'; return; }
+  var prev = track.style.transition;
+  track.style.transition = 'none';
+  track.style.height = h + 'px';
+  void track.offsetHeight;
+  track.style.transition = prev;
 }
 
 /* ---------- Profile screen ---------- */
@@ -1523,6 +1548,7 @@ document.body.addEventListener('click', function (e) {
     STATE.heroSlide = idx;
     var track = document.getElementById('heroTrack');
     if (track) track.scrollLeft = idx * track.clientWidth;
+    fitHero(true);
     document.querySelectorAll('.hero-dot').forEach(function (d, i) { d.classList.toggle('is-active', i === idx); });
     return;
   }
