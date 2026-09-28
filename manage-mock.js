@@ -128,6 +128,8 @@
           var st = getStore(tripId || lastTripId);
           if (!st) { resolve({ error: 'invalid_token' }); return; }
           var now = new Date().toISOString();
+          /* Mirror server rule: pickup/dropoff only while the trip is started and not ended. */
+          if ((action === 'picked_up' || action === 'dropped_off') && st.trip.status !== 'active') { resolve({ error: 'not_started' }); return; }
           if (action === 'start') st.trip.status = 'active';
           else if (action === 'end') st.trip.status = 'completed';
           else if (action === 'remove') st.bookings = st.bookings.filter(function (b) { return b.id !== bookingId; });
