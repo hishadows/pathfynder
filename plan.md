@@ -71,3 +71,4 @@ One task per session. Status: todo / done / parked.
 - 2026-09-28 — Manage: past=DONE, pickup buttons gated on started trip (client + RPC), slides reordered (details/route/next), route timeline + per-passenger colours. Open: passenger card avatars not coloured yet.
 - 2026-09-28 — Route slide line: solid travelled / dashed ahead, transit-style markers.
 - 2026-09-28 — Manage: slides reordered (route/details/progress), endpoint passengers no longer dropped, location → Google Maps, tinted passenger blocks. Open: live-GPS origin path untested in headless.
+- 2026-09-28 — Manage: per-slide height (animated) + dots above slides. Open: real-finger swipe on iOS/Android not tested.
