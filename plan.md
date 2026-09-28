@@ -27,6 +27,7 @@ One task per session. Status: todo / done / parked.
    - Done when: `/m/<token>` loads the trip via `trip_manage_get` and actions work via `trip_manage_action`.
    - Status: done against mock (2026-09-28) — built from Pranay's screenshot, not `design/`; goes live once task 5 ships the RPCs
    - 2026-09-28: now the driver home — date strip (trip dates + Today), empty state (Post a trip → WhatsApp bot, Explore rides), profile icon placeholder, driver info removed from trip details slide. Done against mock.
+   - 2026-09-28: profile screen built against mock (name/photo edit, masked read-only WhatsApp, rides summary, notification switch, Light/Dark/System theme, support mailto). Now live (2026-09-28): RPCs `driver_profile_get`/`driver_profile_update`/`driver_notify_set`, photo stored as a small JPEG data URL in `drivers.photo` (no bucket).
 
 7. **Passenger join page `/j/<code>`** — pickup, drop-off, time, "for work" toggle + shift start, note, "Confirm on WhatsApp".
    - Done when: `/j/<code>` shows the trip and "Confirm on WhatsApp" opens WhatsApp with the filled-in details.
@@ -70,5 +71,9 @@ One task per session. Status: todo / done / parked.
 - 2026-09-28 — Manage default slide: ride details unless the trip is active (then pickup); Start trip jumps to pickup; refresh keeps swiped slide. Open: Start-failure rollback of the slide not tested.
 - 2026-09-28 — Manage: past=DONE, pickup buttons gated on started trip (client + RPC), slides reordered (details/route/next), route timeline + per-passenger colours. Open: passenger card avatars not coloured yet.
 - 2026-09-28 — Route slide line: solid travelled / dashed ahead, transit-style markers.
+- 2026-09-28 — Explore: removed WhatsApp/Facebook source-group info (card "from <group>" / "Posted in N groups", detail "Shared on WhatsApp in N groups" block, unused CSS); near-me header now just "Within 25 km · next 3 days"; original-message time reads `posted_at` first. Group-link card untouched. Open: real-phone check pending.
 - 2026-09-28 — Manage: slides reordered (route/details/progress), endpoint passengers no longer dropped, location → Google Maps, tinted passenger blocks. Open: live-GPS origin path untested in headless.
 - 2026-09-28 — Manage: per-slide height (animated) + dots above slides. Open: real-finger swipe on iOS/Android not tested.
+- 2026-09-28 — Explore cards: dropped "Ride coordinator" tag; added green "Ride available" tag on driver cards; Daily tag now always shows (was hidden when the recurring label said "daily"); landing count "N drivers/passengers available" when From is set. Open: real-phone check pending.
+- 2026-09-28 — Driver profile screen in manage.html (mock only): name/photo edit, masked WhatsApp, rides summary (trips, member since, passengers, total earned), notify switch, theme toggle, support email. Loads `pf-notify-v5.js` + `pf-install-sheet-v2.js`. Open: RPCs + avatar bucket (needs approval).
+- 2026-09-28 — Driver profile real backend: migration `driver_profile_rpcs` (3 RPCs + `drivers.photo`); notify switch now links via `driver_notify_set` (was passing the wrong token). Open: real push + iOS untested; enabling creates a short-lived unlinked notify row that the RPC adopts; no remove-photo button yet.

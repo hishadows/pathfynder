@@ -57,11 +57,11 @@
       arrive_time: '17:10', seats: 2, price: 18, rating: 4.8, rating_count: 27, verified: true, luggage: 'Small bag OK',
       posted_at: '2026-09-25T15:00', match_type: 'along_route', pickup_km: 12, dropoff_km: 14 },
 
-    { id: 'mehak', source: 'whatsapp', role: 'passenger', parsed: true, display_name: 'Mehak S.',
+    { id: 'mehak', source: 'whatsapp', role: 'passenger', parsed: true, display_name: 'Mehak S.', is_urgent: true,
       origin_label: 'St. Catharines, ON', dest_label: 'Welland, ON', ride_date: '2026-09-26', ride_time: '08:30', seats: 1,
       match_type: 'direct', groups: [G('Niagara Local Rides', '2026-09-26T06:25')], posted_at: '2026-09-26T06:25',
       raw_text: 'Need ride St Catharines → Welland (Niagara College) 8:30 today, 1 person' },
-    { id: 'tom', source: 'poparide', role: 'passenger', parsed: true, display_name: 'Tom W.',
+    { id: 'tom', source: 'poparide', role: 'passenger', parsed: true, display_name: 'Tom W.', is_daily: true, recurring_label: 'Daily',
       origin_label: 'St. Catharines, ON', dest_label: 'Welland, ON', ride_date: '2026-09-26', ride_time: '17:00', seats: 2,
       posted_at: '2026-09-25T21:00', match_type: 'direct' },
     { id: 'harleen', source: 'whatsapp', role: 'passenger', parsed: true, display_name: 'Harleen K.', is_regular: true,
