@@ -71,3 +71,4 @@ One task per session. Status: todo / done / parked.
 - 2026-09-28 — Manage: past=DONE, pickup buttons gated on started trip (client + RPC), slides reordered (details/route/next), route timeline + per-passenger colours. Open: passenger card avatars not coloured yet.
 - 2026-09-28 — Route slide line: solid travelled / dashed ahead, transit-style markers.
 - 2026-09-28 — Explore: removed WhatsApp/Facebook source-group info (card "from <group>" / "Posted in N groups", detail "Shared on WhatsApp in N groups" block, unused CSS); near-me header now just "Within 25 km · next 3 days"; original-message time reads `posted_at` first. Group-link card untouched. Open: real-phone check pending.
+- 2026-09-28 — Manage: slides reordered (route/details/progress), endpoint passengers no longer dropped, location → Google Maps, tinted passenger blocks. Open: live-GPS origin path untested in headless.
