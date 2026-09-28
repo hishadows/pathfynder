@@ -2,7 +2,7 @@
    Local mock data for /manage (manage.html), matching the
    trip_manage_get / trip_manage_action RPC contract (see plan for
    /m/:token). Loaded only when ?mock=1. In-memory only, per query
-   `state` param: not_started | in_progress (default) | ended | invalid.
+   `state` param: draft | active (default) | completed | invalid.
    ?fail=1 makes trip_manage_action reject, to test optimistic rollback.
    TODO: delete this file once trip_manage_get / trip_manage_action ship.
    --------------------------------------------------------------------- */
@@ -17,35 +17,32 @@
   function buildPayload(stateKey) {
     if (stateKey === 'invalid') return null;
 
-    var confirmedStatus = 'confirmed';
-    var jordanStatus = 'confirmed';
-    var tripStatus = 'in_progress';
-    if (stateKey === 'not_started') { tripStatus = 'not_started'; }
-    else if (stateKey === 'ended') { tripStatus = 'ended'; confirmedStatus = 'dropped_off'; jordanStatus = 'dropped_off'; }
-    else { tripStatus = 'in_progress'; jordanStatus = 'picked_up'; }
+    var tripStatus = stateKey === 'draft' ? 'draft' : (stateKey === 'completed' ? 'completed' : 'active');
 
     var bookings = [
-      { id: 'b1', status: confirmedStatus, name: 'Sara', phone: '15195550101', seats: 1,
+      { id: 'b1', name: 'Sara', phone: '15195550101', seats: 1,
         pickup_label: 'Peter Street, Windsor, Ontario, Canada', pickup_lat: 42.3178, pickup_lng: -83.0310,
         dropoff_label: 'Essex, Ontario, Canada', dropoff_lat: DEST.lat, dropoff_lng: DEST.lng,
-        pickup_time: null, created_at: isoOffset(-3 * 24 * 3600e3) },
-      { id: 'b2', status: confirmedStatus, name: 'Priya', phone: '15195550102', seats: 1,
+        pickup_time: null, created_at: isoOffset(-3 * 24 * 3600e3), picked_up_at: null, dropped_off_at: null },
+      { id: 'b2', name: 'Priya', phone: '15195550102', seats: 1,
         pickup_label: '496 Askin Avenue, Windsor, Ontario N9B 2W8, Canada', pickup_lat: 42.3145, pickup_lng: -83.0655,
         dropoff_label: 'Essex, Ontario, Canada', dropoff_lat: DEST.lat, dropoff_lng: DEST.lng,
-        pickup_time: null, created_at: isoOffset(-3 * 24 * 3600e3 + 60e3) },
-      { id: 'b3', status: confirmedStatus, name: 'Amit', phone: '15195550103', seats: 1,
+        pickup_time: null, created_at: isoOffset(-3 * 24 * 3600e3 + 60e3), picked_up_at: null, dropped_off_at: null },
+      { id: 'b3', name: 'Amit', phone: '15195550103', seats: 1,
         pickup_label: '496 Askin Avenue, Windsor, Ontario N9B 2W8, Canada', pickup_lat: 42.3145, pickup_lng: -83.0655,
         dropoff_label: 'Leamington, Ontario, Canada', dropoff_lat: LEAMINGTON.lat, dropoff_lng: LEAMINGTON.lng,
-        pickup_time: null, created_at: isoOffset(-3 * 24 * 3600e3 + 120e3) },
-      { id: 'b4', status: jordanStatus, name: 'Jordan', phone: '15195550104', seats: 1,
+        pickup_time: null, created_at: isoOffset(-3 * 24 * 3600e3 + 120e3), picked_up_at: null, dropped_off_at: null },
+      { id: 'b4', name: 'Jordan', phone: '15195550104', seats: 1,
         pickup_label: 'Ottawa Street, Windsor, Ontario, Canada', pickup_lat: 42.3080, pickup_lng: -83.0065,
         dropoff_label: 'Leamington, Ontario, Canada', dropoff_lat: LEAMINGTON.lat, dropoff_lng: LEAMINGTON.lng,
-        pickup_time: null, created_at: isoOffset(-3 * 24 * 3600e3 + 180e3) },
-      { id: 'b5', status: 'requested', name: 'Mei', phone: '15195550105', seats: 1,
-        pickup_label: 'Tecumseh, Ontario, Canada', pickup_lat: 42.3149, pickup_lng: -82.9002,
-        dropoff_label: 'Essex, Ontario, Canada', dropoff_lat: DEST.lat, dropoff_lng: DEST.lng,
-        pickup_time: isoOffset(3 * 3600e3), created_at: isoOffset(-2 * 3600e3) }
+        pickup_time: null, created_at: isoOffset(-3 * 24 * 3600e3 + 180e3), picked_up_at: null, dropped_off_at: null }
     ];
+
+    if (stateKey === 'active') {
+      bookings[3].picked_up_at = isoOffset(-15 * 60e3); /* Jordan already on board */
+    } else if (stateKey === 'completed') {
+      bookings.forEach(function (b) { b.picked_up_at = isoOffset(-40 * 60e3); b.dropped_off_at = isoOffset(-10 * 60e3); });
+    }
 
     return {
       trip: {
@@ -61,8 +58,8 @@
 
   var STORE = {};
   function stateKey() {
-    try { return new URLSearchParams(location.search).get('state') || 'in_progress'; }
-    catch (e) { return 'in_progress'; }
+    try { return new URLSearchParams(location.search).get('state') || 'active'; }
+    catch (e) { return 'active'; }
   }
   function shouldFail() {
     try { return new URLSearchParams(location.search).get('fail') === '1'; }
@@ -89,12 +86,12 @@
           if (shouldFail()) { reject(new Error('mock action failure')); return; }
           var st = getStore();
           if (!st) { resolve({ error: 'invalid_token' }); return; }
-          if (action === 'start') st.trip.status = 'in_progress';
-          else if (action === 'end') st.trip.status = 'ended';
-          else if (action === 'accept') st.bookings.forEach(function (b) { if (b.id === bookingId) b.status = 'confirmed'; });
-          else if (action === 'decline' || action === 'remove') st.bookings = st.bookings.filter(function (b) { return b.id !== bookingId; });
-          else if (action === 'picked_up') st.bookings.forEach(function (b) { if (b.id === bookingId) b.status = 'picked_up'; });
-          else if (action === 'dropped_off') st.bookings.forEach(function (b) { if (b.id === bookingId) b.status = 'dropped_off'; });
+          var now = new Date().toISOString();
+          if (action === 'start') st.trip.status = 'active';
+          else if (action === 'end') st.trip.status = 'completed';
+          else if (action === 'remove') st.bookings = st.bookings.filter(function (b) { return b.id !== bookingId; });
+          else if (action === 'picked_up') st.bookings.forEach(function (b) { if (b.id === bookingId) b.picked_up_at = now; });
+          else if (action === 'dropped_off') st.bookings.forEach(function (b) { if (b.id === bookingId) b.dropped_off_at = now; });
           resolve(clone(st));
         }, 300);
       });

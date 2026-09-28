@@ -121,15 +121,12 @@ button{font:inherit}
 .section__title{margin:0;font-size:15px;font-weight:700}
 .pill-soft{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;padding:6px 12px;border-radius:999px;background:var(--chip-soft);color:var(--chip-soft-text);margin-bottom:10px}
 
-/* Request card */
-.req-card{background:var(--card);border-radius:16px;padding:12px 14px;margin-bottom:10px}
-.req-card__top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
-.req-card__name{font-size:14.5px;font-weight:700}
-.req-card__seats{font-size:12.5px;color:var(--text-2)}
-.req-card__route{font-size:13px;color:var(--text-2);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.req-card__time{font-size:12px;color:var(--text-2);margin-bottom:10px}
-.req-card__actions{display:flex;gap:8px}
-.req-card__actions .btn{flex:1}
+/* Cash card */
+.cash-card{background:var(--card);border-radius:16px;padding:14px}
+.cash-card__title{margin:0 0 6px;font-size:12.5px;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:.02em}
+.cash-card__total{margin:0 0 2px;font-size:26px;font-weight:800}
+.cash-card__line{margin:0 0 6px;font-size:13px;color:var(--text-2)}
+.cash-card__note{margin:0;font-size:12px;color:var(--text-2)}
 
 /* Passenger card */
 .pax-card{background:var(--card);border-radius:16px;padding:12px 14px;margin-bottom:10px}
@@ -216,6 +213,9 @@ try {
   });
 } catch (e) { console.warn('Supabase failed to init:', e); }
 
+var MAPBOX_TOKEN = 'pk.eyJ1IjoicGF0aHktY2EiLCJhIjoiY211aTZwMXRwMGQ4MjM0b2x4emxtMW9zOSJ9.w2VX7kd0rZniB4GnbLryGg';
+function DEBUG() { return new URLSearchParams(location.search).get('debug') === '1'; }
+
 /* ---------- Helpers ---------- */
 var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]; }); };
 function clone(o) { return o == null ? o : JSON.parse(JSON.stringify(o)); }
@@ -234,18 +234,10 @@ function shortLabel(label) {
   }
   return prov ? city + ', ' + prov : city;
 }
-function haversineKm(lat1, lng1, lat2, lng2) {
-  if ([lat1, lng1, lat2, lng2].some(function (v) { return v == null || isNaN(v); })) return null;
-  var R = 6371, toRad = function (d) { return d * Math.PI / 180; };
-  var dLat = toRad(lat2 - lat1), dLng = toRad(lng2 - lng1);
-  var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
 function fmtDateShort(iso) { var d = new Date(iso); return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); }
 function timeOfDay(iso) { var h = new Date(iso).getHours(); return h < 12 ? 'Morning' : (h < 17 ? 'Afternoon' : 'Evening'); }
 function fmtPrice2(n) { return '$' + Number(n).toFixed(2); }
 function fmtMoneyShort(n) { var v = Number(n); return '$' + (Math.round(v * 100) / 100).toString(); }
-function fmtClock(iso) { return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }); }
 function relTime(iso) {
   var min = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 6e4));
   if (min < 1) return 'just now';
@@ -255,11 +247,164 @@ function relTime(iso) {
 }
 function km1(n) { return n == null ? '' : (Math.round(n * 10) / 10).toFixed(1) + ' km'; }
 
+/* ---------- Route logic (pure, self-contained — unit-testable) ---------- */
+var PFRoute = (function () {
+/* ROUTE-START */
+function haversineKm(lat1, lng1, lat2, lng2) {
+  if ([lat1, lng1, lat2, lng2].some(function (v) { return v == null || isNaN(v); })) return null;
+  var R = 6371, toRad = function (d) { return d * Math.PI / 180; };
+  var dLat = toRad(lat2 - lat1), dLng = toRad(lng2 - lng1);
+  var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+/* One point per pending pickup/dropoff across all bookings. */
+function buildStops(origin, dest, bookings) {
+  var pts = [];
+  (bookings || []).forEach(function (b) {
+    if (!b.picked_up_at) pts.push({ lat: b.pickup_lat, lng: b.pickup_lng, label: b.pickup_label, passengerId: b.id, kind: 'pickup' });
+    if (!b.dropped_off_at) pts.push({ lat: b.dropoff_lat, lng: b.dropoff_lng, label: b.dropoff_label, passengerId: b.id, kind: 'dropoff' });
+  });
+  return pts;
+}
+
+var MERGE_KM = 0.15;
+
+/* Merge points within 150m into one stop; drop stops within 150m of origin/destination. */
+function dedupeStops(points, origin, dest) {
+  var stops = [];
+  (points || []).forEach(function (p) {
+    var merged = null;
+    for (var i = 0; i < stops.length; i++) {
+      if (haversineKm(stops[i].lat, stops[i].lng, p.lat, p.lng) <= MERGE_KM) { merged = stops[i]; break; }
+    }
+    if (merged) {
+      merged.members.push({ passengerId: p.passengerId, kind: p.kind, label: p.label });
+    } else {
+      stops.push({ lat: p.lat, lng: p.lng, label: p.label, members: [{ passengerId: p.passengerId, kind: p.kind, label: p.label }] });
+    }
+  });
+  return stops.filter(function (s) {
+    if (origin && haversineKm(s.lat, s.lng, origin.lat, origin.lng) <= MERGE_KM) return false;
+    if (dest && haversineKm(s.lat, s.lng, dest.lat, dest.lng) <= MERGE_KM) return false;
+    return true;
+  });
+}
+
+/* Exact shortest order (DFS + branch-and-bound) respecting pickup-before-dropoff
+   per passenger, for <=8 stops; nearest-neighbour (respecting the same
+   precedence) beyond that. */
+function orderStops(origin, dest, stops) {
+  var n = stops.length;
+  if (n === 0) return [];
+
+  var pickupIndex = {}, dropoffIndex = {};
+  stops.forEach(function (s, idx) {
+    s.members.forEach(function (m) {
+      if (m.kind === 'pickup') pickupIndex[m.passengerId] = idx;
+      else dropoffIndex[m.passengerId] = idx;
+    });
+  });
+  var constraints = [];
+  Object.keys(pickupIndex).forEach(function (pid) {
+    if (Object.prototype.hasOwnProperty.call(dropoffIndex, pid) && pickupIndex[pid] !== dropoffIndex[pid]) {
+      constraints.push([pickupIndex[pid], dropoffIndex[pid]]);
+    }
+  });
+
+  if (n > 8) {
+    console.warn('[maps] more than 8 stops (' + n + ') — using nearest-neighbour ordering');
+    return nearestNeighbourOrder(origin, stops, constraints);
+  }
+
+  var predMap = {};
+  constraints.forEach(function (c) { (predMap[c[1]] = predMap[c[1]] || []).push(c[0]); });
+
+  var best = null, bestDist = Infinity;
+  var used = new Array(n);
+  for (var z = 0; z < n; z++) used[z] = false;
+  var path = [];
+
+  function ready(idx) {
+    var preds = predMap[idx];
+    if (!preds) return true;
+    for (var i = 0; i < preds.length; i++) if (!used[preds[i]]) return false;
+    return true;
+  }
+
+  function dfs(curLat, curLng, distSoFar) {
+    if (distSoFar >= bestDist) return;
+    if (path.length === n) {
+      var total = distSoFar + haversineKm(curLat, curLng, dest.lat, dest.lng);
+      if (total < bestDist) { bestDist = total; best = path.slice(); }
+      return;
+    }
+    for (var i = 0; i < n; i++) {
+      if (used[i] || !ready(i)) continue;
+      var d = haversineKm(curLat, curLng, stops[i].lat, stops[i].lng);
+      used[i] = true; path.push(i);
+      dfs(stops[i].lat, stops[i].lng, distSoFar + d);
+      path.pop(); used[i] = false;
+    }
+  }
+  dfs(origin.lat, origin.lng, 0);
+  if (!best) { best = []; for (var k = 0; k < n; k++) best.push(k); }
+  return best.map(function (i) { return stops[i]; });
+}
+
+function nearestNeighbourOrder(origin, stops, constraints) {
+  var n = stops.length;
+  var used = new Array(n);
+  for (var z = 0; z < n; z++) used[z] = false;
+  var predMap = {};
+  constraints.forEach(function (c) { (predMap[c[1]] = predMap[c[1]] || []).push(c[0]); });
+  function ready(idx) {
+    var preds = predMap[idx];
+    if (!preds) return true;
+    for (var i = 0; i < preds.length; i++) if (!used[preds[i]]) return false;
+    return true;
+  }
+  var order = [], curLat = origin.lat, curLng = origin.lng;
+  for (var k = 0; k < n; k++) {
+    var bestI = -1, bestD = Infinity;
+    for (var i = 0; i < n; i++) {
+      if (used[i] || !ready(i)) continue;
+      var d = haversineKm(curLat, curLng, stops[i].lat, stops[i].lng);
+      if (d < bestD) { bestD = d; bestI = i; }
+    }
+    if (bestI === -1) { for (var j = 0; j < n; j++) { if (!used[j]) { bestI = j; break; } } }
+    used[bestI] = true; order.push(bestI);
+    curLat = stops[bestI].lat; curLng = stops[bestI].lng;
+  }
+  return order.map(function (i) { return stops[i]; });
+}
+
+/* Never includes "optimize:true" — order is our own. Labels are used as
+   waypoint values; "lat,lng" is only a fallback when a label is missing. */
+function buildMapsUrl(origin, dest, orderedStops) {
+  function fallback(pt) { return pt.lat + ',' + pt.lng; }
+  var originVal = origin.label ? origin.label : fallback(origin);
+  var destVal = dest.label ? dest.label : fallback(dest);
+  var url = 'https://www.google.com/maps/dir/?api=1&origin=' + encodeURIComponent(originVal) +
+    '&destination=' + encodeURIComponent(destVal) + '&travelmode=driving';
+  if (orderedStops && orderedStops.length) {
+    var wp = orderedStops.map(function (s) { return encodeURIComponent(s.label ? s.label : fallback(s)); }).join('|');
+    url += '&waypoints=' + wp;
+  }
+  return url;
+}
+/* ROUTE-END */
+return { haversineKm: haversineKm, buildStops: buildStops, dedupeStops: dedupeStops, orderStops: orderStops, buildMapsUrl: buildMapsUrl };
+})();
+
 /* ---------- State ---------- */
 var STATE = {
   token: null, isMock: false, payload: null, loading: true, errorType: null,
-  heroSlide: 0, pendingKey: null, expanded: {}, sheet: null
+  heroSlide: 0, pendingKey: null, expanded: {}, sheet: null,
+  gps: { fix: null, label: null, denied: false },
+  routeThrottle: { ts: 0, lat: null, lng: null }
 };
+var geoLabelCache = {};
 var toastTimer = null;
 
 function getToken() {
@@ -322,12 +467,12 @@ function doAction(action, bookingId, pendingKey) {
 }
 function applyOptimistic(action, bookingId) {
   var p = STATE.payload; if (!p) return;
-  if (action === 'start') p.trip.status = 'in_progress';
-  else if (action === 'end') p.trip.status = 'ended';
-  else if (action === 'accept') p.bookings.forEach(function (b) { if (b.id === bookingId) b.status = 'confirmed'; });
-  else if (action === 'decline' || action === 'remove') p.bookings = p.bookings.filter(function (b) { return b.id !== bookingId; });
-  else if (action === 'picked_up') p.bookings.forEach(function (b) { if (b.id === bookingId) b.status = 'picked_up'; });
-  else if (action === 'dropped_off') p.bookings.forEach(function (b) { if (b.id === bookingId) b.status = 'dropped_off'; });
+  var now = new Date().toISOString();
+  if (action === 'start') p.trip.status = 'active';
+  else if (action === 'end') p.trip.status = 'completed';
+  else if (action === 'remove') p.bookings = p.bookings.filter(function (b) { return b.id !== bookingId; });
+  else if (action === 'picked_up') p.bookings.forEach(function (b) { if (b.id === bookingId) b.picked_up_at = now; });
+  else if (action === 'dropped_off') p.bookings.forEach(function (b) { if (b.id === bookingId) b.dropped_off_at = now; });
 }
 
 function toast(msg) {
@@ -339,35 +484,36 @@ function toast(msg) {
 }
 
 /* ---------- Derived data ---------- */
-function confirmedBookings(payload) {
-  return payload.bookings.filter(function (b) { return ['confirmed', 'picked_up', 'dropped_off'].indexOf(b.status) !== -1; });
-}
 function seatsTaken(payload) {
-  return confirmedBookings(payload).reduce(function (n, b) { return n + (b.seats || 0); }, 0);
+  return payload.bookings.reduce(function (n, b) { return n + (b.seats || 0); }, 0);
 }
-function requestedBookings(payload) {
-  return payload.bookings.filter(function (b) { return b.status === 'requested'; });
+function nameForId(payload, id) {
+  var b = payload.bookings.find(function (x) { return x.id === id; });
+  return b ? firstName(b.name) : '';
 }
-function stopsForSlide2(payload) {
-  var trip = payload.trip, cb = confirmedBookings(payload);
-  var pickups = cb.map(function (b) { return { type: 'pickup', id: b.id, name: b.name, addr: b.pickup_label, dist: haversineKm(trip.origin_lat, trip.origin_lng, b.pickup_lat, b.pickup_lng), done: b.status === 'picked_up' || b.status === 'dropped_off' }; });
-  var dropoffs = cb.map(function (b) { return { type: 'dropoff', id: b.id, name: b.name, addr: b.dropoff_label, dist: haversineKm(trip.origin_lat, trip.origin_lng, b.dropoff_lat, b.dropoff_lng), done: b.status === 'dropped_off' }; });
-  pickups.sort(function (a, b) { return (a.dist || 0) - (b.dist || 0); });
-  dropoffs.sort(function (a, b) { return (a.dist || 0) - (b.dist || 0); });
-  return pickups.concat(dropoffs);
+function currentOriginForDisplay(payload) {
+  var trip = payload.trip;
+  var fix = STATE.gps.fix;
+  if (fix) return { lat: fix.lat, lng: fix.lng, label: STATE.gps.label || (fix.lat + ',' + fix.lng), isGps: true };
+  return { lat: trip.origin_lat, lng: trip.origin_lng, label: trip.origin_label, isGps: false };
 }
-function mapsUrl(payload) {
-  var trip = payload.trip, cb = confirmedBookings(payload);
-  var pu = cb.filter(function (b) { return b.status === 'confirmed'; })
-    .map(function (b) { return { lat: b.pickup_lat, lng: b.pickup_lng, dist: haversineKm(trip.origin_lat, trip.origin_lng, b.pickup_lat, b.pickup_lng) }; });
-  var doo = cb.filter(function (b) { return b.status !== 'dropped_off'; })
-    .map(function (b) { return { lat: b.dropoff_lat, lng: b.dropoff_lng, dist: haversineKm(trip.origin_lat, trip.origin_lng, b.dropoff_lat, b.dropoff_lng) }; });
-  pu.sort(function (a, b) { return a.dist - b.dist; });
-  doo.sort(function (a, b) { return a.dist - b.dist; });
-  var wp = pu.concat(doo).slice(0, 9).map(function (w) { return w.lat + ',' + w.lng; }).join('|');
-  var url = 'https://www.google.com/maps/dir/?api=1&origin=' + trip.origin_lat + ',' + trip.origin_lng + '&destination=' + trip.dest_lat + ',' + trip.dest_lng + '&travelmode=driving';
-  if (wp) url += '&waypoints=' + encodeURIComponent(wp);
-  return url;
+function computeRoute(payload) {
+  var trip = payload.trip;
+  var origin = currentOriginForDisplay(payload);
+  var dest = { lat: trip.dest_lat, lng: trip.dest_lng, label: trip.dest_label };
+  var pts = PFRoute.buildStops(origin, dest, payload.bookings);
+  var stops = PFRoute.dedupeStops(pts, origin, dest);
+  var ordered = PFRoute.orderStops(origin, dest, stops);
+  return { origin: origin, dest: dest, stops: ordered };
+}
+function doneStopsForSlide2(payload) {
+  var items = [];
+  payload.bookings.forEach(function (b) {
+    if (b.picked_up_at) items.push({ id: b.id, name: b.name, label: b.pickup_label, kind: 'pickup', ts: b.picked_up_at });
+    if (b.dropped_off_at) items.push({ id: b.id, name: b.name, label: b.dropoff_label, kind: 'dropoff', ts: b.dropped_off_at });
+  });
+  items.sort(function (a, b) { return new Date(a.ts) - new Date(b.ts); });
+  return items;
 }
 function shareText(payload) {
   var trip = payload.trip;
@@ -395,6 +541,139 @@ function copyToClipboard(text) {
   }
 }
 
+/* ---------- GPS + reverse geocoding ---------- */
+function reverseGeocode(lat, lng) {
+  if (!MAPBOX_TOKEN || typeof fetch !== 'function') return Promise.resolve(null);
+  var params = new URLSearchParams();
+  params.set('longitude', String(lng));
+  params.set('latitude', String(lat));
+  params.set('types', 'address,street,neighborhood,locality,place');
+  params.set('limit', '1');
+  params.set('access_token', MAPBOX_TOKEN);
+  return fetch('https://api.mapbox.com/search/geocode/v6/reverse?' + params.toString())
+    .then(function (res) { return res.ok ? res.json() : null; })
+    .then(function (json) {
+      var f = json && json.features && json.features[0];
+      var addr = f && f.properties && f.properties.full_address;
+      return addr || null;
+    })
+    .catch(function () { return null; });
+}
+function roundKey(lat, lng) { return lat.toFixed(3) + ',' + lng.toFixed(3); }
+function resolveGpsLabel(lat, lng) {
+  var key = roundKey(lat, lng);
+  if (Object.prototype.hasOwnProperty.call(geoLabelCache, key)) { STATE.gps.label = geoLabelCache[key]; return; }
+  reverseGeocode(lat, lng).then(function (label) {
+    geoLabelCache[key] = label;
+    STATE.gps.label = label;
+    scheduleRouteRerender(true);
+  });
+}
+function scheduleRouteRerender(force) {
+  if (!STATE.payload) return;
+  var now = Date.now(), last = STATE.routeThrottle, fix = STATE.gps.fix;
+  var movedFar = !!(fix && last.lat != null && PFRoute.haversineKm(last.lat, last.lng, fix.lat, fix.lng) > 0.15);
+  if (!force && (now - last.ts) < 15000 && !movedFar) return;
+  STATE.routeThrottle = { ts: now, lat: fix ? fix.lat : null, lng: fix ? fix.lng : null };
+  render();
+}
+function setGpsFix(lat, lng) {
+  STATE.gps.fix = { lat: lat, lng: lng, ts: Date.now() };
+  resolveGpsLabel(lat, lng);
+  scheduleRouteRerender(false);
+}
+function initGps() {
+  var params = new URLSearchParams(location.search);
+  var gpsParam = params.get('gps');
+  if (STATE.isMock && gpsParam === 'off') { STATE.gps.denied = true; return; }
+  if (STATE.isMock && gpsParam) {
+    var parts = gpsParam.split(',').map(Number);
+    if (parts.length === 2 && isFinite(parts[0]) && isFinite(parts[1])) { setGpsFix(parts[0], parts[1]); return; }
+  }
+  if (!('geolocation' in navigator)) return;
+  try {
+    navigator.geolocation.watchPosition(function (pos) {
+      setGpsFix(pos.coords.latitude, pos.coords.longitude);
+    }, function () { /* denied/unavailable — fall back to trip origin */ }, { enableHighAccuracy: true, maximumAge: 30000 });
+  } catch (e) {}
+}
+function resolveOriginForMaps() {
+  return new Promise(function (resolve) {
+    var trip = STATE.payload.trip;
+    var fix = STATE.gps.fix;
+    if (fix && (Date.now() - fix.ts) < 30000) { resolve({ lat: fix.lat, lng: fix.lng }); return; }
+    if (STATE.gps.denied) { resolve({ lat: trip.origin_lat, lng: trip.origin_lng }); return; }
+    var settled = false;
+    var backstop = setTimeout(function () {
+      if (settled) return; settled = true;
+      resolve({ lat: trip.origin_lat, lng: trip.origin_lng });
+    }, 8000);
+    try {
+      navigator.geolocation.getCurrentPosition(function (pos) {
+        if (settled) return; settled = true; clearTimeout(backstop);
+        resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+      }, function () {
+        if (settled) return; settled = true; clearTimeout(backstop);
+        resolve({ lat: trip.origin_lat, lng: trip.origin_lng });
+      }, { timeout: 6000 });
+    } catch (e) {
+      if (!settled) { settled = true; clearTimeout(backstop); resolve({ lat: trip.origin_lat, lng: trip.origin_lng }); }
+    }
+  });
+}
+function resolveOriginLabelForMaps(pt) {
+  return new Promise(function (resolve) {
+    var key = roundKey(pt.lat, pt.lng);
+    if (Object.prototype.hasOwnProperty.call(geoLabelCache, key) && geoLabelCache[key]) { resolve(geoLabelCache[key]); return; }
+    var done = false;
+    var t = setTimeout(function () { if (!done) { done = true; resolve(null); } }, 3000);
+    reverseGeocode(pt.lat, pt.lng).then(function (label) {
+      if (done) return; done = true; clearTimeout(t);
+      geoLabelCache[key] = label;
+      resolve(label);
+    });
+  });
+}
+function isMobileOrPwa() {
+  return (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) ||
+    !!navigator.standalone ||
+    (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+}
+function openMapsTap(btn) {
+  if (!STATE.payload) return;
+  var trip = STATE.payload.trip;
+  var origLabel = btn.textContent;
+  btn.textContent = 'Opening…';
+  var mobile = isMobileOrPwa();
+  var w = null;
+  if (!mobile) { try { w = window.open('about:blank', '_blank'); } catch (e) { w = null; } }
+
+  resolveOriginForMaps().then(function (pt) {
+    return resolveOriginLabelForMaps(pt).then(function (label) {
+      return { lat: pt.lat, lng: pt.lng, label: label || (pt.lat + ',' + pt.lng) };
+    });
+  }).then(function (origin) {
+    var dest = { lat: trip.dest_lat, lng: trip.dest_lng, label: trip.dest_label };
+    var pts = PFRoute.buildStops(origin, dest, STATE.payload.bookings);
+    var stops = PFRoute.dedupeStops(pts, origin, dest);
+    var ordered = PFRoute.orderStops(origin, dest, stops);
+    var url = PFRoute.buildMapsUrl(origin, dest, ordered);
+    console.info('[maps] ' + ordered.length + ' stops');
+    if (DEBUG() || STATE.isMock) console.info('[maps] url', url);
+    if (mobile || !w) {
+      var a = document.createElement('a');
+      a.href = url; a.target = '_blank'; a.rel = 'noopener';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    } else {
+      w.location.href = url;
+    }
+    btn.textContent = origLabel;
+  }).catch(function (e) {
+    console.error('[manage] open maps failed', e);
+    btn.textContent = origLabel;
+  });
+}
+
 /* ---------- Render: shell ---------- */
 function header() {
   return '<header class="app-bar"><div class="app-bar__inner">' +
@@ -414,9 +693,21 @@ function errorPage() {
 }
 
 /* ---------- Render: hero ---------- */
+function routeStopRow(payload, stop, isDone) {
+  var pickups = stop.members.filter(function (m) { return m.kind === 'pickup'; });
+  var dropoffs = stop.members.filter(function (m) { return m.kind === 'dropoff'; });
+  var labelParts = [];
+  if (pickups.length) labelParts.push('Pick up ' + pickups.map(function (m) { return esc(nameForId(payload, m.passengerId)); }).join(', '));
+  if (dropoffs.length) labelParts.push('Drop off ' + dropoffs.map(function (m) { return esc(nameForId(payload, m.passengerId)); }).join(', '));
+  var dotColor = colorFor(stop.members[0].passengerId);
+  return '<div class="route-stop' + (isDone ? ' is-done' : '') + '">' +
+    '<span class="route-stop__dot" style="background:' + dotColor + '"></span>' +
+    '<div class="route-stop__text"><span class="route-stop__label">' + labelParts.join(' · ') + '</span><span class="route-stop__addr">' + esc(shortLabel(stop.label)) + '</span></div>' +
+  '</div>';
+}
 function heroSection(payload) {
   var trip = payload.trip;
-  var statusLabel = trip.status === 'not_started' ? 'Not started' : (trip.status === 'in_progress' ? 'Started' : 'Ended');
+  var statusLabel = trip.status === 'draft' ? 'Not started' : (trip.status === 'active' ? 'Started' : 'Ended');
   var taken = seatsTaken(payload);
   var pct = trip.seats_total > 0 ? Math.min(100, Math.round(taken / trip.seats_total * 100)) : 0;
   var pricePanel = trip.price_per_seat != null ?
@@ -437,14 +728,17 @@ function heroSection(payload) {
       pricePanel +
     '</div>';
 
-  var stops = stopsForSlide2(payload);
-  var rows = stops.map(function (s) {
-    return '<div class="route-stop' + (s.done ? ' is-done' : '') + '">' +
-      '<span class="route-stop__dot" style="background:' + colorFor(s.id) + '"></span>' +
-      '<div class="route-stop__text"><span class="route-stop__label">' + (s.type === 'pickup' ? 'Pick up ' : 'Drop off ') + esc(s.name) + '</span><span class="route-stop__addr">' + esc(s.addr) + '</span></div>' +
-    '</div>';
+  var route = computeRoute(payload);
+  var doneItems = doneStopsForSlide2(payload);
+  var originLabel = route.origin.isGps ? 'Start: your location' : ('Start: ' + shortLabel(route.origin.label));
+  var rows = '<div class="route-stop"><span class="route-stop__dot" style="background:#FFFFFF"></span><div class="route-stop__text"><span class="route-stop__label">' + esc(originLabel) + '</span></div></div>';
+  rows += route.stops.map(function (s) { return routeStopRow(payload, s, false); }).join('');
+  rows += '<div class="route-stop"><span class="route-stop__dot" style="background:#FFFFFF"></span><div class="route-stop__text"><span class="route-stop__label">Destination: ' + esc(shortLabel(trip.dest_label)) + '</span></div></div>';
+  rows += doneItems.map(function (d) {
+    return '<div class="route-stop is-done"><span class="route-stop__dot" style="background:' + colorFor(d.id) + '"></span>' +
+      '<div class="route-stop__text"><span class="route-stop__label">' + (d.kind === 'pickup' ? 'Picked up ' : 'Dropped off ') + esc(firstName(d.name)) + '</span><span class="route-stop__addr">' + esc(shortLabel(d.label)) + '</span></div></div>';
   }).join('');
-  var slide2 = '<h3 class="hero-slide__title">Your route</h3><div class="route-stops">' + (rows || '<p style="opacity:.8;font-size:13px;margin:0">No confirmed passengers yet.</p>') + '</div>';
+  var slide2 = '<h3 class="hero-slide__title">Your route</h3><div class="route-stops">' + rows + '</div>';
 
   var dots = [0, 1].map(function (i) { return '<button type="button" class="hero-dot' + (STATE.heroSlide === i ? ' is-active' : '') + '" data-action="dot" data-index="' + i + '" aria-label="Slide ' + (i + 1) + '"></button>'; }).join('');
 
@@ -455,28 +749,18 @@ function heroSection(payload) {
     '<div class="hero-dots">' + dots + '</div>';
 }
 
-/* ---------- Render: requests ---------- */
-function requestsSection(payload) {
-  if (payload.trip.status === 'ended') return '';
-  var reqs = requestedBookings(payload);
-  if (!reqs.length) return '';
-  var free = payload.trip.seats_total - seatsTaken(payload);
-  var cards = reqs.map(function (r) {
-    var disabled = r.seats > free;
-    var pendingAccept = STATE.pendingKey === 'accept:' + r.id;
-    var pendingDecline = STATE.pendingKey === 'decline:' + r.id;
-    var timeText = r.pickup_time ? fmtClock(r.pickup_time) : relTime(r.created_at);
-    return '<div class="req-card">' +
-      '<div class="req-card__top"><span class="req-card__name">' + esc(r.name) + '</span><span class="req-card__seats">' + r.seats + ' seat' + (r.seats === 1 ? '' : 's') + '</span></div>' +
-      '<div class="req-card__route">' + esc(shortLabel(r.pickup_label)) + ' → ' + esc(shortLabel(r.dropoff_label)) + '</div>' +
-      '<div class="req-card__time">' + esc(timeText) + '</div>' +
-      '<div class="req-card__actions">' +
-        '<button type="button" class="btn btn-secondary" data-action="decline" data-id="' + r.id + '"' + (pendingDecline ? ' disabled' : '') + '>Decline</button>' +
-        '<button type="button" class="btn btn-cta" data-action="accept" data-id="' + r.id + '"' + (disabled || pendingAccept ? ' disabled' : '') + '>' + (disabled ? 'Not enough seats' : 'Accept') + '</button>' +
-      '</div>' +
-    '</div>';
-  }).join('');
-  return '<section class="section"><div class="section__head"><h2 class="section__title">Requests (' + reqs.length + ')</h2></div>' + cards + '</section>';
+/* ---------- Render: cash card ---------- */
+function cashCard(payload) {
+  var trip = payload.trip;
+  if (trip.status === 'completed' || trip.price_per_seat == null || !payload.bookings.length) return '';
+  var totalSeats = seatsTaken(payload);
+  var total = totalSeats * trip.price_per_seat;
+  return '<section class="section"><div class="cash-card">' +
+    '<p class="cash-card__title">Cash to collect</p>' +
+    '<p class="cash-card__total">' + esc(fmtMoneyShort(total)) + '</p>' +
+    '<p class="cash-card__line">' + totalSeats + ' seat' + (totalSeats === 1 ? '' : 's') + ' × ' + esc(fmtMoneyShort(trip.price_per_seat)) + '</p>' +
+    '<p class="cash-card__note">Paid in cash in the car</p>' +
+  '</div></section>';
 }
 
 /* ---------- Render: passengers ---------- */
@@ -484,11 +768,12 @@ function passengerCard(b, trip) {
   var digits = String(b.phone || '').replace(/\D/g, '');
   var outsideHref = 'https://wa.me/' + digits + '?text=' + encodeURIComponent('Hi ' + firstName(b.name) + ", I'm outside at " + b.pickup_label + ' 🚗');
   var priceText = trip.price_per_seat != null ? fmtMoneyShort(b.seats * trip.price_per_seat) : '–';
-  var pickupDist = haversineKm(trip.origin_lat, trip.origin_lng, b.pickup_lat, b.pickup_lng);
-  var dropoffDist = haversineKm(b.dropoff_lat, b.dropoff_lng, trip.dest_lat, trip.dest_lng);
-  var ended = trip.status === 'ended';
+  var pickupDist = PFRoute.haversineKm(trip.origin_lat, trip.origin_lng, b.pickup_lat, b.pickup_lng);
+  var dropoffDist = PFRoute.haversineKm(b.dropoff_lat, b.dropoff_lng, trip.dest_lat, trip.dest_lng);
+  var completed = trip.status === 'completed';
+  var picked = !!b.picked_up_at, dropped = !!b.dropped_off_at;
 
-  if (b.status === 'dropped_off' && !STATE.expanded[b.id]) {
+  if (dropped && !STATE.expanded[b.id]) {
     return '<div class="pax-card pax-card--collapsed pax-card--muted" data-action="toggle-expand" data-id="' + b.id + '">' +
       '<span class="pax-avatar">' + esc(initial(b.name)) + '</span>' +
       '<span class="pax-card__name">' + esc(b.name) + '</span>' +
@@ -496,16 +781,16 @@ function passengerCard(b, trip) {
     '</div>';
   }
 
-  var tagText = b.status === 'confirmed' ? 'confirmed' : (b.status === 'picked_up' ? 'picked up' : 'dropped off');
-  var cardClass = 'pax-card' + (b.status !== 'confirmed' ? ' pax-card--muted' : '') + (b.status === 'dropped_off' ? ' pax-card--collapsed-full' : '');
-  var removeBtn = (!ended && b.status === 'confirmed') ?
+  var tagText = dropped ? 'dropped off' : (picked ? 'picked up' : 'confirmed');
+  var cardClass = 'pax-card' + (picked ? ' pax-card--muted' : '');
+  var removeBtn = (!completed && !dropped) ?
     '<button type="button" class="pax-remove" data-action="remove" data-id="' + b.id + '" aria-label="Remove ' + esc(b.name) + '">✕</button>' : '';
-  var toggleAttrs = b.status === 'dropped_off' ? ' data-action="toggle-expand" data-id="' + b.id + '" style="cursor:pointer"' : '';
+  var toggleAttrs = dropped ? ' data-action="toggle-expand" data-id="' + b.id + '" style="cursor:pointer"' : '';
 
   var head = '<div class="pax-card__top"' + toggleAttrs + '>' +
     '<span class="pax-avatar">' + esc(initial(b.name)) + '</span>' +
     '<div class="pax-card__id"><span class="pax-card__name">' + esc(b.name) + '</span><span class="pax-card__meta">' + relTime(b.created_at) + '</span></div>' +
-    '<div class="pax-card__tagwrap"><span class="pax-tag' + (b.status === 'confirmed' ? '' : ' pax-tag--muted') + '">' + tagText + '</span>' + removeBtn + '</div>' +
+    '<div class="pax-card__tagwrap"><span class="pax-tag' + ((picked || dropped) ? ' pax-tag--muted' : '') + '">' + tagText + '</span>' + removeBtn + '</div>' +
   '</div>';
 
   var timeline = '<div class="pax-timeline">' +
@@ -516,22 +801,19 @@ function passengerCard(b, trip) {
   var side = '<div class="pax-side"><span class="pax-side__price">' + esc(priceText) + '</span><span class="pax-side__seats">' + b.seats + ' seat' + (b.seats === 1 ? '' : 's') + '</span></div>';
 
   var actions = '';
-  if (!ended) {
-    var pendingOut = false;
-    if (b.status === 'confirmed') {
-      var pendingPicked = STATE.pendingKey === 'picked_up:' + b.id;
-      if (trip.status === 'not_started') {
-        actions = '<div class="pax-actions"><a class="btn btn-secondary btn-full" href="' + outsideHref + '" target="_blank" rel="noopener">I’m outside</a></div>';
-      } else {
-        actions = '<div class="pax-actions">' +
-          '<a class="btn btn-secondary" href="' + outsideHref + '" target="_blank" rel="noopener">I’m outside</a>' +
-          '<button type="button" class="btn btn-cta" data-action="picked_up" data-id="' + b.id + '"' + (pendingPicked ? ' disabled' : '') + '>Picked up</button>' +
-        '</div>';
-      }
-    } else if (b.status === 'picked_up') {
+  if (!completed) {
+    if (picked && !dropped) {
       var pendingDropped = STATE.pendingKey === 'dropped_off:' + b.id;
       actions = '<span class="pax-onboard">On board</span>' +
         '<div class="pax-actions"><button type="button" class="btn btn-cta btn-full" data-action="dropped_off" data-id="' + b.id + '"' + (pendingDropped ? ' disabled' : '') + '>Dropped off</button></div>';
+    } else if (!dropped) {
+      var pendingPicked = STATE.pendingKey === 'picked_up:' + b.id;
+      var pendingDropped2 = STATE.pendingKey === 'dropped_off:' + b.id;
+      actions = '<div class="pax-actions">' +
+          '<a class="btn btn-secondary" href="' + outsideHref + '" target="_blank" rel="noopener">I’m outside</a>' +
+          '<button type="button" class="btn btn-cta" data-action="picked_up" data-id="' + b.id + '"' + (pendingPicked ? ' disabled' : '') + '>Picked up</button>' +
+        '</div>' +
+        '<div class="pax-actions" style="margin-top:8px"><button type="button" class="btn btn-secondary btn-full" data-action="dropped_off" data-id="' + b.id + '"' + (pendingDropped2 ? ' disabled' : '') + '>Dropped off</button></div>';
     }
   }
 
@@ -539,20 +821,20 @@ function passengerCard(b, trip) {
 }
 function passengersSection(payload) {
   var trip = payload.trip;
-  var cb = confirmedBookings(payload);
-  var pickedCount = cb.filter(function (b) { return b.status === 'picked_up' || b.status === 'dropped_off'; }).length;
-  var pill = (trip.status === 'in_progress' && pickedCount > 0) ?
+  var bookings = payload.bookings;
+  var pickedCount = bookings.filter(function (b) { return !!b.picked_up_at; }).length;
+  var pill = (trip.status === 'active' && pickedCount > 0) ?
     '<span class="pill-soft">✓ ' + pickedCount + ' passenger' + (pickedCount === 1 ? '' : 's') + ' picked up so far</span>' : '';
-  var cards = cb.map(function (b) { return passengerCard(b, trip); }).join('');
-  return '<section class="section"><div class="section__head"><h2 class="section__title">Passengers (' + cb.length + ')</h2></div>' + pill + cards + '</section>';
+  var cards = bookings.map(function (b) { return passengerCard(b, trip); }).join('');
+  return '<section class="section"><div class="section__head"><h2 class="section__title">Passengers (' + bookings.length + ')</h2></div>' + pill + cards + '</section>';
 }
 
 /* ---------- Render: action bar ---------- */
 function actionBar(payload) {
   var trip = payload.trip;
-  if (trip.status === 'ended') return '';
+  if (trip.status === 'completed') return '';
   var pendingStart = STATE.pendingKey === 'start';
-  if (trip.status === 'not_started') {
+  if (trip.status === 'draft') {
     return '<div class="action-bar"><div class="action-bar__row">' +
       '<button type="button" class="btn btn-secondary" data-action="share">Share link</button>' +
       '<button type="button" class="btn btn-cta" data-action="open-start-sheet"' + (pendingStart ? ' disabled' : '') + '>Start trip</button>' +
@@ -560,11 +842,11 @@ function actionBar(payload) {
   }
   return '<div class="action-bar"><div class="action-bar__row">' +
     '<button type="button" class="btn btn-secondary" data-action="share">Share link</button>' +
-    '<a class="btn btn-secondary" href="' + mapsUrl(payload) + '" target="_blank" rel="noopener">Open in Maps</a>' +
+    '<button type="button" class="btn btn-secondary" data-action="open-maps">Open in Maps</button>' +
   '</div></div>';
 }
 function endTripLink(payload) {
-  if (payload.trip.status !== 'in_progress') return '';
+  if (payload.trip.status !== 'active') return '';
   var pending = STATE.pendingKey === 'end';
   return '<div class="end-trip-wrap"><button type="button" class="btn-text-danger" data-action="open-end-sheet"' + (pending ? ' disabled' : '') + '>End trip</button></div>';
 }
@@ -592,9 +874,9 @@ function render() {
   if (STATE.loading || !STATE.payload) { app.classList.remove('has-bar'); app.innerHTML = header() + skeleton(); sheetHtml(); return; }
 
   var payload = STATE.payload;
-  var showBar = payload.trip.status !== 'ended';
+  var showBar = payload.trip.status !== 'completed';
   app.classList.toggle('has-bar', showBar);
-  app.innerHTML = header() + heroSection(payload) + requestsSection(payload) + passengersSection(payload) + endTripLink(payload) + '<div class="footer-space"></div>' + actionBar(payload);
+  app.innerHTML = header() + heroSection(payload) + cashCard(payload) + passengersSection(payload) + endTripLink(payload) + '<div class="footer-space"></div>' + actionBar(payload);
   sheetHtml();
 
   var track = document.getElementById('heroTrack');
@@ -618,6 +900,7 @@ document.body.addEventListener('click', function (e) {
   var id = t.getAttribute('data-id');
 
   if (action === 'share') { doShare(); return; }
+  if (action === 'open-maps') { openMapsTap(t); return; }
   if (action === 'dot') {
     var idx = Number(t.getAttribute('data-index'));
     STATE.heroSlide = idx;
@@ -634,7 +917,7 @@ document.body.addEventListener('click', function (e) {
     openSheet({ title: 'Remove ' + (b ? b.name : 'passenger') + ' from this trip?', message: 'They will no longer be part of this ride.', confirmLabel: 'Remove', danger: true, doAction: 'remove', bookingId: id });
     return;
   }
-  if (action === 'accept' || action === 'decline' || action === 'picked_up' || action === 'dropped_off') {
+  if (action === 'picked_up' || action === 'dropped_off') {
     doAction(action, id, action + ':' + id);
     return;
   }
@@ -652,6 +935,7 @@ function boot() {
   STATE.isMock = new URLSearchParams(location.search).get('mock') === '1';
   STATE.token = getToken();
   if (!STATE.isMock && !STATE.token) { STATE.loading = false; STATE.errorType = 'invalid_token'; render(); return; }
+  initGps();
   load(true);
 }
 document.addEventListener('visibilitychange', function () {

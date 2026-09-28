@@ -28,6 +28,7 @@ One task per session. Status: todo / done / parked.
 
 7. **Passenger join page `/j/<code>`** — pickup, drop-off, time, "for work" toggle + shift start, note, "Confirm on WhatsApp".
    - Done when: `/j/<code>` shows the trip and "Confirm on WhatsApp" opens WhatsApp with the filled-in details.
+   - Note (2026-09-28): no driver approval step — joining books the seat immediately (confirmed); the join must refuse when seats are full. Page not designed yet; the manage page's Share link already points to it (`trip.join_url`).
    - Status: todo (needs task 5)
 
 8. **PWA** — manifest, service worker, install prompt, Web Push opt-in. Plan first.
@@ -51,3 +52,4 @@ One task per session. Status: todo / done / parked.
 - 2026-09-27 — Notifications for all Explore visitors: tokenless devices get an `ALERTS <code>` WhatsApp link step (`notify_link_device`). Open: n8n bot step for `ALERTS <code>` not added yet — do not merge/deploy the front end until it is; real-phone test pending.
 - 2026-09-28 — Task 6: new `manage.html` + `manage-mock.js` (`?mock=1&state=not_started|in_progress|ended|invalid`, `&fail=1`), `/m/:token` rewrite, build.sh copy. `docs/booking-flow.md` was missing, so the data contract is the one in the changelog entry. Open: RPCs `trip_manage_get`/`trip_manage_action` don't exist yet (task 5); real-phone test pending.
 - 2026-09-28 — Explore card UI cleanup (ad-hoc, from Pranay's screenshot): top-row tags wrap instead of overlapping ("Needs ride" is now a tag, time reads "3d ago"), more space between/inside cards + light shadow, punctuation-only names show "WhatsApp member" with a person avatar. Open: check on Pranay's iPhone after deploy.
+- 2026-09-28 — Manage ride v2: requests/approval removed (joining = confirmed), trip status draft/active/completed, picked_up_at/dropped_off_at timestamps, Cash to collect card, Open in Maps rebuilt to Pranay's production spec (GPS origin, 150 m dedupe, exact shortest order, label URLs, PWA/desktop open). Open: RPCs still missing (task 5); real-phone Maps test pending.
