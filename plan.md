@@ -60,3 +60,4 @@ One task per session. Status: todo / done / parked.
 - 2026-09-28 — Manage page: "Your route" hero slide now on a white card (dark mode: #202C33 card), green start/destination dots.
 - 2026-09-28 — Manage ride: every action button has a leading icon (new `ico()` helper, inline stroke SVGs): Start/End trip, Invite passengers, I'm outside, Picked up, Dropped off, Remove passenger, and the pop-up confirm buttons. Bottom-bar labels kept on one line (fits 360px).
 - 2026-09-28 — Manage ride: "I'm outside" icon changed from map pin to a ringing bell (Pranay's reference).
+- 2026-09-28 — Manage page: new "Next stop" hero slide (first of 3, every state) with segmented stop progress + car marker, full pickup address, per-passenger Call/Message, notes, Picked up/Dropped off moved off passenger cards. Booking gets optional `note`. Open: RPCs (task 5); real-phone check.

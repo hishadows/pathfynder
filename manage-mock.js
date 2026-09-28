@@ -23,19 +23,19 @@
       { id: 'b1', name: 'Sara', phone: '15195550101', seats: 1,
         pickup_label: 'Peter Street, Windsor, Ontario, Canada', pickup_lat: 42.3178, pickup_lng: -83.0310,
         dropoff_label: 'Essex, Ontario, Canada', dropoff_lat: DEST.lat, dropoff_lng: DEST.lng,
-        pickup_time: null, created_at: isoOffset(-3 * 24 * 3600e3), picked_up_at: null, dropped_off_at: null },
+        pickup_time: null, created_at: isoOffset(-3 * 24 * 3600e3), picked_up_at: null, dropped_off_at: null, note: "I'll be waiting by the red door, thanks!" },
       { id: 'b2', name: 'Priya', phone: '15195550102', seats: 1,
         pickup_label: '496 Askin Avenue, Windsor, Ontario N9B 2W8, Canada', pickup_lat: 42.3145, pickup_lng: -83.0655,
         dropoff_label: 'Essex, Ontario, Canada', dropoff_lat: DEST.lat, dropoff_lng: DEST.lng,
-        pickup_time: null, created_at: isoOffset(-3 * 24 * 3600e3 + 60e3), picked_up_at: null, dropped_off_at: null },
+        pickup_time: null, created_at: isoOffset(-3 * 24 * 3600e3 + 60e3), picked_up_at: null, dropped_off_at: null, note: null },
       { id: 'b3', name: 'Amit', phone: '15195550103', seats: 1,
         pickup_label: '496 Askin Avenue, Windsor, Ontario N9B 2W8, Canada', pickup_lat: 42.3145, pickup_lng: -83.0655,
         dropoff_label: 'Leamington, Ontario, Canada', dropoff_lat: LEAMINGTON.lat, dropoff_lng: LEAMINGTON.lng,
-        pickup_time: null, created_at: isoOffset(-3 * 24 * 3600e3 + 120e3), picked_up_at: null, dropped_off_at: null },
+        pickup_time: null, created_at: isoOffset(-3 * 24 * 3600e3 + 120e3), picked_up_at: null, dropped_off_at: null, note: 'Near the bus stop' },
       { id: 'b4', name: 'Jordan', phone: '15195550104', seats: 1,
         pickup_label: 'Ottawa Street, Windsor, Ontario, Canada', pickup_lat: 42.3080, pickup_lng: -83.0065,
         dropoff_label: 'Leamington, Ontario, Canada', dropoff_lat: LEAMINGTON.lat, dropoff_lng: LEAMINGTON.lng,
-        pickup_time: null, created_at: isoOffset(-3 * 24 * 3600e3 + 180e3), picked_up_at: null, dropped_off_at: null }
+        pickup_time: null, created_at: isoOffset(-3 * 24 * 3600e3 + 180e3), picked_up_at: null, dropped_off_at: null, note: null }
     ];
 
     if (stateKey === 'active') {
