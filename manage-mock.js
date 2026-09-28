@@ -36,7 +36,17 @@
       { id: 'b4', name: 'Jordan', phone: '15195550104', seats: 1,
         pickup_label: 'Ottawa Street, Windsor, Ontario, Canada', pickup_lat: 42.3080, pickup_lng: -83.0065,
         dropoff_label: 'Leamington, Ontario, Canada', dropoff_lat: LEAMINGTON.lat, dropoff_lng: LEAMINGTON.lng,
-        pickup_time: null, created_at: isoOffset(-3 * 24 * 3600e3 + 180e3), picked_up_at: null, dropped_off_at: null, note: null }
+        pickup_time: null, created_at: isoOffset(-3 * 24 * 3600e3 + 180e3), picked_up_at: null, dropped_off_at: null, note: null },
+      /* Picked up at the driver's origin (Windsor) */
+      { id: 'b5', name: 'Pranay', phone: '15195550105', seats: 1,
+        pickup_label: 'Windsor, Ontario, Canada', pickup_lat: ORIGIN.lat, pickup_lng: ORIGIN.lng,
+        dropoff_label: 'Leamington, Ontario, Canada', dropoff_lat: LEAMINGTON.lat, dropoff_lng: LEAMINGTON.lng,
+        pickup_time: null, created_at: isoOffset(-3 * 24 * 3600e3 + 240e3), picked_up_at: null, dropped_off_at: null, note: null },
+      /* Dropped at the destination (Essex) */
+      { id: 'b6', name: 'Sahil', phone: '15195550106', seats: 1,
+        pickup_label: 'Tecumseh Road East, Windsor, Ontario, Canada', pickup_lat: 42.3055, pickup_lng: -82.9700,
+        dropoff_label: 'Essex, Ontario, Canada', dropoff_lat: DEST.lat, dropoff_lng: DEST.lng,
+        pickup_time: null, created_at: isoOffset(-3 * 24 * 3600e3 + 300e3), picked_up_at: null, dropped_off_at: null, note: null }
     ];
 
     if (stateKey === 'active') {
@@ -50,7 +60,7 @@
         id: tripId || 'trip-mock', status: tripStatus, driver_name: 'Test Driver',
         origin_label: (reverse ? DEST : ORIGIN).label, origin_lat: (reverse ? DEST : ORIGIN).lat, origin_lng: (reverse ? DEST : ORIGIN).lng,
         dest_label: (reverse ? ORIGIN : DEST).label, dest_lat: (reverse ? ORIGIN : DEST).lat, dest_lng: (reverse ? ORIGIN : DEST).lng,
-        depart_at: departAt || '2026-09-24T18:30:00', seats_total: 4, price_per_seat: 10,
+        depart_at: departAt || '2026-09-24T18:30:00', seats_total: 6, price_per_seat: 10,
         join_url: 'https://pathfynder.ca/j/DEMO42'
       },
       bookings: bookings
@@ -153,6 +163,8 @@
           var st = getStore(tripId || lastTripId);
           if (!st) { resolve({ error: 'invalid_token' }); return; }
           var now = new Date().toISOString();
+          /* Mirror server rule: pickup/dropoff only while the trip is started and not ended. */
+          if ((action === 'picked_up' || action === 'dropped_off') && st.trip.status !== 'active') { resolve({ error: 'not_started' }); return; }
           if (action === 'start') st.trip.status = 'active';
           else if (action === 'end') st.trip.status = 'completed';
           else if (action === 'remove') st.bookings = st.bookings.filter(function (b) { return b.id !== bookingId; });

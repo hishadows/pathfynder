@@ -17,7 +17,7 @@
   --chip-soft:#D9FDD3; --chip-soft-text:#006D5B; --danger:#D93025;
   --hero-bg:#075E54; --hero-text:#FFFFFF; --hero-chip:rgba(255,255,255,.12); --hero-fill:#25D366;
   --overlay:rgba(11,20,26,.42); --shadow:0 -1px 4px rgba(11,20,26,.08);
-  --sel-bg:#E3F1EA; --sel-border:#075E54;
+  --sel-bg:#E3F1EA; --sel-border:#075E54; --pax-tint:rgba(0,0,0,.035);
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
@@ -28,7 +28,7 @@
     --chip-soft:#0A332C; --chip-soft-text:#25D366; --danger:#F15C6D;
     --hero-bg:#075E54; --hero-text:#FFFFFF; --hero-chip:rgba(255,255,255,.12); --hero-fill:#25D366;
     --overlay:rgba(0,0,0,.62); --shadow:0 -1px 4px rgba(0,0,0,.4);
-    --sel-bg:#0A332C; --sel-border:#00A884;
+    --sel-bg:#0A332C; --sel-border:#00A884; --pax-tint:rgba(255,255,255,.045);
   }
 }
 :root[data-theme="dark"]{
@@ -39,7 +39,7 @@
   --chip-soft:#0A332C; --chip-soft-text:#25D366; --danger:#F15C6D;
   --hero-bg:#075E54; --hero-text:#FFFFFF; --hero-chip:rgba(255,255,255,.12); --hero-fill:#25D366;
   --overlay:rgba(0,0,0,.62); --shadow:0 -1px 4px rgba(0,0,0,.4);
-  --sel-bg:#0A332C; --sel-border:#00A884;
+  --sel-bg:#0A332C; --sel-border:#00A884; --pax-tint:rgba(255,255,255,.045);
 }
 *{box-sizing:border-box}
 html,body{margin:0;overflow-x:hidden}
@@ -184,16 +184,24 @@ button{font:inherit}
 .hero-bar__fill{height:100%;background:var(--hero-fill);border-radius:4px}
 
 .hero-slide__title{margin:0 0 12px;font-size:15px;font-weight:700}
-.route-stops{display:flex;flex-direction:column;gap:10px}
-.route-stop{display:flex;align-items:flex-start;gap:10px}
-.route-stop__dot{width:10px;height:10px;border-radius:50%;flex:none;margin-top:4px}
+.route-stops{display:flex;flex-direction:column}
+.route-stop{display:flex;align-items:flex-start;gap:12px;position:relative;padding-bottom:14px}
+.route-stop:last-child{padding-bottom:0}
+.route-stop:not(:last-child)::before{content:"";position:absolute;left:5.5px;top:11px;bottom:-11px;width:3px;z-index:0;opacity:.45;background:repeating-linear-gradient(to bottom,var(--primary) 0 5px,transparent 5px 9px)}
+.route-stop.is-trav:not(:last-child)::before,.route-stops--complete .route-stop:not(:last-child)::before{opacity:1;background:var(--primary)}
+.route-stop__dot{width:14px;height:14px;flex:none;margin-top:4px;position:relative;z-index:1}
+.route-stop__dot::after{content:"";position:absolute;inset:1px;border-radius:50%;box-sizing:border-box;background:var(--card);border:2.5px solid var(--primary)}
+.route-stop__dot--start::after,.route-stop.is-done .route-stop__dot::after{background:var(--primary)}
+.route-stop__dot--end::after{inset:0;background:var(--primary)}
+.route-stop__dot--end::before{content:"";position:absolute;left:4.5px;top:4.5px;width:5px;height:5px;border-radius:50%;background:#fff;z-index:1}
 .route-stop__text{min-width:0;display:flex;flex-direction:column}
-.route-stop__label{font-size:14px;font-weight:600}
-.route-stop__addr{font-size:12.5px;color:rgba(255,255,255,.75);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.route-stop.is-done .route-stop__label,.route-stop.is-done .route-stop__addr{text-decoration:line-through;opacity:.55}
+.route-stop__label{font-size:14px;font-weight:600;color:var(--text);line-height:18px}
+.route-stop__addr{font-size:12.5px;color:var(--text-2);line-height:17px}
+.route-stop__addr b{font-weight:600}
+.route-stop.is-done .route-stop__text{opacity:.55}
 .hero-slide--route{background:var(--card);color:var(--text);border:1px solid var(--divider)}
-.hero-slide--route .route-stop__addr{color:var(--text-2)}
-.hero-slide--route .route-stop.is-done .route-stop__label,.hero-slide--route .route-stop.is-done .route-stop__addr{color:var(--text-2)}
+.ns-hint{margin:8px 0 0;font-size:12.5px;color:var(--text-2);text-align:center}
+.ns-btns .btn.is-off{opacity:.5;cursor:default;pointer-events:none}
 
 /* Next stop slide */
 .hero-slide--next{background:var(--card);color:var(--text);border:1px solid var(--divider)}
@@ -213,10 +221,13 @@ button{font:inherit}
 .ns-pill{display:inline-flex;align-items:center;font-size:11.5px;font-weight:700;letter-spacing:.02em;padding:5px 10px;border-radius:999px;background:var(--chip-soft);color:var(--chip-soft-text)}
 .ns-eta{font-size:13px;color:var(--text-2);font-weight:600;white-space:nowrap}
 .ns-addr__label{display:block;font-size:12px;font-weight:600;color:var(--text-2);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+.ns-addr{display:block;color:inherit;text-decoration:none;-webkit-tap-highlight-color:transparent}
 .ns-addr__row{display:flex;align-items:flex-start;gap:8px;margin-bottom:12px}
-.ns-addr__row svg{width:20px;height:20px;flex:none;color:var(--primary);margin-top:0}
+.ns-addr__go{width:16px;height:16px;flex:none;margin-top:2px;margin-left:auto;color:var(--text-2)}
+.ns-addr:active .ns-addr__text{text-decoration:underline}
+.ns-addr__row>svg:first-child{width:20px;height:20px;flex:none;color:var(--primary);margin-top:0}
 .ns-addr__text{font-size:15px;font-weight:600;line-height:1.35;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.ns-pax{padding:10px 0;border-top:1px solid var(--divider)}
+.ns-pax{padding:12px;border-radius:12px;background:var(--pax-tint);margin-bottom:8px}
 .ns-pax__top{display:flex;align-items:center;gap:10px}
 .ns-pax__id{flex:1;min-width:0}
 .ns-pax__name{display:block;font-size:16px;font-weight:600;overflow-wrap:anywhere}
@@ -336,8 +347,13 @@ var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, f
 function clone(o) { return o == null ? o : JSON.parse(JSON.stringify(o)); }
 function initial(name) { var m = (String(name || '')).match(/\p{L}/u); return m ? m[0].toUpperCase() : '?'; }
 function firstName(name) { return String(name || '').split(' ')[0]; }
-var PALETTE = ['#F59E0B','#3B82F6','#EF4444','#10B981','#8B5CF6','#EC4899','#14B8A6','#F97316'];
-function colorFor(id) { var h = 0, s = String(id || ''); for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return PALETTE[h % PALETTE.length]; }
+var PALETTE = ['#5B7DB1','#C0664A','#5E9A6E','#8E6BAF','#B8893A','#3F8F8F','#B8617E','#7D8B45'];
+/* Per-trip colour by booking order (payload.bookings is created_at order); hash fallback for unknown ids. */
+function colorFor(id) {
+  var bk = STATE.payload && STATE.payload.bookings;
+  if (bk) { for (var j = 0; j < bk.length; j++) if (bk[j].id === id) return PALETTE[j % PALETTE.length]; }
+  var h = 0, s = String(id || ''); for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return PALETTE[h % PALETTE.length];
+}
 var PROV_MAP = { Ontario:'ON', Quebec:'QC', 'British Columbia':'BC', Alberta:'AB', Manitoba:'MB', Saskatchewan:'SK', 'Nova Scotia':'NS', 'New Brunswick':'NB', 'Newfoundland and Labrador':'NL', 'Prince Edward Island':'PE', 'Northwest Territories':'NT', Yukon:'YT', Nunavut:'NU' };
 function shortLabel(label) {
   var parts = String(label || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean);
@@ -404,6 +420,16 @@ function dedupeStops(points, origin, dest) {
     if (dest && haversineKm(s.lat, s.lng, dest.lat, dest.lng) <= MERGE_KM) return false;
     return true;
   });
+}
+
+/* 'origin' | 'dest' | null: is a point within 150m of the live/planned origin or the destination?
+   Used only for display; dedupeStops (and so the Maps URL) is untouched. */
+function endpointOf(pt, origin, planned, dest) {
+  if (!pt || pt.lat == null || pt.lng == null) return null;
+  if (origin && haversineKm(pt.lat, pt.lng, origin.lat, origin.lng) <= MERGE_KM) return 'origin';
+  if (planned && planned.lat != null && haversineKm(pt.lat, pt.lng, planned.lat, planned.lng) <= MERGE_KM) return 'origin';
+  if (dest && haversineKm(pt.lat, pt.lng, dest.lat, dest.lng) <= MERGE_KM) return 'dest';
+  return null;
 }
 
 /* Exact shortest order (DFS + branch-and-bound) respecting pickup-before-dropoff
@@ -509,14 +535,14 @@ function buildMapsUrl(origin, dest, orderedStops) {
   return url;
 }
 /* ROUTE-END */
-return { haversineKm: haversineKm, buildStops: buildStops, dedupeStops: dedupeStops, orderStops: orderStops, buildMapsUrl: buildMapsUrl };
+return { haversineKm: haversineKm, buildStops: buildStops, dedupeStops: dedupeStops, endpointOf: endpointOf, orderStops: orderStops, buildMapsUrl: buildMapsUrl };
 })();
 
 /* ---------- State ---------- */
 var STATE = {
   token: null, isMock: false, payload: null, trips: [], selectedDate: null, selectedTripId: null, stripScroll: false, loading: true, errorType: null,
   view: 'home', profile: null, profileLoading: false, profileError: null, editingName: false, nameDraft: '', nameError: null, notifBusy: false,
-  heroSlide: 0, slideAuto: true, pendingKey: null, expanded: {}, sheet: null,
+  heroSlide: 1, slideAuto: true, pendingKey: null, expanded: {}, sheet: null,
   gps: { fix: null, label: null, denied: false },
   routeThrottle: { ts: 0, lat: null, lng: null }
 };
@@ -617,9 +643,9 @@ function loadTrip(showSkeleton) {
       var prevStatus = STATE.payload && STATE.payload.trip ? STATE.payload.trip.status : null;
       STATE.errorType = null; STATE.payload = data;
       var newStatus = data.trip.status;
-      /* Default slide once per opened trip: active -> next stop (0), else ride details (1). Background refreshes keep the swiped slide, except a trip that just became active. */
-      if (STATE.slideAuto) { STATE.heroSlide = newStatus === 'active' ? 0 : 1; STATE.slideAuto = false; }
-      else if (prevStatus && prevStatus !== 'active' && newStatus === 'active') STATE.heroSlide = 0;
+      /* Default slide once per opened trip: active -> trip progress (2), else trip details (1). Background refreshes keep the swiped slide, except a trip that just became active. */
+      if (STATE.slideAuto) { STATE.heroSlide = newStatus === 'active' ? 2 : 1; STATE.slideAuto = false; }
+      else if (prevStatus && prevStatus !== 'active' && newStatus === 'active') STATE.heroSlide = 2;
     }
     render();
   }).catch(function (e) { if (STATE.selectedTripId === wanted) failLoad(e); });
@@ -644,7 +670,7 @@ function doAction(action, bookingId, pendingKey) {
   var prevSlide = STATE.heroSlide;
   STATE.pendingKey = pendingKey;
   applyOptimistic(action, bookingId);
-  if (action === 'start') STATE.heroSlide = 0;
+  if (action === 'start') STATE.heroSlide = 2;
   render();
   apiAction(action, bookingId).then(function (data) {
     STATE.pendingKey = null;
@@ -699,13 +725,33 @@ function computeRoute(payload) {
   var pts = PFRoute.buildStops(origin, dest, payload.bookings);
   var stops = PFRoute.dedupeStops(pts, origin, dest);
   var ordered = PFRoute.orderStops(origin, dest, stops);
-  return { origin: origin, dest: dest, stops: ordered };
-}
-function doneStopsForSlide2(payload) {
-  var items = [];
+  /* Display-only: passengers at the origin/destination (removed by dedupeStops) attach to Start / Destination.
+     `stops` stays as-is for the Maps card. */
+  var planned = { lat: trip.origin_lat, lng: trip.origin_lng };
+  var startMembers = [], endMembers = [], startPts = [], endPts = [];
   payload.bookings.forEach(function (b) {
-    if (b.picked_up_at) items.push({ id: b.id, name: b.name, label: b.pickup_label, kind: 'pickup', ts: b.picked_up_at });
-    if (b.dropped_off_at) items.push({ id: b.id, name: b.name, label: b.dropoff_label, kind: 'dropoff', ts: b.dropped_off_at });
+    [{ kind: 'pickup', lat: b.pickup_lat, lng: b.pickup_lng, label: b.pickup_label, done: !!b.picked_up_at },
+     { kind: 'dropoff', lat: b.dropoff_lat, lng: b.dropoff_lng, label: b.dropoff_label, done: !!b.dropped_off_at }].forEach(function (p) {
+      var w = PFRoute.endpointOf(p, origin, planned, dest);
+      if (!w) return;
+      var m = { passengerId: b.id, kind: p.kind, label: p.label, done: p.done };
+      (w === 'origin' ? startMembers : endMembers).push(m);
+      if (!p.done) (w === 'origin' ? startPts : endPts).push({ lat: p.lat, lng: p.lng, label: p.label, member: m });
+    });
+  });
+  var viewPts = pts.filter(function (p) { return !PFRoute.endpointOf(p, origin, planned, dest); });
+  var viewStops = PFRoute.orderStops(origin, dest, PFRoute.dedupeStops(viewPts, origin, dest));
+  function endStop(list) {
+    if (!list.length) return null;
+    return { lat: list[0].lat, lng: list[0].lng, label: list[0].label, members: list.map(function (p) { return { passengerId: p.member.passengerId, kind: p.member.kind, label: p.label }; }) };
+  }
+  return { origin: origin, dest: dest, stops: ordered, viewStops: viewStops, startMembers: startMembers, endMembers: endMembers, startStop: endStop(startPts), endStop: endStop(endPts) };
+}
+function doneStopsForSlide2(payload, route) {
+  var items = [], planned = { lat: payload.trip.origin_lat, lng: payload.trip.origin_lng };
+  payload.bookings.forEach(function (b) {
+    if (b.picked_up_at && !PFRoute.endpointOf({ lat: b.pickup_lat, lng: b.pickup_lng }, route.origin, planned, route.dest)) items.push({ id: b.id, name: b.name, label: b.pickup_label, kind: 'pickup', ts: b.picked_up_at });
+    if (b.dropped_off_at && !PFRoute.endpointOf({ lat: b.dropoff_lat, lng: b.dropoff_lng }, route.origin, planned, route.dest)) items.push({ id: b.id, name: b.name, label: b.dropoff_label, kind: 'dropoff', ts: b.dropped_off_at });
   });
   items.sort(function (a, b) { return new Date(a.ts) - new Date(b.ts); });
   return items;
@@ -893,6 +939,7 @@ function dateStrip() {
     var dstr = fmtDateShort(t ? t.depart_at : new Date().toISOString());
     var top, sub;
     if (k === today) { top = 'Today'; sub = dstr; }
+    else if (k < today) { top = dstr; sub = counts[k] > 1 ? counts[k] + ' rides' : 'Done'; }
     else { top = dstr; sub = counts[k] > 1 ? counts[k] + ' rides' : (t.status === 'completed' ? 'Done' : (t.status === 'active' ? 'Live' : 'Upcoming')); }
     return '<button type="button" class="date-pill' + (k === STATE.selectedDate ? ' is-selected' : '') + '" data-action="pick-date" data-date="' + k + '"' + (k === STATE.selectedDate ? ' aria-current="date"' : '') + '>' +
       '<span class="date-pill__top">' + esc(top) + '</span><span class="date-pill__sub' + (k === today ? ' date-pill__sub--date' : '') + '">' + esc(sub) + '</span></button>';
@@ -931,17 +978,26 @@ function errorPage() {
 }
 
 /* ---------- Render: hero ---------- */
-function routeStopRow(payload, stop, isDone) {
+function routePax(payload, id) { return '<b style="color:' + colorFor(id) + '">' + esc(nameForId(payload, id)) + '</b>'; }
+function routeStopRow(payload, stop, num) {
   var pickups = stop.members.filter(function (m) { return m.kind === 'pickup'; });
   var dropoffs = stop.members.filter(function (m) { return m.kind === 'dropoff'; });
-  var labelParts = [];
-  if (pickups.length) labelParts.push('Pick up ' + pickups.map(function (m) { return esc(nameForId(payload, m.passengerId)); }).join(', '));
-  if (dropoffs.length) labelParts.push('Drop off ' + dropoffs.map(function (m) { return esc(nameForId(payload, m.passengerId)); }).join(', '));
-  var dotColor = colorFor(stop.members[0].passengerId);
-  return '<div class="route-stop' + (isDone ? ' is-done' : '') + '">' +
-    '<span class="route-stop__dot" style="background:' + dotColor + '"></span>' +
-    '<div class="route-stop__text"><span class="route-stop__label">' + labelParts.join(' · ') + '</span><span class="route-stop__addr">' + esc(shortLabel(stop.label)) + '</span></div>' +
-  '</div>';
+  var parts = ['Stop ' + num];
+  if (pickups.length) parts.push('Pick: ' + pickups.map(function (m) { return routePax(payload, m.passengerId); }).join(', '));
+  if (dropoffs.length) parts.push('Drop: ' + dropoffs.map(function (m) { return routePax(payload, m.passengerId); }).join(', '));
+  return '<div class="route-stop"><span class="route-stop__dot"></span>' +
+    '<div class="route-stop__text"><span class="route-stop__label">' + esc(shortLabel(stop.label)) + '</span><span class="route-stop__addr">' + parts.join(' · ') + '</span></div></div>';
+}
+/* "Start · Picked: A ✓ · Pick: B" text for the Start / Destination rows. */
+function endpointText(payload, word, members) {
+  var parts = [word];
+  [['pickup', 'Picked', 'Pick'], ['dropoff', 'Dropped', 'Drop']].forEach(function (k) {
+    var done = members.filter(function (m) { return m.kind === k[0] && m.done; });
+    var pend = members.filter(function (m) { return m.kind === k[0] && !m.done; });
+    if (done.length) parts.push(k[1] + ': ' + done.map(function (m) { return routePax(payload, m.passengerId); }).join(', ') + ' ✓');
+    if (pend.length) parts.push(k[2] + ': ' + pend.map(function (m) { return routePax(payload, m.passengerId); }).join(', '));
+  });
+  return parts.join(' · ');
 }
 function mapsCard(payload) {
   if (payload.trip.status === 'completed') return '';
@@ -956,41 +1012,35 @@ function mapsCard(payload) {
 var NS_ICON_PIN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>';
 var NS_ICON_PHONE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.8a16 16 0 0 0 6 6l1.2-1.2a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg>';
 var NS_ICON_WA = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" stroke="none" d="M12.04 2a9.9 9.9 0 0 0-8.5 14.98L2 22l5.17-1.5A9.9 9.9 0 1 0 12.04 2zm0 18.1a8.2 8.2 0 0 1-4.18-1.15l-.3-.18-3.07.89.9-2.99-.2-.31a8.2 8.2 0 1 1 6.85 3.74zm4.5-6.14c-.25-.12-1.46-.72-1.69-.8-.23-.09-.39-.13-.56.12-.16.25-.64.8-.78.97-.15.16-.29.18-.54.06a6.7 6.7 0 0 1-3.34-2.92c-.25-.43.25-.4.72-1.34.08-.16.04-.3-.02-.43l-.76-1.83c-.2-.48-.4-.41-.56-.42h-.47a.9.9 0 0 0-.65.3 2.7 2.7 0 0 0-.85 2.02c0 1.19.87 2.34.99 2.5.12.16 1.71 2.61 4.14 3.66 1.54.66 2.14.72 2.91.6.47-.07 1.46-.6 1.66-1.17.2-.58.2-1.07.14-1.17-.06-.1-.22-.16-.47-.28z"/></svg>';
+var NS_ICON_GO = '<svg class="ns-addr__go" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
 var NS_ICON_NOTE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
 var NS_ICON_CAR = '<svg viewBox="0 0 24 14" aria-hidden="true"><path fill="currentColor" d="M3.5 6 5 2.2A2 2 0 0 1 6.9 1h10.2A2 2 0 0 1 19 2.2L20.5 6h.3A1.7 1.7 0 0 1 22.5 7.7V11h-2v.5a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1V11h-11v.5a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1V11h-2V7.7A1.7 1.7 0 0 1 3.2 6z"/></svg>';
 
-/* Stops already completed, excluding ones the route never lists (within 150m of trip origin/destination). */
+/* Stops already completed (origin/destination ones included), minus labels still pending in the remaining stops. */
 function nsDoneCount(payload, remaining) {
-  var trip = payload.trip, keys = {}, rem = {};
+  var keys = {}, rem = {};
   remaining.forEach(function (s) { s.members.forEach(function (m) { rem[m.kind + '|' + m.label] = 1; }); });
   payload.bookings.forEach(function (b) {
-    var d;
-    if (b.picked_up_at) {
-      d = PFRoute.haversineKm(b.pickup_lat, b.pickup_lng, trip.origin_lat, trip.origin_lng);
-      if (!(d != null && d <= 0.15)) keys['pickup|' + b.pickup_label] = 1;
-    }
-    if (b.dropped_off_at) {
-      d = PFRoute.haversineKm(b.dropoff_lat, b.dropoff_lng, trip.dest_lat, trip.dest_lng);
-      if (!(d != null && d <= 0.15)) keys['dropoff|' + b.dropoff_label] = 1;
-    }
+    if (b.picked_up_at) keys['pickup|' + b.pickup_label] = 1;
+    if (b.dropped_off_at) keys['dropoff|' + b.dropoff_label] = 1;
   });
   return Object.keys(keys).filter(function (k) { return !rem[k]; }).length;
 }
-function nsButtons(b, kind, compact) {
+function nsButtons(b, kind, compact, off) {
   var digits = String(b.phone || '').replace(/\D/g, '');
   var out = '';
   if (kind === 'pickup') {
     var outsideHref = 'https://wa.me/' + digits + '?text=' + encodeURIComponent('Hi ' + firstName(b.name) + ", I'm outside at " + b.pickup_label + ' 🚗');
     var pend = STATE.pendingKey === 'picked_up:' + b.id;
-    out = (digits ? '<a class="btn btn-secondary" href="' + outsideHref + '" target="_blank" rel="noopener">' + ico('bellRing') + 'I’m outside</a>' : '') +
-      '<button type="button" class="btn btn-cta" data-action="picked_up" data-id="' + b.id + '"' + (pend ? ' disabled' : '') + '>' + ico('userCheck') + 'Picked up</button>';
+    out = (digits ? (off ? '<button type="button" class="btn btn-secondary is-off" disabled>' + ico('bellRing') + 'I’m outside</button>' : '<a class="btn btn-secondary" href="' + outsideHref + '" target="_blank" rel="noopener">' + ico('bellRing') + 'I’m outside</a>') : '') +
+      '<button type="button" class="btn btn-cta" data-action="picked_up" data-id="' + b.id + '"' + (pend || off ? ' disabled' : '') + '>' + ico('userCheck') + 'Picked up</button>';
   } else {
     var pendD = STATE.pendingKey === 'dropped_off:' + b.id;
-    out = '<button type="button" class="btn btn-cta btn-full" data-action="dropped_off" data-id="' + b.id + '"' + (pendD ? ' disabled' : '') + '>' + ico('checkCircle') + 'Dropped off</button>';
+    out = '<button type="button" class="btn btn-cta btn-full" data-action="dropped_off" data-id="' + b.id + '"' + (pendD || off ? ' disabled' : '') + '>' + ico('checkCircle') + 'Dropped off</button>';
   }
   return '<div class="ns-btns' + (compact ? '' : ' ns-btns--main') + '">' + out + '</div>';
 }
-function nsPaxRow(b, kind, multi, canAct) {
+function nsPaxRow(b, kind, multi, canAct, off) {
   var digits = String(b.phone || '').replace(/\D/g, '');
   var contacts = digits ?
     '<a class="ns-ic" href="tel:+' + digits + '" aria-label="Call ' + esc(firstName(b.name)) + '">' + NS_ICON_PHONE + '</a>' +
@@ -1001,18 +1051,26 @@ function nsPaxRow(b, kind, multi, canAct) {
     '<div class="ns-pax__id"><span class="ns-pax__name">' + esc(b.name) + '</span><span class="ns-pax__seats">' + seats + '</span></div>' +
     contacts + '</div>' +
     (b.note ? '<div class="ns-note">' + NS_ICON_NOTE + '<span>' + esc(b.note) + '</span></div>' : '') +
-    (multi && canAct ? nsButtons(b, kind, true) : '') +
+    (canAct ? nsButtons(b, kind, multi, off) : '') +
+    (!multi && canAct && off ? '<p class="ns-hint">Start the trip to pick up passengers</p>' : '') +
   '</div>';
 }
 function nextStopSlide(payload) {
   var trip = payload.trip, bookings = payload.bookings;
   var completed = trip.status === 'completed';
   var canAct = !completed;
+  var off = trip.status !== 'active'; /* draft: buttons shown but disabled until the trip starts */
   var route = computeRoute(payload);
-  var remaining = completed ? [] : route.stops;
+  var remaining = [];
+  if (!completed) {
+    if (route.startStop) remaining.push(route.startStop);
+    remaining = remaining.concat(route.viewStops);
+    if (route.endStop) remaining.push(route.endStop);
+  }
+  var hasDest = route.endMembers.some(function (m) { return m.kind === 'dropoff'; });
   var undropped = bookings.filter(function (b) { return !b.dropped_off_at; });
   var done = nsDoneCount(payload, remaining);
-  var total = done + remaining.length + 1;
+  var total = done + remaining.length + (hasDest ? 0 : 1);
 
   var mode, stop = null, members = [], kind = 'dropoff', addrLabel = '', addrText = '', pillText = '';
   if (completed) mode = 'completed';
@@ -1022,7 +1080,7 @@ function nextStopSlide(payload) {
     members = stop.members.map(function (m) { return { b: bookings.find(function (x) { return x.id === m.passengerId; }), kind: m.kind }; }).filter(function (m) { return m.b; });
     kind = stop.members[0].kind;
     addrText = stop.label;
-    pillText = kind === 'pickup' ? 'NEXT STOP · PICKUP' : 'NEXT STOP · DROP-OFF';
+    pillText = stop === route.endStop ? 'DESTINATION' : (kind === 'pickup' ? 'NEXT STOP · PICKUP' : 'NEXT STOP · DROP-OFF');
   } else if (undropped.length) {
     mode = 'dest';
     members = undropped.map(function (b) { return { b: b, kind: 'dropoff' }; });
@@ -1058,10 +1116,11 @@ function nextStopSlide(payload) {
     var d = fix ? PFRoute.haversineKm(fix.lat, fix.lng, tLat, tLng) : null;
     if (d != null) eta = '~' + Math.max(1, Math.round(d / 40 * 60)) + ' min · ' + (Math.round(d * 10) / 10).toFixed(1) + ' km';
     var multi = members.length > 1;
+    var mapsHref = 'https://www.google.com/maps/dir/?api=1&destination=' + (tLat != null && tLng != null ? tLat + ',' + tLng : encodeURIComponent(addrText));
     body = '<div class="ns-pillrow"><span class="ns-pill">' + pillText + '</span>' + (eta ? '<span class="ns-eta">' + eta + '</span>' : '') + '</div>' +
-      '<div class="ns-addr"><span class="ns-addr__label">' + addrLabel + '</span><div class="ns-addr__row">' + NS_ICON_PIN + '<span class="ns-addr__text">' + esc(addrText) + '</span></div></div>' +
-      members.map(function (m) { return nsPaxRow(m.b, m.kind, multi, canAct); }).join('') +
-      (!multi && canAct && members.length ? nsButtons(members[0].b, members[0].kind, false) : '');
+      '<a class="ns-addr" href="' + esc(mapsHref) + '" target="_blank" rel="noopener" aria-label="Directions to ' + esc(addrText) + '"><span class="ns-addr__label">' + addrLabel + '</span><div class="ns-addr__row">' + NS_ICON_PIN + '<span class="ns-addr__text">' + esc(addrText) + '</span>' + NS_ICON_GO + '</div></a>' +
+      members.map(function (m) { return nsPaxRow(m.b, m.kind, multi, canAct, off); }).join('') +
+      (multi && off && canAct ? '<p class="ns-hint">Start the trip to pick up passengers</p>' : '');
   }
   return prog + body;
 }
@@ -1074,7 +1133,7 @@ function heroSection(payload) {
   var pricePanel = trip.price_per_seat != null ?
     '<div class="hero-panel"><span class="hero-panel__label">Price</span><span class="hero-panel__value">' + esc(fmtPrice2(trip.price_per_seat)) + ' per seat</span></div>' : '';
 
-  var slide1 =
+  var slideDetails =
     '<div class="hero-top">' +
       '<div class="hero-top__text"><span class="hero-pill">' + statusLabel + '</span></div>' +
     '</div>' +
@@ -1089,23 +1148,22 @@ function heroSection(payload) {
     '</div>';
 
   var route = computeRoute(payload);
-  var doneItems = doneStopsForSlide2(payload);
-  var originLabel = route.origin.isGps ? 'Start: your location' : ('Start: ' + shortLabel(route.origin.label));
-  var rows = '<div class="route-stop"><span class="route-stop__dot" style="background:var(--primary)"></span><div class="route-stop__text"><span class="route-stop__label">' + esc(originLabel) + '</span></div></div>';
-  rows += route.stops.map(function (s) { return routeStopRow(payload, s, false); }).join('');
-  rows += '<div class="route-stop"><span class="route-stop__dot" style="background:var(--primary)"></span><div class="route-stop__text"><span class="route-stop__label">Destination: ' + esc(shortLabel(trip.dest_label)) + '</span></div></div>';
-  rows += doneItems.map(function (d) {
-    return '<div class="route-stop is-done"><span class="route-stop__dot" style="background:' + colorFor(d.id) + '"></span>' +
-      '<div class="route-stop__text"><span class="route-stop__label">' + (d.kind === 'pickup' ? 'Picked up ' : 'Dropped off ') + esc(firstName(d.name)) + '</span><span class="route-stop__addr">' + esc(shortLabel(d.label)) + '</span></div></div>';
+  var doneItems = doneStopsForSlide2(payload, route);
+  var rows = '<div class="route-stop' + (doneItems.length ? ' is-trav' : '') + '"><span class="route-stop__dot route-stop__dot--start"></span><div class="route-stop__text"><span class="route-stop__label">' + esc(route.origin.isGps ? 'Your location' : shortLabel(route.origin.label)) + '</span><span class="route-stop__addr">' + endpointText(payload, 'Start', route.startMembers) + '</span></div></div>';
+  rows += doneItems.map(function (d, n) {
+    return '<div class="route-stop is-done' + (n < doneItems.length - 1 ? ' is-trav' : '') + '"><span class="route-stop__dot"></span>' +
+      '<div class="route-stop__text"><span class="route-stop__label">' + esc(shortLabel(d.label)) + '</span><span class="route-stop__addr">Stop ' + (n + 1) + ' · ' + (d.kind === 'pickup' ? 'Picked: ' : 'Dropped: ') + '<b style="color:' + colorFor(d.id) + '">' + esc(firstName(d.name)) + '</b> ✓</span></div></div>';
   }).join('');
-  var slide2 = '<h3 class="hero-slide__title">Your route</h3><div class="route-stops">' + rows + '</div>';
+  rows += route.viewStops.map(function (st, n) { return routeStopRow(payload, st, doneItems.length + n + 1); }).join('');
+  rows += '<div class="route-stop"><span class="route-stop__dot route-stop__dot--end"></span><div class="route-stop__text"><span class="route-stop__label">' + esc(shortLabel(trip.dest_label)) + '</span><span class="route-stop__addr">' + endpointText(payload, 'Destination', route.endMembers) + '</span></div></div>';
+  var slideRoute = '<h3 class="hero-slide__title">Your route</h3><div class="route-stops' + (trip.status === 'completed' ? ' route-stops--complete' : '') + '">' + rows + '</div>';
 
   var dots = [0, 1, 2].map(function (i) { return '<button type="button" class="hero-dot' + (STATE.heroSlide === i ? ' is-active' : '') + '" data-action="dot" data-index="' + i + '" aria-label="Slide ' + (i + 1) + '"></button>'; }).join('');
 
   return '<section class="hero-wrap"><div class="hero-track" id="heroTrack">' +
+      '<div class="hero-slide hero-slide--route">' + slideRoute + '</div>' +
+      '<div class="hero-slide">' + slideDetails + '</div>' +
       '<div class="hero-slide hero-slide--next">' + nextStopSlide(payload) + '</div>' +
-      '<div class="hero-slide">' + slide1 + '</div>' +
-      '<div class="hero-slide hero-slide--route">' + slide2 + '</div>' +
     '</div></section>' +
     '<div class="hero-dots">' + dots + '</div>' +
     mapsCard(payload);
@@ -1459,6 +1517,7 @@ document.body.addEventListener('click', function (e) {
     return;
   }
   if (action === 'picked_up' || action === 'dropped_off') {
+    if (!STATE.payload || STATE.payload.trip.status !== 'active') return;
     doAction(action, id, action + ':' + id);
     return;
   }
