@@ -121,13 +121,6 @@ button{font:inherit}
 .section__title{margin:0;font-size:15px;font-weight:700}
 .pill-soft{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;padding:6px 12px;border-radius:999px;background:var(--chip-soft);color:var(--chip-soft-text);margin-bottom:10px}
 
-/* Cash card */
-.cash-card{background:var(--card);border-radius:16px;padding:14px}
-.cash-card__title{margin:0 0 6px;font-size:12.5px;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:.02em}
-.cash-card__total{margin:0 0 2px;font-size:26px;font-weight:800}
-.cash-card__line{margin:0 0 6px;font-size:13px;color:var(--text-2)}
-.cash-card__note{margin:0;font-size:12px;color:var(--text-2)}
-
 /* Passenger card */
 .pax-card{background:var(--card);border-radius:16px;padding:12px 14px;margin-bottom:10px}
 .pax-card--muted{background:var(--muted-card);border:1px dashed var(--divider)}
@@ -749,20 +742,6 @@ function heroSection(payload) {
     '<div class="hero-dots">' + dots + '</div>';
 }
 
-/* ---------- Render: cash card ---------- */
-function cashCard(payload) {
-  var trip = payload.trip;
-  if (trip.status === 'completed' || trip.price_per_seat == null || !payload.bookings.length) return '';
-  var totalSeats = seatsTaken(payload);
-  var total = totalSeats * trip.price_per_seat;
-  return '<section class="section"><div class="cash-card">' +
-    '<p class="cash-card__title">Cash to collect</p>' +
-    '<p class="cash-card__total">' + esc(fmtMoneyShort(total)) + '</p>' +
-    '<p class="cash-card__line">' + totalSeats + ' seat' + (totalSeats === 1 ? '' : 's') + ' × ' + esc(fmtMoneyShort(trip.price_per_seat)) + '</p>' +
-    '<p class="cash-card__note">Paid in cash in the car</p>' +
-  '</div></section>';
-}
-
 /* ---------- Render: passengers ---------- */
 function passengerCard(b, trip) {
   var digits = String(b.phone || '').replace(/\D/g, '');
@@ -876,7 +855,7 @@ function render() {
   var payload = STATE.payload;
   var showBar = payload.trip.status !== 'completed';
   app.classList.toggle('has-bar', showBar);
-  app.innerHTML = header() + heroSection(payload) + cashCard(payload) + passengersSection(payload) + endTripLink(payload) + '<div class="footer-space"></div>' + actionBar(payload);
+  app.innerHTML = header() + heroSection(payload) + passengersSection(payload) + endTripLink(payload) + '<div class="footer-space"></div>' + actionBar(payload);
   sheetHtml();
 
   var track = document.getElementById('heroTrack');
