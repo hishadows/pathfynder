@@ -1,0 +1,669 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#008069">
+<link rel="icon" type="image/png" href="/logo.png">
+<title>Manage ride · Pathfynder</title>
+<style>
+:root{
+  --header:#008069; --header-text:#FFFFFF; --header-sub:rgba(255,255,255,.82);
+  --primary:#008069; --cta:#25D366; --cta-text:#111B21;
+  --bg:#F0F2F5; --card:#FFFFFF; --muted-card:#F7F8FA;
+  --text:#111B21; --text-2:#667781; --divider:#E9EDEF;
+  --chip-soft:#D9FDD3; --chip-soft-text:#006D5B; --danger:#D93025;
+  --hero-bg:#075E54; --hero-text:#FFFFFF; --hero-chip:rgba(255,255,255,.12); --hero-fill:#25D366;
+  --overlay:rgba(11,20,26,.42); --shadow:0 -1px 4px rgba(11,20,26,.08);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --header:#202C33; --header-text:#E9EDEF; --header-sub:#8696A0;
+    --primary:#00A884; --cta:#00A884; --cta-text:#111B21;
+    --bg:#0B141A; --card:#202C33; --muted-card:#182229;
+    --text:#E9EDEF; --text-2:#8696A0; --divider:#2A3942;
+    --chip-soft:#0A332C; --chip-soft-text:#25D366; --danger:#F15C6D;
+    --hero-bg:#075E54; --hero-text:#FFFFFF; --hero-chip:rgba(255,255,255,.12); --hero-fill:#25D366;
+    --overlay:rgba(0,0,0,.62); --shadow:0 -1px 4px rgba(0,0,0,.4);
+  }
+}
+:root[data-theme="dark"]{
+  --header:#202C33; --header-text:#E9EDEF; --header-sub:#8696A0;
+  --primary:#00A884; --cta:#00A884; --cta-text:#111B21;
+  --bg:#0B141A; --card:#202C33; --muted-card:#182229;
+  --text:#E9EDEF; --text-2:#8696A0; --divider:#2A3942;
+  --chip-soft:#0A332C; --chip-soft-text:#25D366; --danger:#F15C6D;
+  --hero-bg:#075E54; --hero-text:#FFFFFF; --hero-chip:rgba(255,255,255,.12); --hero-fill:#25D366;
+  --overlay:rgba(0,0,0,.62); --shadow:0 -1px 4px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box}
+html,body{margin:0;overflow-x:hidden}
+html{touch-action:manipulation;-webkit-text-size-adjust:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
+button{font:inherit}
+.app{min-height:100vh;max-width:100vw;overflow-x:clip;padding-bottom:24px}
+.app.has-bar{padding-bottom:96px}
+
+/* Header */
+.app-bar{position:sticky;top:0;z-index:3;background:var(--header);color:var(--header-text)}
+.app-bar__inner{display:flex;align-items:center;gap:12px;min-height:56px;padding:8px 16px}
+.brand{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;background:#FFFFFF;flex:none;overflow:hidden}
+.brand img{width:22px;height:22px;object-fit:contain}
+.app-bar__title{margin:0;font-size:18px;font-weight:600;line-height:1.2}
+.app-bar__sub{margin:0;font-size:12.5px;color:var(--header-sub)}
+
+/* Skeleton */
+.skel{padding:16px}
+.skel__block{background:var(--divider);border-radius:16px;height:220px;margin-bottom:12px;animation:pulse 1.2s ease-in-out infinite}
+.skel__line{background:var(--divider);border-radius:8px;height:70px;margin-bottom:8px;animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+
+/* Error page */
+.error-page{display:flex;flex-direction:column;align-items:center;text-align:center;padding:60px 24px}
+.error-page h2{margin:0 0 8px;font-size:19px}
+.error-page p{margin:0 0 20px;color:var(--text-2);font-size:14.5px;max-width:320px}
+
+/* Buttons */
+.btn{border:0;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;min-height:44px;padding:0 16px;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none}
+.btn:disabled{opacity:.5;cursor:default}
+.btn-cta{background:var(--cta);color:var(--cta-text);min-height:48px}
+.btn-secondary{background:var(--muted-card);color:var(--text);border:1px solid var(--divider)}
+.btn-danger{background:var(--danger);color:#FFFFFF}
+.btn-full{width:100%}
+.btn-text-danger{background:transparent;border:0;color:var(--danger);font-size:14px;font-weight:600;min-height:44px;cursor:pointer}
+
+/* Hero */
+.hero-wrap{padding:12px 12px 0}
+.hero-track{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;border-radius:16px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.hero-track::-webkit-scrollbar{display:none}
+.hero-slide{flex:0 0 100%;scroll-snap-align:start;min-width:100%;background:var(--hero-bg);color:var(--hero-text);padding:16px;border-radius:16px}
+.hero-dots{display:flex;justify-content:center;gap:6px;padding:10px 0 4px}
+.hero-dot{width:7px;height:7px;border-radius:4px;background:var(--divider);border:0;padding:0;cursor:pointer}
+.hero-dot.is-active{width:18px;background:var(--primary)}
+
+.hero-top{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.hero-avatar{width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.18);display:grid;place-items:center;font-weight:700;font-size:16px;flex:none}
+.hero-top__text{display:flex;flex-direction:column;gap:4px;min-width:0}
+.hero-top__text strong{font-size:16px;font-weight:600}
+.hero-pill{align-self:flex-start;font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px;background:var(--hero-chip)}
+
+.hero-route{position:relative;padding-left:20px;margin-bottom:14px}
+.hero-route::before{content:"";position:absolute;left:4px;top:8px;bottom:8px;border-left:2px dotted rgba(255,255,255,.5)}
+.hero-route__stop{position:relative;display:flex;align-items:center;gap:10px;min-height:30px}
+.hero-route__dot{position:absolute;left:-20px;width:9px;height:9px;border:2px solid #FFFFFF;background:transparent;border-radius:50%}
+.hero-route__dot--to{background:#FFFFFF;border-radius:2px;transform:rotate(45deg);width:8px;height:8px}
+.hero-route__city{display:block;font-size:15.5px;font-weight:600}
+.hero-route__sub{display:block;font-size:12px;color:rgba(255,255,255,.75)}
+
+.hero-chips{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.hero-chip{font-size:12.5px;font-weight:600;padding:5px 10px;border-radius:999px;background:var(--hero-chip)}
+
+.hero-panels{display:flex;flex-direction:column;gap:10px}
+.hero-panel{background:var(--hero-chip);border-radius:12px;padding:10px 12px}
+.hero-panel__label{display:block;font-size:13px;font-weight:600;margin-bottom:6px}
+.hero-panel__value{display:block;font-size:15px;font-weight:700}
+.hero-bar{height:6px;border-radius:4px;background:rgba(255,255,255,.25);overflow:hidden}
+.hero-bar__fill{height:100%;background:var(--hero-fill);border-radius:4px}
+
+.hero-slide__title{margin:0 0 12px;font-size:15px;font-weight:700}
+.route-stops{display:flex;flex-direction:column;gap:10px}
+.route-stop{display:flex;align-items:flex-start;gap:10px}
+.route-stop__dot{width:10px;height:10px;border-radius:50%;flex:none;margin-top:4px}
+.route-stop__text{min-width:0;display:flex;flex-direction:column}
+.route-stop__label{font-size:14px;font-weight:600}
+.route-stop__addr{font-size:12.5px;color:rgba(255,255,255,.75);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.route-stop.is-done .route-stop__label,.route-stop.is-done .route-stop__addr{text-decoration:line-through;opacity:.55}
+
+/* Sections */
+.section{padding:16px 12px 0}
+.section__head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.section__title{margin:0;font-size:15px;font-weight:700}
+.pill-soft{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;padding:6px 12px;border-radius:999px;background:var(--chip-soft);color:var(--chip-soft-text);margin-bottom:10px}
+
+/* Request card */
+.req-card{background:var(--card);border-radius:16px;padding:12px 14px;margin-bottom:10px}
+.req-card__top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+.req-card__name{font-size:14.5px;font-weight:700}
+.req-card__seats{font-size:12.5px;color:var(--text-2)}
+.req-card__route{font-size:13px;color:var(--text-2);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.req-card__time{font-size:12px;color:var(--text-2);margin-bottom:10px}
+.req-card__actions{display:flex;gap:8px}
+.req-card__actions .btn{flex:1}
+
+/* Passenger card */
+.pax-card{background:var(--card);border-radius:16px;padding:12px 14px;margin-bottom:10px}
+.pax-card--muted{background:var(--muted-card);border:1px dashed var(--divider)}
+.pax-card--collapsed{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer}
+.pax-card__top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.pax-avatar{width:36px;height:36px;border-radius:50%;background:var(--chip-soft);color:var(--chip-soft-text);display:grid;place-items:center;font-weight:700;font-size:14px;flex:none}
+.pax-card__id{flex:1;min-width:0}
+.pax-card__name{font-size:14.5px;font-weight:700;display:block}
+.pax-card__meta{font-size:12px;color:var(--text-2)}
+.pax-card__tagwrap{display:flex;align-items:center;gap:6px}
+.pax-tag{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.02em;padding:4px 8px;border-radius:999px;background:var(--chip-soft);color:var(--chip-soft-text)}
+.pax-tag--muted{background:var(--divider);color:var(--text-2)}
+.pax-remove{width:32px;height:32px;min-width:44px;min-height:44px;display:grid;place-items:center;border:0;background:transparent;color:var(--danger);cursor:pointer;font-size:18px;line-height:1;border-radius:50%}
+
+.pax-timeline{position:relative;padding-left:18px;margin-bottom:10px}
+.pax-timeline::before{content:"";position:absolute;left:4px;top:6px;bottom:6px;border-left:2px dotted var(--divider)}
+.pax-stop{position:relative;margin-bottom:10px}
+.pax-stop:last-child{margin-bottom:0}
+.pax-stop__dot{position:absolute;left:-18px;top:3px;width:8px;height:8px;border-radius:50%;background:var(--text-2)}
+.pax-stop__head{display:flex;align-items:center;gap:8px;margin-bottom:2px;flex-wrap:wrap}
+.pax-stop__label{font-size:11.5px;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:.02em}
+.pax-stop__chip{font-size:11.5px;font-weight:600;color:var(--text-2);background:var(--muted-card);border-radius:999px;padding:2px 8px}
+.pax-stop__addr{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.pax-side{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.pax-side__price{font-size:14px;font-weight:700}
+.pax-side__seats{font-size:12.5px;color:var(--text-2)}
+.pax-onboard{display:inline-block;font-size:12px;font-weight:600;color:var(--chip-soft-text);background:var(--chip-soft);border-radius:999px;padding:4px 10px;margin-bottom:10px}
+
+.pax-actions{display:flex;gap:8px}
+.pax-actions .btn{flex:1}
+.pax-done-line{font-size:14px;color:var(--text-2)}
+.pax-done-line strong{color:var(--text)}
+
+/* Sticky action bar */
+.action-bar{position:fixed;left:0;right:0;bottom:0;z-index:4;background:var(--card);border-top:1px solid var(--divider);box-shadow:var(--shadow);padding:10px 12px calc(10px + env(safe-area-inset-bottom))}
+.action-bar__row{display:flex;gap:10px}
+.action-bar__row .btn{flex:1}
+.end-trip-wrap{padding:8px 16px 4px;text-align:center}
+
+/* Sheet */
+.sheet-layer{position:fixed;inset:0;z-index:10;display:none}
+.sheet-layer.is-open{display:block}
+.sheet-backdrop{position:absolute;inset:0;background:var(--overlay)}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--card);border-radius:16px 16px 0 0;padding:20px 16px calc(20px + env(safe-area-inset-bottom))}
+.sheet h3{margin:0 0 8px;font-size:16.5px}
+.sheet p{margin:0 0 18px;color:var(--text-2);font-size:14px}
+.sheet__actions{display:flex;flex-direction:column;gap:8px}
+.sheet__actions .btn{width:100%}
+
+/* Toast */
+.toast{position:fixed;left:16px;right:16px;bottom:90px;z-index:20;background:#111B21;color:#FFFFFF;font-size:13.5px;text-align:center;padding:11px 16px;border-radius:10px;opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.is-visible{opacity:1}
+
+.footer-space{height:8px}
+</style>
+</head>
+<body>
+
+<div class="app" id="app"></div>
+<div class="sheet-layer" id="sheetLayer"><div class="sheet-backdrop" data-action="close-sheet"></div><div class="sheet" id="sheetBody"></div></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  var qs = new URLSearchParams(location.search);
+  if (qs.get('mock') === '1') { document.write('<script src="/manage-mock.js"><\/script>'); }
+})();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+(function () {
+'use strict';
+
+/* ---------- Supabase (public anon key — read-only + RPCs only) ---------- */
+var SUPABASE_URL = 'https://omussxfyrztjahbdrrpi.supabase.co';
+var SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9tdXNzeGZ5cnp0amFoYmRycnBpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MjI1NjAsImV4cCI6MjA5NTk5ODU2MH0.ySigym7uOaFIQm01nErPfn4kE6j4MOVKoNntt_Mosak';
+var noopStorage = { getItem: function () { return null; }, setItem: function () {}, removeItem: function () {} };
+var db;
+try {
+  db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
+    auth: { storage: noopStorage, persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+  });
+} catch (e) { console.warn('Supabase failed to init:', e); }
+
+/* ---------- Helpers ---------- */
+var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]; }); };
+function clone(o) { return o == null ? o : JSON.parse(JSON.stringify(o)); }
+function initial(name) { var m = (String(name || '')).match(/\p{L}/u); return m ? m[0].toUpperCase() : '?'; }
+function firstName(name) { return String(name || '').split(' ')[0]; }
+var PALETTE = ['#F59E0B','#3B82F6','#EF4444','#10B981','#8B5CF6','#EC4899','#14B8A6','#F97316'];
+function colorFor(id) { var h = 0, s = String(id || ''); for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return PALETTE[h % PALETTE.length]; }
+var PROV_MAP = { Ontario:'ON', Quebec:'QC', 'British Columbia':'BC', Alberta:'AB', Manitoba:'MB', Saskatchewan:'SK', 'Nova Scotia':'NS', 'New Brunswick':'NB', 'Newfoundland and Labrador':'NL', 'Prince Edward Island':'PE', 'Northwest Territories':'NT', Yukon:'YT', Nunavut:'NU' };
+function shortLabel(label) {
+  var parts = String(label || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+  if (!parts.length) return label || '';
+  var city = parts[0], prov = null;
+  for (var i = 1; i < parts.length; i++) {
+    if (PROV_MAP[parts[i]]) { prov = PROV_MAP[parts[i]]; break; }
+    if (/^[A-Z]{2}$/.test(parts[i])) { prov = parts[i]; break; }
+  }
+  return prov ? city + ', ' + prov : city;
+}
+function haversineKm(lat1, lng1, lat2, lng2) {
+  if ([lat1, lng1, lat2, lng2].some(function (v) { return v == null || isNaN(v); })) return null;
+  var R = 6371, toRad = function (d) { return d * Math.PI / 180; };
+  var dLat = toRad(lat2 - lat1), dLng = toRad(lng2 - lng1);
+  var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+function fmtDateShort(iso) { var d = new Date(iso); return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); }
+function timeOfDay(iso) { var h = new Date(iso).getHours(); return h < 12 ? 'Morning' : (h < 17 ? 'Afternoon' : 'Evening'); }
+function fmtPrice2(n) { return '$' + Number(n).toFixed(2); }
+function fmtMoneyShort(n) { var v = Number(n); return '$' + (Math.round(v * 100) / 100).toString(); }
+function fmtClock(iso) { return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }); }
+function relTime(iso) {
+  var min = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 6e4));
+  if (min < 1) return 'just now';
+  if (min < 60) return min + 'm ago';
+  var h = Math.round(min / 60); if (h < 24) return h + 'h ago';
+  return Math.round(h / 24) + 'd ago';
+}
+function km1(n) { return n == null ? '' : (Math.round(n * 10) / 10).toFixed(1) + ' km'; }
+
+/* ---------- State ---------- */
+var STATE = {
+  token: null, isMock: false, payload: null, loading: true, errorType: null,
+  heroSlide: 0, pendingKey: null, expanded: {}, sheet: null
+};
+var toastTimer = null;
+
+function getToken() {
+  var m = location.pathname.match(/\/m\/([^/]+)/);
+  if (m) return decodeURIComponent(m[1]);
+  var t = new URLSearchParams(location.search).get('t');
+  if (t) return t;
+  return STATE.isMock ? 'mock' : null;
+}
+
+/* ---------- API ---------- */
+function realGet(token) {
+  return db.rpc('trip_manage_get', { p_token: token }).then(function (res) {
+    if (res.error) throw res.error;
+    return res.data;
+  });
+}
+function realAction(token, action, bookingId) {
+  return db.rpc('trip_manage_action', { p_token: token, p_action: action, p_booking_id: bookingId || null }).then(function (res) {
+    if (res.error) throw res.error;
+    return res.data;
+  });
+}
+function apiGet() { return STATE.isMock ? window.PF_MANAGE_MOCK.get(STATE.token) : realGet(STATE.token); }
+function apiAction(action, bookingId) { return STATE.isMock ? window.PF_MANAGE_MOCK.action(STATE.token, action, bookingId) : realAction(STATE.token, action, bookingId); }
+
+function load(showSkeleton) {
+  if (showSkeleton) { STATE.loading = true; render(); }
+  apiGet().then(function (data) {
+    STATE.loading = false;
+    if (!data || data.error === 'invalid_token') { STATE.errorType = 'invalid_token'; STATE.payload = null; }
+    else if (!data.trip) { STATE.errorType = 'rpc_error'; STATE.payload = null; }
+    else { STATE.errorType = null; STATE.payload = data; }
+    render();
+  }).catch(function (e) {
+    console.error('[manage] load failed', e);
+    STATE.loading = false; STATE.errorType = 'rpc_error'; STATE.payload = null;
+    render();
+  });
+}
+
+function doAction(action, bookingId, pendingKey) {
+  if (STATE.pendingKey || !STATE.payload) return;
+  var snapshot = clone(STATE.payload);
+  STATE.pendingKey = pendingKey;
+  applyOptimistic(action, bookingId);
+  render();
+  apiAction(action, bookingId).then(function (data) {
+    STATE.pendingKey = null;
+    if (!data || data.error) { STATE.payload = snapshot; toast("Couldn't update — try again"); }
+    else { STATE.payload = data; }
+    render();
+  }).catch(function (e) {
+    console.error('[manage] action failed', e);
+    STATE.pendingKey = null;
+    STATE.payload = snapshot;
+    toast("Couldn't update — try again");
+    render();
+  });
+}
+function applyOptimistic(action, bookingId) {
+  var p = STATE.payload; if (!p) return;
+  if (action === 'start') p.trip.status = 'in_progress';
+  else if (action === 'end') p.trip.status = 'ended';
+  else if (action === 'accept') p.bookings.forEach(function (b) { if (b.id === bookingId) b.status = 'confirmed'; });
+  else if (action === 'decline' || action === 'remove') p.bookings = p.bookings.filter(function (b) { return b.id !== bookingId; });
+  else if (action === 'picked_up') p.bookings.forEach(function (b) { if (b.id === bookingId) b.status = 'picked_up'; });
+  else if (action === 'dropped_off') p.bookings.forEach(function (b) { if (b.id === bookingId) b.status = 'dropped_off'; });
+}
+
+function toast(msg) {
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('is-visible');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function () { el.classList.remove('is-visible'); }, 3000);
+}
+
+/* ---------- Derived data ---------- */
+function confirmedBookings(payload) {
+  return payload.bookings.filter(function (b) { return ['confirmed', 'picked_up', 'dropped_off'].indexOf(b.status) !== -1; });
+}
+function seatsTaken(payload) {
+  return confirmedBookings(payload).reduce(function (n, b) { return n + (b.seats || 0); }, 0);
+}
+function requestedBookings(payload) {
+  return payload.bookings.filter(function (b) { return b.status === 'requested'; });
+}
+function stopsForSlide2(payload) {
+  var trip = payload.trip, cb = confirmedBookings(payload);
+  var pickups = cb.map(function (b) { return { type: 'pickup', id: b.id, name: b.name, addr: b.pickup_label, dist: haversineKm(trip.origin_lat, trip.origin_lng, b.pickup_lat, b.pickup_lng), done: b.status === 'picked_up' || b.status === 'dropped_off' }; });
+  var dropoffs = cb.map(function (b) { return { type: 'dropoff', id: b.id, name: b.name, addr: b.dropoff_label, dist: haversineKm(trip.origin_lat, trip.origin_lng, b.dropoff_lat, b.dropoff_lng), done: b.status === 'dropped_off' }; });
+  pickups.sort(function (a, b) { return (a.dist || 0) - (b.dist || 0); });
+  dropoffs.sort(function (a, b) { return (a.dist || 0) - (b.dist || 0); });
+  return pickups.concat(dropoffs);
+}
+function mapsUrl(payload) {
+  var trip = payload.trip, cb = confirmedBookings(payload);
+  var pu = cb.filter(function (b) { return b.status === 'confirmed'; })
+    .map(function (b) { return { lat: b.pickup_lat, lng: b.pickup_lng, dist: haversineKm(trip.origin_lat, trip.origin_lng, b.pickup_lat, b.pickup_lng) }; });
+  var doo = cb.filter(function (b) { return b.status !== 'dropped_off'; })
+    .map(function (b) { return { lat: b.dropoff_lat, lng: b.dropoff_lng, dist: haversineKm(trip.origin_lat, trip.origin_lng, b.dropoff_lat, b.dropoff_lng) }; });
+  pu.sort(function (a, b) { return a.dist - b.dist; });
+  doo.sort(function (a, b) { return a.dist - b.dist; });
+  var wp = pu.concat(doo).slice(0, 9).map(function (w) { return w.lat + ',' + w.lng; }).join('|');
+  var url = 'https://www.google.com/maps/dir/?api=1&origin=' + trip.origin_lat + ',' + trip.origin_lng + '&destination=' + trip.dest_lat + ',' + trip.dest_lng + '&travelmode=driving';
+  if (wp) url += '&waypoints=' + encodeURIComponent(wp);
+  return url;
+}
+function shareText(payload) {
+  var trip = payload.trip;
+  return 'Book a seat on my ride ' + shortLabel(trip.origin_label) + ' → ' + shortLabel(trip.dest_label) + ', ' + fmtDateShort(trip.depart_at) + ': ' + trip.join_url;
+}
+function doShare() {
+  if (!STATE.payload) return;
+  var text = shareText(STATE.payload);
+  if (navigator.share) {
+    navigator.share({ text: text }).catch(function (e) { if (e && e.name === 'AbortError') return; });
+  } else {
+    copyToClipboard(text);
+  }
+}
+function copyToClipboard(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function () { toast('Link copied'); }, function () { toast('Link copied'); });
+  } else {
+    try {
+      var ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.focus(); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+    } catch (e) {}
+    toast('Link copied');
+  }
+}
+
+/* ---------- Render: shell ---------- */
+function header() {
+  return '<header class="app-bar"><div class="app-bar__inner">' +
+    '<span class="brand"><img src="/logo.png" alt=""></span>' +
+    '<div><h1 class="app-bar__title">Pathfynder</h1><p class="app-bar__sub">Manage ride</p></div>' +
+    '</div></header>';
+}
+function skeleton() {
+  return '<div class="skel"><div class="skel__block"></div><div class="skel__line"></div><div class="skel__line"></div><div class="skel__line"></div></div>';
+}
+function errorPage() {
+  return header() + '<div class="error-page">' +
+    '<h2>This link doesn’t work</h2>' +
+    '<p>We couldn’t find that ride. The link may be old or mistyped. Message us on WhatsApp and we’ll help you out.</p>' +
+    '<a class="btn btn-cta" href="https://wa.me/916356600421?text=Hi" target="_blank" rel="noopener">Message us on WhatsApp</a>' +
+    '</div>';
+}
+
+/* ---------- Render: hero ---------- */
+function heroSection(payload) {
+  var trip = payload.trip;
+  var statusLabel = trip.status === 'not_started' ? 'Not started' : (trip.status === 'in_progress' ? 'Started' : 'Ended');
+  var taken = seatsTaken(payload);
+  var pct = trip.seats_total > 0 ? Math.min(100, Math.round(taken / trip.seats_total * 100)) : 0;
+  var pricePanel = trip.price_per_seat != null ?
+    '<div class="hero-panel"><span class="hero-panel__label">Price</span><span class="hero-panel__value">' + esc(fmtPrice2(trip.price_per_seat)) + ' per seat</span></div>' : '';
+
+  var slide1 =
+    '<div class="hero-top">' +
+      '<span class="hero-avatar">' + esc(initial(trip.driver_name)) + '</span>' +
+      '<div class="hero-top__text"><strong>' + esc(trip.driver_name) + '</strong><span class="hero-pill">' + statusLabel + '</span></div>' +
+    '</div>' +
+    '<div class="hero-route">' +
+      '<div class="hero-route__stop"><span class="hero-route__dot"></span><div><span class="hero-route__city">' + esc(shortLabel(trip.origin_label)) + '</span><span class="hero-route__sub">Pickup</span></div></div>' +
+      '<div class="hero-route__stop"><span class="hero-route__dot hero-route__dot--to"></span><div><span class="hero-route__city">' + esc(shortLabel(trip.dest_label)) + '</span><span class="hero-route__sub">Dropoff</span></div></div>' +
+    '</div>' +
+    '<div class="hero-chips"><span class="hero-chip">' + esc(fmtDateShort(trip.depart_at)) + '</span><span class="hero-chip">' + esc(timeOfDay(trip.depart_at)) + '</span></div>' +
+    '<div class="hero-panels">' +
+      '<div class="hero-panel"><span class="hero-panel__label">' + taken + ' of ' + trip.seats_total + ' seats taken</span><div class="hero-bar"><div class="hero-bar__fill" style="width:' + pct + '%"></div></div></div>' +
+      pricePanel +
+    '</div>';
+
+  var stops = stopsForSlide2(payload);
+  var rows = stops.map(function (s) {
+    return '<div class="route-stop' + (s.done ? ' is-done' : '') + '">' +
+      '<span class="route-stop__dot" style="background:' + colorFor(s.id) + '"></span>' +
+      '<div class="route-stop__text"><span class="route-stop__label">' + (s.type === 'pickup' ? 'Pick up ' : 'Drop off ') + esc(s.name) + '</span><span class="route-stop__addr">' + esc(s.addr) + '</span></div>' +
+    '</div>';
+  }).join('');
+  var slide2 = '<h3 class="hero-slide__title">Your route</h3><div class="route-stops">' + (rows || '<p style="opacity:.8;font-size:13px;margin:0">No confirmed passengers yet.</p>') + '</div>';
+
+  var dots = [0, 1].map(function (i) { return '<button type="button" class="hero-dot' + (STATE.heroSlide === i ? ' is-active' : '') + '" data-action="dot" data-index="' + i + '" aria-label="Slide ' + (i + 1) + '"></button>'; }).join('');
+
+  return '<section class="hero-wrap"><div class="hero-track" id="heroTrack">' +
+      '<div class="hero-slide">' + slide1 + '</div>' +
+      '<div class="hero-slide">' + slide2 + '</div>' +
+    '</div></section>' +
+    '<div class="hero-dots">' + dots + '</div>';
+}
+
+/* ---------- Render: requests ---------- */
+function requestsSection(payload) {
+  if (payload.trip.status === 'ended') return '';
+  var reqs = requestedBookings(payload);
+  if (!reqs.length) return '';
+  var free = payload.trip.seats_total - seatsTaken(payload);
+  var cards = reqs.map(function (r) {
+    var disabled = r.seats > free;
+    var pendingAccept = STATE.pendingKey === 'accept:' + r.id;
+    var pendingDecline = STATE.pendingKey === 'decline:' + r.id;
+    var timeText = r.pickup_time ? fmtClock(r.pickup_time) : relTime(r.created_at);
+    return '<div class="req-card">' +
+      '<div class="req-card__top"><span class="req-card__name">' + esc(r.name) + '</span><span class="req-card__seats">' + r.seats + ' seat' + (r.seats === 1 ? '' : 's') + '</span></div>' +
+      '<div class="req-card__route">' + esc(shortLabel(r.pickup_label)) + ' → ' + esc(shortLabel(r.dropoff_label)) + '</div>' +
+      '<div class="req-card__time">' + esc(timeText) + '</div>' +
+      '<div class="req-card__actions">' +
+        '<button type="button" class="btn btn-secondary" data-action="decline" data-id="' + r.id + '"' + (pendingDecline ? ' disabled' : '') + '>Decline</button>' +
+        '<button type="button" class="btn btn-cta" data-action="accept" data-id="' + r.id + '"' + (disabled || pendingAccept ? ' disabled' : '') + '>' + (disabled ? 'Not enough seats' : 'Accept') + '</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+  return '<section class="section"><div class="section__head"><h2 class="section__title">Requests (' + reqs.length + ')</h2></div>' + cards + '</section>';
+}
+
+/* ---------- Render: passengers ---------- */
+function passengerCard(b, trip) {
+  var digits = String(b.phone || '').replace(/\D/g, '');
+  var outsideHref = 'https://wa.me/' + digits + '?text=' + encodeURIComponent('Hi ' + firstName(b.name) + ", I'm outside at " + b.pickup_label + ' 🚗');
+  var priceText = trip.price_per_seat != null ? fmtMoneyShort(b.seats * trip.price_per_seat) : '–';
+  var pickupDist = haversineKm(trip.origin_lat, trip.origin_lng, b.pickup_lat, b.pickup_lng);
+  var dropoffDist = haversineKm(b.dropoff_lat, b.dropoff_lng, trip.dest_lat, trip.dest_lng);
+  var ended = trip.status === 'ended';
+
+  if (b.status === 'dropped_off' && !STATE.expanded[b.id]) {
+    return '<div class="pax-card pax-card--collapsed pax-card--muted" data-action="toggle-expand" data-id="' + b.id + '">' +
+      '<span class="pax-avatar">' + esc(initial(b.name)) + '</span>' +
+      '<span class="pax-card__name">' + esc(b.name) + '</span>' +
+      '<span style="margin-left:auto;font-size:13px;color:var(--text-2)">Dropped off ✓</span>' +
+    '</div>';
+  }
+
+  var tagText = b.status === 'confirmed' ? 'confirmed' : (b.status === 'picked_up' ? 'picked up' : 'dropped off');
+  var cardClass = 'pax-card' + (b.status !== 'confirmed' ? ' pax-card--muted' : '') + (b.status === 'dropped_off' ? ' pax-card--collapsed-full' : '');
+  var removeBtn = (!ended && b.status === 'confirmed') ?
+    '<button type="button" class="pax-remove" data-action="remove" data-id="' + b.id + '" aria-label="Remove ' + esc(b.name) + '">✕</button>' : '';
+  var toggleAttrs = b.status === 'dropped_off' ? ' data-action="toggle-expand" data-id="' + b.id + '" style="cursor:pointer"' : '';
+
+  var head = '<div class="pax-card__top"' + toggleAttrs + '>' +
+    '<span class="pax-avatar">' + esc(initial(b.name)) + '</span>' +
+    '<div class="pax-card__id"><span class="pax-card__name">' + esc(b.name) + '</span><span class="pax-card__meta">' + relTime(b.created_at) + '</span></div>' +
+    '<div class="pax-card__tagwrap"><span class="pax-tag' + (b.status === 'confirmed' ? '' : ' pax-tag--muted') + '">' + tagText + '</span>' + removeBtn + '</div>' +
+  '</div>';
+
+  var timeline = '<div class="pax-timeline">' +
+    '<div class="pax-stop"><span class="pax-stop__dot"></span><div class="pax-stop__head"><span class="pax-stop__label">Pickup</span>' + (pickupDist != null ? '<span class="pax-stop__chip">' + km1(pickupDist) + '</span>' : '') + '</div><div class="pax-stop__addr">' + esc(b.pickup_label) + '</div></div>' +
+    '<div class="pax-stop"><span class="pax-stop__dot"></span><div class="pax-stop__head"><span class="pax-stop__label">Dropoff</span>' + (dropoffDist != null ? '<span class="pax-stop__chip">' + km1(dropoffDist) + '</span>' : '') + '</div><div class="pax-stop__addr">' + esc(b.dropoff_label) + '</div></div>' +
+  '</div>';
+
+  var side = '<div class="pax-side"><span class="pax-side__price">' + esc(priceText) + '</span><span class="pax-side__seats">' + b.seats + ' seat' + (b.seats === 1 ? '' : 's') + '</span></div>';
+
+  var actions = '';
+  if (!ended) {
+    var pendingOut = false;
+    if (b.status === 'confirmed') {
+      var pendingPicked = STATE.pendingKey === 'picked_up:' + b.id;
+      if (trip.status === 'not_started') {
+        actions = '<div class="pax-actions"><a class="btn btn-secondary btn-full" href="' + outsideHref + '" target="_blank" rel="noopener">I’m outside</a></div>';
+      } else {
+        actions = '<div class="pax-actions">' +
+          '<a class="btn btn-secondary" href="' + outsideHref + '" target="_blank" rel="noopener">I’m outside</a>' +
+          '<button type="button" class="btn btn-cta" data-action="picked_up" data-id="' + b.id + '"' + (pendingPicked ? ' disabled' : '') + '>Picked up</button>' +
+        '</div>';
+      }
+    } else if (b.status === 'picked_up') {
+      var pendingDropped = STATE.pendingKey === 'dropped_off:' + b.id;
+      actions = '<span class="pax-onboard">On board</span>' +
+        '<div class="pax-actions"><button type="button" class="btn btn-cta btn-full" data-action="dropped_off" data-id="' + b.id + '"' + (pendingDropped ? ' disabled' : '') + '>Dropped off</button></div>';
+    }
+  }
+
+  return '<div class="' + cardClass + '">' + head + timeline + side + actions + '</div>';
+}
+function passengersSection(payload) {
+  var trip = payload.trip;
+  var cb = confirmedBookings(payload);
+  var pickedCount = cb.filter(function (b) { return b.status === 'picked_up' || b.status === 'dropped_off'; }).length;
+  var pill = (trip.status === 'in_progress' && pickedCount > 0) ?
+    '<span class="pill-soft">✓ ' + pickedCount + ' passenger' + (pickedCount === 1 ? '' : 's') + ' picked up so far</span>' : '';
+  var cards = cb.map(function (b) { return passengerCard(b, trip); }).join('');
+  return '<section class="section"><div class="section__head"><h2 class="section__title">Passengers (' + cb.length + ')</h2></div>' + pill + cards + '</section>';
+}
+
+/* ---------- Render: action bar ---------- */
+function actionBar(payload) {
+  var trip = payload.trip;
+  if (trip.status === 'ended') return '';
+  var pendingStart = STATE.pendingKey === 'start';
+  if (trip.status === 'not_started') {
+    return '<div class="action-bar"><div class="action-bar__row">' +
+      '<button type="button" class="btn btn-secondary" data-action="share">Share link</button>' +
+      '<button type="button" class="btn btn-cta" data-action="open-start-sheet"' + (pendingStart ? ' disabled' : '') + '>Start trip</button>' +
+    '</div></div>';
+  }
+  return '<div class="action-bar"><div class="action-bar__row">' +
+    '<button type="button" class="btn btn-secondary" data-action="share">Share link</button>' +
+    '<a class="btn btn-secondary" href="' + mapsUrl(payload) + '" target="_blank" rel="noopener">Open in Maps</a>' +
+  '</div></div>';
+}
+function endTripLink(payload) {
+  if (payload.trip.status !== 'in_progress') return '';
+  var pending = STATE.pendingKey === 'end';
+  return '<div class="end-trip-wrap"><button type="button" class="btn-text-danger" data-action="open-end-sheet"' + (pending ? ' disabled' : '') + '>End trip</button></div>';
+}
+
+/* ---------- Sheet ---------- */
+function sheetHtml() {
+  var s = STATE.sheet;
+  var layer = document.getElementById('sheetLayer');
+  if (!s) { layer.classList.remove('is-open'); document.getElementById('sheetBody').innerHTML = ''; return; }
+  layer.classList.add('is-open');
+  document.getElementById('sheetBody').innerHTML =
+    '<h3>' + esc(s.title) + '</h3><p>' + esc(s.message) + '</p>' +
+    '<div class="sheet__actions">' +
+      '<button type="button" class="btn ' + (s.danger ? 'btn-danger' : 'btn-cta') + '" data-action="sheet-confirm">' + esc(s.confirmLabel) + '</button>' +
+      '<button type="button" class="btn btn-secondary" data-action="sheet-cancel">Cancel</button>' +
+    '</div>';
+}
+function openSheet(opts) { STATE.sheet = opts; sheetHtml(); }
+function closeSheet() { STATE.sheet = null; sheetHtml(); }
+
+/* ---------- Full render ---------- */
+function render() {
+  var app = document.getElementById('app');
+  if (STATE.errorType) { app.classList.remove('has-bar'); app.innerHTML = errorPage(); sheetHtml(); return; }
+  if (STATE.loading || !STATE.payload) { app.classList.remove('has-bar'); app.innerHTML = header() + skeleton(); sheetHtml(); return; }
+
+  var payload = STATE.payload;
+  var showBar = payload.trip.status !== 'ended';
+  app.classList.toggle('has-bar', showBar);
+  app.innerHTML = header() + heroSection(payload) + requestsSection(payload) + passengersSection(payload) + endTripLink(payload) + '<div class="footer-space"></div>' + actionBar(payload);
+  sheetHtml();
+
+  var track = document.getElementById('heroTrack');
+  if (track) {
+    track.scrollLeft = STATE.heroSlide * track.clientWidth;
+    track.onscroll = function () {
+      var idx = Math.round(track.scrollLeft / Math.max(1, track.clientWidth));
+      if (idx !== STATE.heroSlide) {
+        STATE.heroSlide = idx;
+        document.querySelectorAll('.hero-dot').forEach(function (d, i) { d.classList.toggle('is-active', i === idx); });
+      }
+    };
+  }
+}
+
+/* ---------- Events ---------- */
+document.body.addEventListener('click', function (e) {
+  var t = e.target.closest('[data-action]');
+  if (!t) return;
+  var action = t.getAttribute('data-action');
+  var id = t.getAttribute('data-id');
+
+  if (action === 'share') { doShare(); return; }
+  if (action === 'dot') {
+    var idx = Number(t.getAttribute('data-index'));
+    STATE.heroSlide = idx;
+    var track = document.getElementById('heroTrack');
+    if (track) track.scrollLeft = idx * track.clientWidth;
+    document.querySelectorAll('.hero-dot').forEach(function (d, i) { d.classList.toggle('is-active', i === idx); });
+    return;
+  }
+  if (action === 'toggle-expand') { STATE.expanded[id] = !STATE.expanded[id]; render(); return; }
+  if (action === 'open-start-sheet') { openSheet({ title: 'Start trip now?', message: 'Passengers will be notified the trip has started.', confirmLabel: 'Start trip', danger: false, doAction: 'start', bookingId: null }); return; }
+  if (action === 'open-end-sheet') { openSheet({ title: 'End trip?', message: "You can't restart it.", confirmLabel: 'End trip', danger: true, doAction: 'end', bookingId: null }); return; }
+  if (action === 'remove') {
+    var b = STATE.payload && STATE.payload.bookings.find(function (x) { return x.id === id; });
+    openSheet({ title: 'Remove ' + (b ? b.name : 'passenger') + ' from this trip?', message: 'They will no longer be part of this ride.', confirmLabel: 'Remove', danger: true, doAction: 'remove', bookingId: id });
+    return;
+  }
+  if (action === 'accept' || action === 'decline' || action === 'picked_up' || action === 'dropped_off') {
+    doAction(action, id, action + ':' + id);
+    return;
+  }
+  if (action === 'sheet-cancel' || action === 'close-sheet') { closeSheet(); return; }
+  if (action === 'sheet-confirm') {
+    var s = STATE.sheet;
+    if (s) { doAction(s.doAction, s.bookingId, s.doAction); }
+    closeSheet();
+    return;
+  }
+});
+
+/* ---------- Init ---------- */
+function boot() {
+  STATE.isMock = new URLSearchParams(location.search).get('mock') === '1';
+  STATE.token = getToken();
+  if (!STATE.isMock && !STATE.token) { STATE.loading = false; STATE.errorType = 'invalid_token'; render(); return; }
+  load(true);
+}
+document.addEventListener('visibilitychange', function () {
+  if (document.visibilityState === 'visible' && !STATE.pendingKey && !STATE.errorType && STATE.payload) load(false);
+});
+setInterval(function () {
+  if (document.visibilityState === 'visible' && !STATE.pendingKey && !STATE.errorType && STATE.payload) load(false);
+}, 30000);
+
+boot();
+
+})();
+</script>
+</body>
+</html>

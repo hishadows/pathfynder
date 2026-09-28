@@ -24,7 +24,7 @@ One task per session. Status: todo / done / parked.
 
 6. **Driver manage page `/m/<token>`** — built from the Claude Design file in `design/`.
    - Done when: `/m/<token>` loads the trip via `trip_manage_get` and actions work via `trip_manage_action`.
-   - Status: parked (waiting on the design file; needs task 5)
+   - Status: done against mock (2026-09-28) — built from Pranay's screenshot, not `design/`; goes live once task 5 ships the RPCs
 
 7. **Passenger join page `/j/<code>`** — pickup, drop-off, time, "for work" toggle + shift start, note, "Confirm on WhatsApp".
    - Done when: `/j/<code>` shows the trip and "Confirm on WhatsApp" opens WhatsApp with the filled-in details.
@@ -49,3 +49,4 @@ One task per session. Status: todo / done / parked.
 - 2026-09-27 — Bug: live location ignored on /explore — stale `pf_geo_failed` flag from any past GPS timeout blocked it forever. Now only a real denial is remembered, granted permission clears it, and enabling location mid-session triggers near-me. Open: not yet checked on a real phone.
 - 2026-09-27 — Follow-up: Safari still ignored location (reports permission as `prompt`, so stale `pf_geo_failed` never cleared). Switched denial memory to new key `pf_geo_denied`; old key removed on load. Open: confirm on Pranay's iPhone Safari after deploy.
 - 2026-09-27 — Notifications for all Explore visitors: tokenless devices get an `ALERTS <code>` WhatsApp link step (`notify_link_device`). Open: n8n bot step for `ALERTS <code>` not added yet — do not merge/deploy the front end until it is; real-phone test pending.
+- 2026-09-28 — Task 6: new `manage.html` + `manage-mock.js` (`?mock=1&state=not_started|in_progress|ended|invalid`, `&fail=1`), `/m/:token` rewrite, build.sh copy. `docs/booking-flow.md` was missing, so the data contract is the one in the changelog entry. Open: RPCs `trip_manage_get`/`trip_manage_action` don't exist yet (task 5); real-phone test pending.
