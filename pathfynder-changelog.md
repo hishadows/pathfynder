@@ -165,4 +165,12 @@
   - New filled `i-whatsapp` sprite icon replaces the chat bubble on both WhatsApp buttons.
   - Verified: `node --check`, Playwright at 390px light/dark (list + detail sheet).
   - Files: explore.html.
+- 2026-09-28 — Manage ride page: matched Explore's calmer WhatsApp green. `--cta` is now #008069 with white text (light) / #005C4B with #E9EDEF text (dark), plus a `--cta-hover` #006D5B. Covers Start trip, Picked up, Dropped off (when it's the primary button), sheet confirm and "Message us on WhatsApp", which also gets an inline WhatsApp logo. The hero progress bar (`--hero-fill`) is unchanged. Verified: `node --check`, Playwright at 390px light/dark (draft, active, invalid states + start-trip sheet). Files: manage.html.
+- 2026-09-28 — Manage ride page layout rework:
+  - Bottom bar: "Share link" renamed "Invite passengers" (same place). The right button is "Start trip" before the start and "End trip" after, both with confirm pop-ups ("Start this ride now?" / "End this ride?", which is red and can't be undone). The small End trip text link is removed.
+  - "Open in Maps" moved out of the bar into a "Full route in Maps · N stops · shortest order · Open" card under the ride details. It is hidden once the ride has ended. `openMapsTap` now writes "Opening…" into the card's sub-line instead of wiping the button.
+  - Passenger card: removed price/seats, the status tag and the ✕. Added a round WhatsApp contact button on the name row (link only, no number shown).
+  - Before the start, each card has "Remove passenger", which opens a pop-up with "Message <name> first" (WhatsApp, pre-filled), "Remove passenger" (red) and Cancel. After the start it shows "I'm outside" + "Picked up", then "Dropped off". The extra pre-pickup "Dropped off" button is gone.
+  - Verified: `node --check`, Playwright at 390px light/dark (draft, active, completed + start/end/remove pop-ups, click-through in mock), no page errors.
+  - Files: manage.html.
 - 2026-09-28 — Manage ride: "Your route" hero slide uses the card background (white light / #202C33 dark) with normal text, muted done stops and primary-green start/destination dots; slide 1 unchanged. CSS + one class. Verified with `node --check` + Playwright light/dark. Files: manage.html.
