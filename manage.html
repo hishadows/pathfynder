@@ -471,7 +471,7 @@ return { haversineKm: haversineKm, buildStops: buildStops, dedupeStops: dedupeSt
 /* ---------- State ---------- */
 var STATE = {
   token: null, isMock: false, payload: null, trips: [], selectedDate: null, selectedTripId: null, stripScroll: false, loading: true, errorType: null,
-  heroSlide: 0, pendingKey: null, expanded: {}, sheet: null,
+  heroSlide: 0, slideAuto: true, pendingKey: null, expanded: {}, sheet: null,
   gps: { fix: null, label: null, denied: false },
   routeThrottle: { ts: 0, lat: null, lng: null }
 };
@@ -554,7 +554,14 @@ function loadTrip(showSkeleton) {
     STATE.loading = false;
     if (!data || data.error === 'invalid_token') { STATE.errorType = 'invalid_token'; STATE.payload = null; }
     else if (!data.trip) { STATE.errorType = 'rpc_error'; STATE.payload = null; }
-    else { STATE.errorType = null; STATE.payload = data; }
+    else {
+      var prevStatus = STATE.payload && STATE.payload.trip ? STATE.payload.trip.status : null;
+      STATE.errorType = null; STATE.payload = data;
+      var newStatus = data.trip.status;
+      /* Default slide once per opened trip: active -> next stop (0), else ride details (1). Background refreshes keep the swiped slide, except a trip that just became active. */
+      if (STATE.slideAuto) { STATE.heroSlide = newStatus === 'active' ? 0 : 1; STATE.slideAuto = false; }
+      else if (prevStatus && prevStatus !== 'active' && newStatus === 'active') STATE.heroSlide = 0;
+    }
     render();
   }).catch(function (e) { if (STATE.selectedTripId === wanted) failLoad(e); });
 }
@@ -562,31 +569,34 @@ function selectDate(key) {
   if (key === STATE.selectedDate || STATE.pendingKey) return;
   STATE.selectedDate = key; STATE.stripScroll = true;
   STATE.selectedTripId = null;
-  STATE.heroSlide = 0; STATE.expanded = {}; STATE.payload = null; STATE.sheet = null;
+  STATE.slideAuto = true; STATE.expanded = {}; STATE.payload = null; STATE.sheet = null;
   loadTrip(true);
 }
 function selectTrip(id) {
   if (id === STATE.selectedTripId || STATE.pendingKey) return;
   STATE.selectedTripId = id;
-  STATE.heroSlide = 0; STATE.expanded = {}; STATE.payload = null; STATE.sheet = null;
+  STATE.slideAuto = true; STATE.expanded = {}; STATE.payload = null; STATE.sheet = null;
   loadTrip(true);
 }
 
 function doAction(action, bookingId, pendingKey) {
   if (STATE.pendingKey || !STATE.payload) return;
   var snapshot = clone(STATE.payload);
+  var prevSlide = STATE.heroSlide;
   STATE.pendingKey = pendingKey;
   applyOptimistic(action, bookingId);
+  if (action === 'start') STATE.heroSlide = 0;
   render();
   apiAction(action, bookingId).then(function (data) {
     STATE.pendingKey = null;
-    if (!data || data.error) { STATE.payload = snapshot; toast("Couldn't update — try again"); }
+    if (!data || data.error) { STATE.payload = snapshot; if (action === 'start') STATE.heroSlide = prevSlide; toast("Couldn't update — try again"); }
     else { STATE.payload = data; }
     render();
   }).catch(function (e) {
     console.error('[manage] action failed', e);
     STATE.pendingKey = null;
     STATE.payload = snapshot;
+    if (action === 'start') STATE.heroSlide = prevSlide;
     toast("Couldn't update — try again");
     render();
   });
