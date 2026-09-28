@@ -323,8 +323,8 @@ body.no-scroll{overflow:hidden}
 .tag .i{width:12px;height:12px;stroke-width:2}
 .ride-card__tags{display:flex;align-items:center;flex:1;flex-wrap:wrap;gap:6px;min-width:0}
 .tag--regular{background:var(--chip-soft);color:var(--chip-soft-text)}
-.tag--coordinator{background:var(--pass-bg);color:var(--pass-fg)}
 .tag--need{background:var(--pass-bg);color:var(--pass-fg)}
+.tag--avail{background:var(--chip-soft);color:var(--chip-soft-text)}
 .rating{display:inline-flex;align-items:center;gap:3px;font-weight:600;color:var(--text)}
 .rating .star{width:14px;height:14px;fill:var(--star);stroke:var(--star)}
 .rating__count{font-weight:400;color:var(--text-2)}
@@ -1400,14 +1400,13 @@ function matchNote(r) {
 function riderTag(r) {
   if (r.is_business) return '<span class="tag tag--business">' + icon('building') + 'Business</span>';
   if (r.is_regular) return '<span class="tag tag--regular">' + icon('repeat') + 'Regular rider</span>';
-  if (r.is_coordinator) return '<span class="tag tag--coordinator">' + icon('groups') + 'Ride coordinator</span>';
   return '';
 }
 function rideTypeTags(r) {
   var out = '';
   if (r.is_urgent) out += '<span class="tag" style="background:var(--notice-bg);color:var(--notice-fg)">' + icon('info') + 'Urgent</span>';
   if (r.is_airport) out += '<span class="tag">' + icon('pin') + 'Airport</span>';
-  if (r.is_daily && !(r.recurring_label && /daily/i.test(r.recurring_label))) out += '<span class="tag">' + icon('repeat') + 'Daily</span>';
+  if (r.is_daily) out += '<span class="tag">' + icon('repeat') + 'Daily</span>';
   return out;
 }
 function sourceBadge(r) {
@@ -1430,7 +1429,7 @@ function metaList(r) {
   if (r.seats) items.push('<li class="ride-meta__item">' + icon('seat') + (r.role === 'driver' ? plural(r.seats, 'seat') : 'Needs ' + plural(r.seats, 'seat')) + '</li>');
   if (r.price_num != null) items.push('<li class="ride-meta__item ride-meta__item--price">$' + r.price_num + '<small>/seat</small></li>');
   if (r.luggage) items.push('<li class="ride-meta__item">' + icon(r.luggage === 'No luggage' ? 'bag-off' : 'bag') + esc(r.luggage) + '</li>');
-  if (r.recurring_label) items.push('<li class="ride-meta__item">' + icon('repeat') + esc(r.recurring_label) + '</li>');
+  if (r.recurring_label && !(r.is_daily && /^\s*daily\s*$/i.test(r.recurring_label))) items.push('<li class="ride-meta__item">' + icon('repeat') + esc(r.recurring_label) + '</li>');
   return items.length ? '<ul class="ride-meta">' + items.join('') + '</ul>' : '';
 }
 function posterSub(r) {
@@ -1447,7 +1446,7 @@ function poster(r, extra) {
     : anon
       ? '<span class="avatar avatar--anon" aria-hidden="true">' + icon('user') + '</span>'
       : '<span class="avatar ' + avatarClass(dn) + '" aria-hidden="true">' + esc(initial(dn)) + '</span>';
-  var subInline = (!r.is_business && (r.is_regular || r.is_coordinator)) ? riderTag(r) : posterSub(r);
+  var subInline = (!r.is_business && r.is_regular) ? riderTag(r) : posterSub(r);
   return '<div class="poster ' + extra + '">' + av +
     '<div class="poster__text"><span class="poster__line"><span class="poster__name">' + esc(dn) + '</span>' +
     (r.verified ? '<span class="verified" title="Verified">' + icon('verified') + '</span>' : '') + '</span>' +
@@ -1473,7 +1472,7 @@ function renderRideCard(r, landingOpts) {
   var req = r.role === 'passenger';
   var badge = (landingOpts && landingOpts.hideBadge) ? '' : matchBadge(r);
   var note = (landingOpts && landingOpts.distanceNote) ? landingDistanceNote(r) : matchNote(r);
-  var details = '<div class="ride-card__top"><span class="ride-card__tags">' + badge + (req ? '<span class="tag tag--need">Needs ride</span>' : '') + (r.is_business ? riderTag(r) : '') + rideTypeTags(r) + '</span><span class="ride-card__ago">' + ago(r.posted_at) + '</span></div>' +
+  var details = '<div class="ride-card__top"><span class="ride-card__tags">' + badge + (req ? '<span class="tag tag--need">Needs ride</span>' : (r.role === 'driver' ? '<span class="tag tag--avail">Ride available</span>' : '')) + (r.is_business ? riderTag(r) : '') + rideTypeTags(r) + '</span><span class="ride-card__ago">' + ago(r.posted_at) + '</span></div>' +
     '<div class="ride-card__main"><div class="route">' +
     '<div class="route__stop route__stop--from"><span class="route__dot"></span><span class="route__city">' + esc(cityOf(r.origin_label)) + '</span></div>' +
     '<div class="route__stop route__stop--to"><span class="route__dot"></span><span class="route__city">' + esc(cityOf(r.dest_label)) + '</span></div>' +
@@ -1660,7 +1659,7 @@ function landingResultsHead(rows) {
   var noun, dateLine;
   var nearLabel = state.fromPlace ? state.fromPlace.name : null;
   if (nearLabel) {
-    noun = 'Within 25 km · next 3 days';
+    noun = plural(n, state.mode === 'passenger' ? 'passenger' : 'driver') + ' available';
     dateLine = '';
   } else {
     noun = 'Upcoming ' + (state.mode === 'passenger' ? 'passenger requests' : 'rides');
