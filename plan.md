@@ -46,6 +46,10 @@ One task per session. Status: todo / done / parked.
    - Done when: on iPhone outside the installed app, "Turn on notifications" opens the sheet; Android and the installed app keep the old flow; looks right in light + dark at 390px and closes cleanly.
    - Status: done (2026-09-27)
 
+11. **Matching around stops** — explore/bot matching should also match passengers near a driver's `driver_routines.stops` (not only origin/destination).
+   - Done when: a passenger whose pickup/drop-off is near a posted stop sees that driver in Explore and bot matches.
+   - Status: todo
+
 ## Session notes
 
 - 2026-09-27 — Setup: rewrote CLAUDE.md (short, general facts only) and created plan.md. Open: task 4 was already done in index.html but has no changelog entry; header nav still says "Join on Telegram".
@@ -80,3 +84,4 @@ One task per session. Status: todo / done / parked.
 - 2026-09-28 — Manage swipe fix (resize on settle, no mid-swipe renders, snap-stop) + min height = Trip details. Confirmed by Pranay on iPhone: no half stops.
 - 2026-09-28 — Profile screen no longer jumps to the top when toggling ride alerts / Appearance / editing the name: `renderProfile` keeps scroll; only opening the profile resets it. Tested in mock (scrollY unchanged).
 - 2026-09-28 — Manage: trip details row (date/time/price), Find passengers → Explore, Edit trip sheet + `trip_manage_update` RPC (only with 0 passengers, not started). Open: places/Mapbox suggestions not exercised live (sandbox).
+- 2026-09-28 — Post a trip flow in driver home ("+" icon + empty-day button): route with stops, seats, multi-date (≤7) with per-day times, return ride, price chips, note, review. RPC `trip_post` (migration `trip_post_rpc`, adds `driver_routines.stops`, platform 'web'). Open: real Mapbox + RPC not exercised from browser (sandbox); matching around stops = task 11.

@@ -70,6 +70,8 @@
   }
 
   var STORE = {};
+  var POSTED = []; /* defs of trips added by post() */
+  var postSeq = 0;
   var lastTripId = null;
   function rawState() {
     try { return new URLSearchParams(location.search).get('state'); }
@@ -96,7 +98,7 @@
     var raw = rawState();
     if (raw === 'draft' || raw === 'active' || raw === 'completed') defs.push({ id: 'trip-today', off: 0, key: raw });
     defs.sort(function (a, b) { return (a.off - b.off) || ((a.hh == null ? 18 : a.hh) - (b.hh == null ? 18 : b.hh)); });
-    return defs;
+    return defs.concat(POSTED); /* trips created through post() (already in STORE) */
   }
   function findDef(id) {
     var defs = tripDefs();
@@ -179,6 +181,43 @@
           t.dest_label = f.dest_label; t.dest_lat = f.dest_lat; t.dest_lng = f.dest_lng;
           t.depart_at = new Date(f.depart_at).toISOString(); t.seats_total = f.seats; t.price_per_seat = f.price == null ? null : f.price;
           resolve(clone(st));
+        }, 300);
+      });
+    },
+    /* Mirrors trip_post: f = { origin_*, dest_*, stops (array|null), seats, price, note, departures[ISO], returns[ISO] } -> { trip_ids } | { error } */
+    post: function (token, f) {
+      return new Promise(function (resolve, reject) {
+        setTimeout(function () {
+          if (shouldFail()) { reject(new Error('mock post failure')); return; }
+          if (rawState() === 'invalid') { resolve({ error: 'invalid_token' }); return; }
+          function num(n, lim) { return typeof n === 'number' && isFinite(n) && Math.abs(n) <= lim; }
+          var deps = f.departures || [], rets = f.returns || [], stops = f.stops == null ? [] : f.stops;
+          var dk = function (iso) { return new Date(iso).toDateString(); };
+          var uniq = function (a) { return a.map(dk).filter(function (k, i, arr) { return arr.indexOf(k) === i; }).length === a.length; };
+          var bad = !f.origin_label || !f.dest_label || !num(f.origin_lat, 90) || !num(f.dest_lat, 90) || !num(f.origin_lng, 180) || !num(f.dest_lng, 180) ||
+            !(f.seats >= 1 && f.seats <= 8 && Math.floor(f.seats) === f.seats) || (f.price != null && f.price < 0) || (f.note != null && f.note.length > 300) ||
+            !Array.isArray(stops) || stops.length > 5 ||
+            stops.some(function (x) { return !x || !x.label || !num(x.lat, 90) || !num(x.lng, 180); }) ||
+            deps.length < 1 || deps.length > 7 || rets.length > 7 || !uniq(deps) || !uniq(rets) ||
+            deps.concat(rets).some(function (iso) { return isNaN(new Date(iso).getTime()); });
+          if (bad) { resolve({ error: 'invalid_input' }); return; }
+          if (deps.concat(rets).some(function (iso) { return new Date(iso).getTime() < Date.now(); })) { resolve({ error: 'past_time' }); return; }
+          var ids = [];
+          function add(iso, rev) {
+            var id = 'trip-new-' + (++postSeq);
+            var o = { label: f.origin_label, lat: f.origin_lat, lng: f.origin_lng }, d = { label: f.dest_label, lat: f.dest_lat, lng: f.dest_lng };
+            var st = stops.length ? stops.slice() : null;
+            if (rev) { var t = o; o = d; d = t; if (st) st.reverse(); }
+            STORE[id] = { trip: { id: id, status: 'draft', driver_name: 'Test Driver',
+              origin_label: o.label, origin_lat: o.lat, origin_lng: o.lng, dest_label: d.label, dest_lat: d.lat, dest_lng: d.lng,
+              depart_at: new Date(iso).toISOString(), seats_total: f.seats, price_per_seat: f.price == null ? null : f.price,
+              stops: st, note: f.note || null, join_url: null }, bookings: [] };
+            POSTED.push({ id: id, off: 0, key: 'draft' });
+            ids.push(id);
+          }
+          deps.forEach(function (iso) { add(iso, false); });
+          rets.forEach(function (iso) { add(iso, true); });
+          resolve({ trip_ids: ids });
         }, 300);
       });
     },
