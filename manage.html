@@ -7,6 +7,7 @@
 <meta name="theme-color" content="#008069">
 <link rel="icon" type="image/png" href="/logo.png">
 <title>Manage ride · Pathfynder</title>
+<script>try{var __t=localStorage.getItem("pf_theme");if(__t==="light"||__t==="dark")document.documentElement.setAttribute("data-theme",__t);}catch(e){}</script>
 <style>
 :root{
   --header:#008069; --header-text:#FFFFFF; --header-sub:rgba(255,255,255,.82);
@@ -57,6 +58,47 @@ button{font:inherit}
 .app-bar__sub{margin:0;font-size:12.5px;color:var(--header-sub)}
 .profile-btn{margin-left:auto;flex:none;width:40px;height:40px;border-radius:50%;border:0;padding:0;background:rgba(255,255,255,.16);color:var(--header-text);display:grid;place-items:center;cursor:pointer}
 .profile-btn svg{width:22px;height:22px}
+
+/* Profile screen */
+.pf-bar__inner{display:flex;align-items:center;gap:8px;min-height:56px;padding:8px 8px}
+.pf-back{flex:none;width:44px;height:44px;border-radius:50%;border:0;padding:0;background:transparent;color:var(--header-text);display:grid;place-items:center;cursor:pointer}
+.pf-back svg{width:24px;height:24px}
+.pf-wrap{padding:16px;display:flex;flex-direction:column;gap:14px;max-width:560px;margin:0 auto}
+.pf-card{background:var(--card);border:1px solid var(--divider);border-radius:14px;padding:14px 16px}
+.pf-h{margin:0 0 10px;font-size:12.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text-2)}
+.pf-head{display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center}
+.pf-avatar-wrap{position:relative;width:96px;height:96px}
+.pf-avatar{width:96px;height:96px;border-radius:50%;background:var(--sel-border);color:#FFFFFF;display:grid;place-items:center;font-size:34px;font-weight:600;overflow:hidden}
+.pf-avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.pf-cam{position:absolute;right:-2px;bottom:-2px;width:36px;height:36px;border-radius:50%;border:2px solid var(--card);background:var(--cta);color:var(--cta-text);display:grid;place-items:center;padding:0;cursor:pointer}
+.pf-cam svg,.pf-pencil svg,.pf-lock svg,.pf-row-ic svg{width:18px;height:18px}
+.pf-name{display:flex;align-items:center;gap:6px;justify-content:center;font-size:20px;font-weight:600;min-width:0}
+.pf-name span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:230px}
+.pf-pencil{width:36px;height:36px;border-radius:50%;border:0;background:transparent;color:var(--primary);display:grid;place-items:center;padding:0;cursor:pointer}
+.pf-edit{display:flex;flex-direction:column;gap:8px;width:100%}
+.pf-input{width:100%;min-height:44px;border:1px solid var(--divider);border-radius:10px;background:var(--muted-card);color:var(--text);font:inherit;font-size:16px;padding:0 12px}
+.pf-edit__btns{display:flex;gap:8px}
+.pf-edit__btns .btn{flex:1}
+.pf-err{margin:0;font-size:13px;color:var(--danger)}
+.pf-row{display:flex;align-items:center;gap:12px;min-height:48px;color:var(--text);text-decoration:none}
+.pf-row__t{flex:1;min-width:0}
+.pf-row__t b{display:block;font-size:15px;font-weight:600}
+.pf-row__t span{display:block;font-size:13px;color:var(--text-2);margin-top:2px}
+.pf-lock,.pf-row-ic{flex:none;color:var(--text-2);display:grid;place-items:center}
+.pf-row-ic{color:var(--primary)}
+.pf-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pf-stat{background:var(--muted-card);border:1px solid var(--divider);border-radius:12px;padding:12px}
+.pf-stat b{display:block;font-size:20px;font-weight:700;color:var(--text)}
+.pf-stat span{display:block;font-size:12.5px;color:var(--text-2);margin-top:2px}
+.pf-switch{flex:none;position:relative;width:52px;height:32px;border-radius:16px;border:0;padding:0;background:var(--divider);cursor:pointer;transition:background .15s}
+.pf-switch::after{content:"";position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:50%;background:#FFFFFF;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .15s}
+.pf-switch[aria-checked="true"]{background:var(--primary)}
+.pf-switch[aria-checked="true"]::after{transform:translateX(20px)}
+.pf-switch:disabled{opacity:.5;cursor:default}
+.pf-seg{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:var(--muted-card);border:1px solid var(--divider);border-radius:12px;padding:4px}
+.pf-seg button{min-height:40px;border:0;border-radius:9px;background:transparent;color:var(--text);font-size:14.5px;font-weight:600;cursor:pointer}
+.pf-seg button[aria-pressed="true"]{background:var(--cta);color:var(--cta-text)}
+.pf-skel{height:120px;border-radius:14px;background:var(--card);border:1px solid var(--divider)}
 
 /* Date strip */
 .date-strip{padding:12px 0 4px}
@@ -280,6 +322,8 @@ button{font:inherit}
 })();
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="/js/pf-notify-v5.js" defer></script>
+<script src="/js/pf-install-sheet-v2.js" defer></script>
 <script>
 (function () {
 'use strict';
@@ -497,6 +541,7 @@ return { haversineKm: haversineKm, buildStops: buildStops, dedupeStops: dedupeSt
 /* ---------- State ---------- */
 var STATE = {
   token: null, isMock: false, payload: null, trips: [], selectedDate: null, selectedTripId: null, stripScroll: false, loading: true, errorType: null,
+  view: 'home', profile: null, profileLoading: false, profileError: null, editingName: false, nameDraft: '', nameError: null, notifBusy: false,
   heroSlide: 1, slideAuto: true, pendingKey: null, expanded: {}, sheet: null,
   gps: { fix: null, label: null, denied: false },
   routeThrottle: { ts: 0, lat: null, lng: null }
@@ -531,8 +576,22 @@ function realAction(token, tripId, action, bookingId) {
     return res.data;
   });
 }
+function realProfileGet(token) {
+  return db.rpc('driver_profile_get', { p_token: token }).then(function (res) {
+    if (res.error) throw res.error;
+    return res.data;
+  });
+}
+function realProfileUpdate(token, patch) {
+  return db.rpc('driver_profile_update', { p_token: token, p_name: patch.name == null ? null : patch.name, p_photo: patch.photo == null ? null : patch.photo }).then(function (res) {
+    if (res.error) throw res.error;
+    return res.data;
+  });
+}
 function apiList() { return STATE.isMock ? window.PF_MANAGE_MOCK.list(STATE.token) : realList(STATE.token); }
 function apiGet(tripId) { return STATE.isMock ? window.PF_MANAGE_MOCK.get(STATE.token, tripId) : realGet(STATE.token, tripId); }
+function apiProfileGet() { return STATE.isMock ? window.PF_MANAGE_MOCK.profile(STATE.token) : realProfileGet(STATE.token); }
+function apiProfileUpdate(patch) { return STATE.isMock ? window.PF_MANAGE_MOCK.updateProfile(STATE.token, patch) : realProfileUpdate(STATE.token, patch); }
 function apiAction(action, bookingId) { return STATE.isMock ? window.PF_MANAGE_MOCK.action(STATE.token, action, bookingId, STATE.selectedTripId) : realAction(STATE.token, STATE.selectedTripId, action, bookingId); }
 
 function localDateKey(iso) {
@@ -862,7 +921,6 @@ function header() {
   return '<header class="app-bar"><div class="app-bar__inner">' +
     '<span class="brand"><img src="/logo.png" alt=""></span>' +
     '<div><h1 class="app-bar__title">Pathfynder</h1><p class="app-bar__sub">Driver home</p></div>' +
-    /* TODO: profile screen is not built yet; button does nothing for now. */
     '<button type="button" class="profile-btn" data-action="profile" aria-label="Profile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></button>' +
     '</div></header>';
 }
@@ -1177,7 +1235,13 @@ var PATHS = {
   userMinus: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 11h6"/>',
   userCheck: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="m16 11 2 2 4-4"/>',
   bellRing: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/><path d="M4 2C2.8 3.7 2 5.7 2 8"/><path d="M22 8c0-2.3-.8-4.3-2-6"/>',
-  checkCircle: '<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>'
+  checkCircle: '<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>',
+  arrowLeft: '<path d="M19 12H5"/><path d="m12 19-7-7 7-7"/>',
+  camera: '<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"/><circle cx="12" cy="13" r="3.5"/>',
+  pencil: '<path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/>',
+  lock: '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+  bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+  mail: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/>'
 };
 function ico(name) {
   return '<svg class="i" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + PATHS[name] + '</svg>';
@@ -1215,6 +1279,7 @@ function closeSheet() { STATE.sheet = null; sheetHtml(); }
 /* ---------- Full render ---------- */
 function render() {
   var app = document.getElementById('app');
+  if (STATE.view === 'profile') { app.classList.remove('has-bar'); renderProfile(app); sheetHtml(); return; }
   if (STATE.errorType) { app.classList.remove('has-bar'); app.innerHTML = errorPage(); sheetHtml(); return; }
   var oldStrip = document.getElementById('dateStrip');
   var keepScroll = oldStrip ? oldStrip.scrollLeft : 0;
@@ -1263,6 +1328,161 @@ function render() {
   }
 }
 
+/* ---------- Profile screen ---------- */
+var THEME_KEY = 'pf_theme';
+function getTheme() { try { var v = localStorage.getItem(THEME_KEY); return (v === 'light' || v === 'dark') ? v : 'system'; } catch (e) { return 'system'; } }
+function setTheme(v) {
+  try { if (v === 'light' || v === 'dark') { document.documentElement.setAttribute('data-theme', v); localStorage.setItem(THEME_KEY, v); } else { document.documentElement.removeAttribute('data-theme'); localStorage.removeItem(THEME_KEY); } } catch (e) {}
+}
+function initials(name) {
+  var p = String(name || '').trim().split(/\s+/).filter(Boolean);
+  if (!p.length) return '?';
+  return (p[0].charAt(0) + (p.length > 1 ? p[p.length - 1].charAt(0) : '')).toUpperCase();
+}
+function fmtMemberSince(iso) {
+  var d = new Date(iso);
+  return isNaN(d.getTime()) ? '-' : d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+}
+function fmtCAD(n) { var v = Number(n) || 0; return '$' + v.toLocaleString('en-CA', { minimumFractionDigits: v % 1 ? 2 : 0, maximumFractionDigits: 2 }); }
+/* Notification switch state: { on, disabled, hint } */
+function notifView() {
+  var p = STATE.profile || {};
+  var st = (window.PFNotify && window.PFNotify.state) ? window.PFNotify.state() : 'unsupported';
+  var on = !!p.notifications_enabled && (STATE.isMock || st === 'granted');
+  if (st === 'denied') return { on: false, disabled: true, hint: 'Notifications are blocked in your browser settings. Allow them for pathfynder.ca to turn this on.' };
+  if (st === 'ios-needs-install') return { on: false, disabled: false, hint: 'On iPhone, add Pathfynder to your Home Screen first. Tap to see how.' };
+  if (st === 'ios-too-old') return { on: false, disabled: true, hint: 'Alerts need iOS 16.4 or newer.' };
+  if (st === 'unsupported' || st === 'in-app-browser') return { on: false, disabled: true, hint: 'This browser cannot receive alerts. Open Pathfynder in Safari or Chrome.' };
+  return { on: on, disabled: STATE.notifBusy, hint: '' };
+}
+function profileHeader() {
+  return '<header class="app-bar"><div class="pf-bar__inner"><button type="button" class="pf-back" data-action="pf-back" aria-label="Back">' + ico('arrowLeft') + '</button><div><h1 class="app-bar__title">Profile</h1></div></div></header>';
+}
+function profileBody(p) {
+  var avatar = p.photo_url ? '<img src="' + esc(p.photo_url) + '" alt="">' : esc(initials(p.name));
+  var nameBlock = STATE.editingName
+    ? '<div class="pf-edit"><input class="pf-input" id="pfNameInput" type="text" maxlength="60" autocomplete="name" aria-label="Your name" value="' + esc(STATE.nameDraft) + '">' +
+      (STATE.nameError ? '<p class="pf-err">' + esc(STATE.nameError) + '</p>' : '') +
+      '<div class="pf-edit__btns"><button type="button" class="btn btn-secondary" data-action="pf-name-cancel">Cancel</button><button type="button" class="btn btn-cta" data-action="pf-name-save">Save</button></div></div>'
+    : '<div class="pf-name"><span>' + esc(p.name || 'Driver') + '</span><button type="button" class="pf-pencil" data-action="pf-name-edit" aria-label="Edit name">' + ico('pencil') + '</button></div>';
+  var s = p.stats || {};
+  var nv = notifView();
+  var th = getTheme();
+  function seg(v, label) { return '<button type="button" data-action="pf-theme" data-id="' + v + '" aria-pressed="' + (th === v) + '">' + label + '</button>'; }
+  return '<div class="pf-wrap">' +
+    '<section class="pf-card pf-head"><div class="pf-avatar-wrap"><div class="pf-avatar">' + avatar + '</div><button type="button" class="pf-cam" data-action="pf-photo" aria-label="Change photo">' + ico('camera') + '</button></div>' +
+      '<input type="file" id="pfPhotoInput" accept="image/*" hidden>' + nameBlock + '</section>' +
+    '<section class="pf-card"><h2 class="pf-h">WhatsApp account</h2><div class="pf-row"><span class="pf-lock">' + ico('lock') + '</span><div class="pf-row__t"><b>' + esc(p.whatsapp_masked || '') + '</b><span>Linked to your Pathfynder account. Can\'t be changed here.</span></div></div></section>' +
+    '<section class="pf-card"><h2 class="pf-h">Rides summary</h2><div class="pf-stats">' +
+      '<div class="pf-stat"><b>' + esc(Number(s.trips_completed) || 0) + '</b><span>Trips completed</span></div>' +
+      '<div class="pf-stat"><b>' + esc(fmtMemberSince(s.member_since)) + '</b><span>Member since</span></div>' +
+      '<div class="pf-stat"><b>' + esc(Number(s.passengers_drove) || 0) + '</b><span>Passengers drove</span></div>' +
+      '<div class="pf-stat"><b>' + esc(fmtCAD(s.total_earned)) + '</b><span>Total earned (CAD)</span></div></div></section>' +
+    '<section class="pf-card"><h2 class="pf-h">Notification alerts</h2><div class="pf-row"><span class="pf-row-ic">' + ico('bell') + '</span><div class="pf-row__t"><b>Ride alerts</b><span id="pfNotifSub">' + esc(nv.hint || (nv.on ? 'On for this device' : 'Off')) + '</span></div>' +
+      '<button type="button" class="pf-switch" id="pfNotifSwitch" role="switch" data-action="pf-notif" aria-checked="' + nv.on + '" aria-label="Notification alerts"' + (nv.disabled ? ' disabled' : '') + '></button></div></section>' +
+    '<section class="pf-card"><h2 class="pf-h">Appearance</h2><div class="pf-seg" role="group" aria-label="Theme">' + seg('light', 'Light') + seg('dark', 'Dark') + seg('system', 'System') + '</div></section>' +
+    '<section class="pf-card"><h2 class="pf-h">Contact support</h2><a class="pf-row" id="pfSupport" href="mailto:pathfynder.ca@gmail.com?subject=Pathfynder%20driver%20support"><span class="pf-row-ic">' + ico('mail') + '</span><div class="pf-row__t"><b>Email support</b><span>We usually reply within a day.</span></div></a></section>' +
+    '</div>';
+}
+function renderProfile(app) {
+  var body;
+  if (STATE.profileLoading && !STATE.profile) body = '<div class="pf-wrap"><div class="pf-skel"></div><div class="pf-skel"></div><div class="pf-skel"></div></div>';
+  else if (!STATE.profile) body = '<div class="pf-wrap"><div class="pf-card"><p class="pf-err">' + esc(STATE.profileError || "We couldn't load your profile. Please try again.") + '</p><button type="button" class="btn btn-secondary btn-full" data-action="pf-retry">Try again</button></div></div>';
+  else body = profileBody(STATE.profile);
+  app.innerHTML = profileHeader() + body;
+  var inp = document.getElementById('pfNameInput');
+  if (inp) { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
+  var f = document.getElementById('pfPhotoInput');
+  if (f) f.onchange = function () { if (f.files && f.files[0]) handlePhoto(f.files[0]); f.value = ''; };
+  window.scrollTo(0, 0);
+}
+function loadProfile() {
+  STATE.profileLoading = true; STATE.profileError = null; render();
+  apiProfileGet().then(function (data) {
+    if (!data || data.error) throw new Error((data && data.error) || 'empty');
+    STATE.profile = data; STATE.profileLoading = false; render();
+  }).catch(function (e) {
+    console.error('[manage] profile load failed', e);
+    STATE.profileLoading = false; STATE.profile = null;
+    STATE.profileError = "We couldn't load your profile right now. Please try again in a moment.";
+    render();
+  });
+}
+function saveProfile(patch, okMsg) {
+  return apiProfileUpdate(patch).then(function (data) {
+    if (!data || data.error) throw new Error((data && data.error) || 'empty');
+    if (patch.name != null) STATE.profile.name = data.name || patch.name;
+    if (patch.photo != null) STATE.profile.photo_url = data.photo_url || patch.photo;
+    if (okMsg) toast(okMsg);
+    return true;
+  }).catch(function (e) {
+    console.error('[manage] profile save failed', e);
+    toast("Couldn't save that. Please try again.");
+    return false;
+  });
+}
+/* Crops to a centred square and resizes to 256px, returns a JPEG data URL. */
+function resizeImage(file) {
+  return new Promise(function (resolve, reject) {
+    var url = URL.createObjectURL(file);
+    var img = new Image();
+    img.onload = function () {
+      try {
+        var side = Math.min(img.naturalWidth, img.naturalHeight);
+        var c = document.createElement('canvas'); c.width = 256; c.height = 256;
+        c.getContext('2d').drawImage(img, (img.naturalWidth - side) / 2, (img.naturalHeight - side) / 2, side, side, 0, 0, 256, 256);
+        URL.revokeObjectURL(url);
+        resolve(c.toDataURL('image/jpeg', 0.85));
+      } catch (e) { URL.revokeObjectURL(url); reject(e); }
+    };
+    img.onerror = function () { URL.revokeObjectURL(url); reject(new Error('bad_image')); };
+    img.src = url;
+  });
+}
+function handlePhoto(file) {
+  if (!/^image\//.test(file.type)) { toast('Please choose an image.'); return; }
+  resizeImage(file).then(function (dataUrl) {
+    return saveProfile({ photo: dataUrl }, 'Photo updated');
+  }).then(function () { render(); }).catch(function () { toast("Couldn't use that image. Try another."); });
+}
+function toggleNotif() {
+  var nv = notifView();
+  if (nv.disabled || STATE.notifBusy) return;
+  if (window.PFInstall && window.PFInstall.needed()) { window.PFInstall.open(); return; }
+  var turnOn = !nv.on;
+  if (STATE.isMock) { STATE.profile.notifications_enabled = turnOn; render(); return; } /* mock: don't hit the real notify RPCs */
+  STATE.notifBusy = true; render();
+  var run = turnOn ? window.PFNotify.enable(STATE.token) : window.PFNotify.disable(STATE.token);
+  run.then(function () {
+    STATE.profile.notifications_enabled = turnOn && window.PFNotify.state() === 'granted';
+  }).catch(function (e) {
+    console.error('[manage] notif toggle failed', e);
+    toast("Couldn't change alerts. Please try again.");
+  }).then(function () { STATE.notifBusy = false; render(); });
+}
+/* Returns true when handled. */
+function profileAction(action, t) {
+  if (action === 'profile') { STATE.view = 'profile'; STATE.editingName = false; if (STATE.profile) render(); if (!STATE.profile || !STATE.profileLoading) loadProfile(); return true; }
+  if (action === 'pf-back') { STATE.view = 'home'; STATE.editingName = false; render(); return true; }
+  if (action === 'pf-retry') { loadProfile(); return true; }
+  if (action === 'pf-photo') { var f = document.getElementById('pfPhotoInput'); if (f) f.click(); return true; }
+  if (action === 'pf-name-edit') { STATE.editingName = true; STATE.nameDraft = STATE.profile.name || ''; STATE.nameError = null; render(); return true; }
+  if (action === 'pf-name-cancel') { STATE.editingName = false; STATE.nameError = null; render(); return true; }
+  if (action === 'pf-name-save') {
+    var inp = document.getElementById('pfNameInput');
+    var v = inp ? inp.value.trim() : '';
+    if (!v) { STATE.nameDraft = ''; STATE.nameError = 'Please enter your name.'; render(); return true; }
+    saveProfile({ name: v }, 'Name updated').then(function (ok) {
+      if (ok) { STATE.editingName = false; STATE.nameError = null; } else { STATE.nameDraft = v; }
+      render();
+    });
+    return true;
+  }
+  if (action === 'pf-theme') { setTheme(t.getAttribute('data-id')); render(); return true; }
+  if (action === 'pf-notif') { toggleNotif(); return true; }
+  return false;
+}
+
 /* ---------- Events ---------- */
 document.body.addEventListener('click', function (e) {
   var t = e.target.closest('[data-action]');
@@ -1271,7 +1491,7 @@ document.body.addEventListener('click', function (e) {
   var action = t.getAttribute('data-action');
   var id = t.getAttribute('data-id');
 
-  if (action === 'profile') { return; } /* TODO: profile screen */
+  if (action.indexOf('pf-') === 0 || action === 'profile') { if (profileAction(action, t)) return; }
   if (action === 'pick-trip') { selectTrip(t.getAttribute('data-id')); return; }
   if (action === 'pick-date') { selectDate(t.getAttribute('data-date')); return; }
   if (action === 'share') { doShare(); return; }
