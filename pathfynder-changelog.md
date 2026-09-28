@@ -165,3 +165,4 @@
   - New filled `i-whatsapp` sprite icon replaces the chat bubble on both WhatsApp buttons.
   - Verified: `node --check`, Playwright at 390px light/dark (list + detail sheet).
   - Files: explore.html.
+- 2026-09-28 — Manage ride page: matched Explore's calmer WhatsApp green. `--cta` is now #008069 with white text (light) / #005C4B with #E9EDEF text (dark), plus a `--cta-hover` #006D5B. Covers Start trip, Picked up, Dropped off (when it's the primary button), sheet confirm and "Message us on WhatsApp", which also gets an inline WhatsApp logo. The hero progress bar (`--hero-fill`) is unchanged. Verified: `node --check`, Playwright at 390px light/dark (draft, active, invalid states + start-trip sheet). Files: manage.html.

@@ -10,7 +10,7 @@
 <style>
 :root{
   --header:#008069; --header-text:#FFFFFF; --header-sub:rgba(255,255,255,.82);
-  --primary:#008069; --cta:#25D366; --cta-text:#111B21;
+  --primary:#008069; --cta:#008069; --cta-text:#FFFFFF; --cta-hover:#006D5B;
   --bg:#F0F2F5; --card:#FFFFFF; --muted-card:#F7F8FA;
   --text:#111B21; --text-2:#667781; --divider:#E9EDEF;
   --chip-soft:#D9FDD3; --chip-soft-text:#006D5B; --danger:#D93025;
@@ -20,7 +20,7 @@
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     --header:#202C33; --header-text:#E9EDEF; --header-sub:#8696A0;
-    --primary:#00A884; --cta:#00A884; --cta-text:#111B21;
+    --primary:#00A884; --cta:#005C4B; --cta-text:#E9EDEF; --cta-hover:#006D5B;
     --bg:#0B141A; --card:#202C33; --muted-card:#182229;
     --text:#E9EDEF; --text-2:#8696A0; --divider:#2A3942;
     --chip-soft:#0A332C; --chip-soft-text:#25D366; --danger:#F15C6D;
@@ -30,7 +30,7 @@
 }
 :root[data-theme="dark"]{
   --header:#202C33; --header-text:#E9EDEF; --header-sub:#8696A0;
-  --primary:#00A884; --cta:#00A884; --cta-text:#111B21;
+  --primary:#00A884; --cta:#005C4B; --cta-text:#E9EDEF; --cta-hover:#006D5B;
   --bg:#0B141A; --card:#202C33; --muted-card:#182229;
   --text:#E9EDEF; --text-2:#8696A0; --divider:#2A3942;
   --chip-soft:#0A332C; --chip-soft-text:#25D366; --danger:#F15C6D;
@@ -68,6 +68,8 @@ button{font:inherit}
 .btn{border:0;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;min-height:44px;padding:0 16px;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none}
 .btn:disabled{opacity:.5;cursor:default}
 .btn-cta{background:var(--cta);color:var(--cta-text);min-height:48px}
+.btn-cta:hover:not(:disabled){background:var(--cta-hover)}
+.btn .i{width:19px;height:19px;flex:none}
 .btn-secondary{background:var(--muted-card);color:var(--text);border:1px solid var(--divider)}
 .btn-danger{background:var(--danger);color:#FFFFFF}
 .btn-full{width:100%}
@@ -681,7 +683,7 @@ function errorPage() {
   return header() + '<div class="error-page">' +
     '<h2>This link doesn’t work</h2>' +
     '<p>We couldn’t find that ride. The link may be old or mistyped. Message us on WhatsApp and we’ll help you out.</p>' +
-    '<a class="btn btn-cta" href="https://wa.me/916356600421?text=Hi" target="_blank" rel="noopener">Message us on WhatsApp</a>' +
+    '<a class="btn btn-cta" href="https://wa.me/916356600421?text=Hi" target="_blank" rel="noopener"><svg class="i" viewBox="0 0 24 24" width="19" height="19" aria-hidden="true"><path fill="currentColor" stroke="none" d="M12.04 2a9.9 9.9 0 0 0-8.5 14.98L2 22l5.17-1.5A9.9 9.9 0 1 0 12.04 2zm0 18.1a8.2 8.2 0 0 1-4.18-1.15l-.3-.18-3.07.89.9-2.99-.2-.31a8.2 8.2 0 1 1 6.85 3.74zm4.5-6.14c-.25-.12-1.46-.72-1.69-.8-.23-.09-.39-.13-.56.12-.16.25-.64.8-.78.97-.15.16-.29.18-.54.06a6.7 6.7 0 0 1-3.34-2.92c-.25-.43.25-.4.72-1.34.08-.16.04-.3-.02-.43l-.76-1.83c-.2-.48-.4-.41-.56-.42h-.47a.9.9 0 0 0-.65.3 2.7 2.7 0 0 0-.85 2.02c0 1.19.87 2.34.99 2.5.12.16 1.71 2.61 4.14 3.66 1.54.66 2.14.72 2.91.6.47-.07 1.46-.6 1.66-1.17.2-.58.2-1.07.14-1.17-.06-.1-.22-.16-.47-.28z"/></svg>Message us on WhatsApp</a>' +
     '</div>';
 }
 
