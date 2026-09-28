@@ -188,3 +188,4 @@
     - In-card action buttons are 44px tall.
   - Verified: `node --check`, and Playwright at 393/375/360/340px in light/dark found no button overflow and no page errors.
   - Files: manage.html.
+- 2026-09-28 — Manage ride: full button audit with Playwright (dots/swipe, Invite, Start/End sheets, Remove + Message-first, Next stop Picked up/Dropped off walk, Call/Message/I'm outside links, Open in Maps mobile + desktop, expand/collapse, rollback, invalid page) — all pass. Fixes: `.ns-ic` and `.pax-contact` contact buttons now 44px; `doShare()` falls back to copy + toast when `navigator.share` fails for a reason other than user cancel. Files: manage.html.
