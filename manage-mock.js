@@ -2,7 +2,8 @@
    Local mock data for /manage (manage.html), matching the
    trip_manage_get / trip_manage_action RPC contract (see plan for
    /m/:token). Loaded only when ?mock=1. In-memory only, per query
-   `state` param: draft | active (default) | completed | invalid.
+   `state` param: draft | active | completed | invalid (adds a trip today
+   with that status; no param = no trip today, empty state shows).
    ?fail=1 makes trip_manage_action reject, to test optimistic rollback.
    TODO: delete this file once trip_manage_get / trip_manage_action ship.
    --------------------------------------------------------------------- */
@@ -14,7 +15,7 @@
   function isoOffset(ms) { return new Date(Date.now() + ms).toISOString(); }
   function clone(o) { return o == null ? o : JSON.parse(JSON.stringify(o)); }
 
-  function buildPayload(stateKey) {
+  function buildPayload(stateKey, tripId, departAt, reverse) {
     if (stateKey === 'invalid') return null;
 
     var tripStatus = stateKey === 'draft' ? 'draft' : (stateKey === 'completed' ? 'completed' : 'active');
@@ -46,10 +47,10 @@
 
     return {
       trip: {
-        id: 'trip-mock', status: tripStatus, driver_name: 'Test Driver',
-        origin_label: ORIGIN.label, origin_lat: ORIGIN.lat, origin_lng: ORIGIN.lng,
-        dest_label: DEST.label, dest_lat: DEST.lat, dest_lng: DEST.lng,
-        depart_at: '2026-09-24T18:30:00', seats_total: 4, price_per_seat: 10,
+        id: tripId || 'trip-mock', status: tripStatus, driver_name: 'Test Driver',
+        origin_label: (reverse ? DEST : ORIGIN).label, origin_lat: (reverse ? DEST : ORIGIN).lat, origin_lng: (reverse ? DEST : ORIGIN).lng,
+        dest_label: (reverse ? ORIGIN : DEST).label, dest_lat: (reverse ? ORIGIN : DEST).lat, dest_lng: (reverse ? ORIGIN : DEST).lng,
+        depart_at: departAt || '2026-09-24T18:30:00', seats_total: 4, price_per_seat: 10,
         join_url: 'https://pathfynder.ca/j/DEMO42'
       },
       bookings: bookings
@@ -57,34 +58,74 @@
   }
 
   var STORE = {};
-  function stateKey() {
-    try { return new URLSearchParams(location.search).get('state') || 'active'; }
-    catch (e) { return 'active'; }
+  var lastTripId = null;
+  function rawState() {
+    try { return new URLSearchParams(location.search).get('state'); }
+    catch (e) { return null; }
   }
   function shouldFail() {
     try { return new URLSearchParams(location.search).get('fail') === '1'; }
     catch (e) { return false; }
   }
-  function getStore() {
-    var k = stateKey();
-    if (!(k in STORE)) STORE[k] = buildPayload(k);
-    return STORE[k];
+  function dayAt(off, hh, mm) {
+    var d = new Date(); d.setHours(hh == null ? 18 : hh, mm == null ? 30 : mm, 0, 0); d.setDate(d.getDate() + off);
+    return d.toISOString();
+  }
+  /* Trip list relative to today: -4/-3/-2 completed, +2 upcoming (draft).
+     ?state=draft|active|completed additionally adds a trip today. */
+  function tripDefs() {
+    var defs = [
+      { id: 'trip-m4', off: -4, key: 'completed' },
+      { id: 'trip-m3', off: -3, key: 'completed' },
+      { id: 'trip-m2', off: -2, key: 'completed' },
+      { id: 'trip-p2', off: 2, key: 'draft' },
+      { id: 'trip-p2b', off: 2, key: 'draft', hh: 21, mm: 0, reverse: true } /* second trip same day, Essex -> Windsor */
+    ];
+    var raw = rawState();
+    if (raw === 'draft' || raw === 'active' || raw === 'completed') defs.push({ id: 'trip-today', off: 0, key: raw });
+    defs.sort(function (a, b) { return (a.off - b.off) || ((a.hh == null ? 18 : a.hh) - (b.hh == null ? 18 : b.hh)); });
+    return defs;
+  }
+  function findDef(id) {
+    var defs = tripDefs();
+    for (var i = 0; i < defs.length; i++) if (defs[i].id === id) return defs[i];
+    return null;
+  }
+  function getStore(id) {
+    var def = findDef(id);
+    if (!def) return null;
+    if (!(id in STORE)) STORE[id] = buildPayload(def.key, id, dayAt(def.off, def.hh, def.mm), def.reverse);
+    return STORE[id];
   }
 
   global.PF_MANAGE_MOCK = {
-    get: function () {
+    list: function () {
       return new Promise(function (resolve) {
         setTimeout(function () {
-          var st = getStore();
+          if (rawState() === 'invalid') { resolve({ error: 'invalid_token' }); return; }
+          resolve({ trips: tripDefs().map(function (d) {
+            var st = STORE[d.id];
+            return { id: d.id, depart_at: dayAt(d.off, d.hh, d.mm), status: st ? st.trip.status : d.key,
+              origin_label: (d.reverse ? DEST : ORIGIN).label, dest_label: (d.reverse ? ORIGIN : DEST).label };
+          }) });
+        }, 200);
+      });
+    },
+    get: function (token, tripId) {
+      return new Promise(function (resolve) {
+        setTimeout(function () {
+          if (rawState() === 'invalid') { resolve({ error: 'invalid_token' }); return; }
+          lastTripId = tripId;
+          var st = getStore(tripId);
           resolve(st ? clone(st) : { error: 'invalid_token' });
         }, 300);
       });
     },
-    action: function (token, action, bookingId) {
+    action: function (token, action, bookingId, tripId) {
       return new Promise(function (resolve, reject) {
         setTimeout(function () {
           if (shouldFail()) { reject(new Error('mock action failure')); return; }
-          var st = getStore();
+          var st = getStore(tripId || lastTripId);
           if (!st) { resolve({ error: 'invalid_token' }); return; }
           var now = new Date().toISOString();
           if (action === 'start') st.trip.status = 'active';

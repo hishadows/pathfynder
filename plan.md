@@ -20,11 +20,13 @@ One task per session. Status: todo / done / parked.
 
 5. **DB: trips + bookings** — one trip per source ride (unique), join code + private manage token, RPCs `trip_manage_get` / `trip_manage_action`. Plan the schema first and ask Pranay before applying.
    - Done when: schema plan approved, migration applied, both RPCs callable by anon with only token/code access.
-   - Status: todo
+   - Note (2026-09-28): the driver home also needs `trip_manage_list(p_token)` → `{ trips: [{id, depart_at, status}] }` and `trip_manage_get`/`trip_manage_action` taking `p_trip_id` (driver-level token, not per-trip).
+   - Status: done (2026-09-28) — built on existing tables instead of new ones: `drivers` (per-driver `manage_token`), `driver_routines` = trips, `passenger_requests` (ride_id) = bookings. RPCs `trip_manage_list/get/action` + service-role-only `driver_manage_url(p_wa_id)` for n8n.
 
 6. **Driver manage page `/m/<token>`** — built from the Claude Design file in `design/`.
    - Done when: `/m/<token>` loads the trip via `trip_manage_get` and actions work via `trip_manage_action`.
    - Status: done against mock (2026-09-28) — built from Pranay's screenshot, not `design/`; goes live once task 5 ships the RPCs
+   - 2026-09-28: now the driver home — date strip (trip dates + Today), empty state (Post a trip → WhatsApp bot, Explore rides), profile icon placeholder, driver info removed from trip details slide. Done against mock.
 
 7. **Passenger join page `/j/<code>`** — pickup, drop-off, time, "for work" toggle + shift start, note, "Confirm on WhatsApp".
    - Done when: `/j/<code>` shows the trip and "Confirm on WhatsApp" opens WhatsApp with the filled-in details.
@@ -63,3 +65,5 @@ One task per session. Status: todo / done / parked.
 - 2026-09-28 — Manage page: new "Next stop" hero slide (first of 3, every state) with segmented stop progress + car marker, full pickup address, per-passenger Call/Message, notes, Picked up/Dropped off moved off passenger cards. Booking gets optional `note`. Open: RPCs (task 5); real-phone check.
 - 2026-09-28 — Manage ride sizing fix (from Pranay's iPhone screenshot): button labels never wrap, buttons 14.5px, Next stop address 15px/600 (2-line clamp), 40px call/WA circles, 44px in-card buttons, Invite gets a wider share of the bar and shortens to "Invite" under 375px. Open: recheck on iPhone (real SF font is wider than our test font).
 - 2026-09-28 — Manage page button audit (Playwright, every button in every state): all working. Fixed Call/Message tap targets (40/38px → 44px) and Invite now falls back to copy when the share sheet errors. Invite link targets the not-yet-built join page (expected).
+- 2026-09-28 — Manage page → driver home: date strip (trip dates + Today), empty state with Post a trip (WhatsApp bot) / Explore rides, profile icon (no page yet), driver info removed from trip slide. Mock only. Open: real path needs `trip_manage_list` + `p_trip_id` (task 5); two trips on one date show only the first.
+- 2026-09-28 — Task 5 + real links: migrations `driver_manage_tokens_and_trip_manage_rpcs`, `drivers_revoke_client_table_privileges`, `trip_manage_list_add_route_labels`; /m/<token> is now one link per driver. Days with 2+ trips show "N RIDES" + trip chips. Open: real link not browser-tested (sandbox can't reach Supabase); n8n must call `driver_manage_url` to send the link; `join_url` null until /j page exists.
