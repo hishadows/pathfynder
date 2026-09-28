@@ -15,7 +15,7 @@
   function isoOffset(ms) { return new Date(Date.now() + ms).toISOString(); }
   function clone(o) { return o == null ? o : JSON.parse(JSON.stringify(o)); }
 
-  function buildPayload(stateKey, tripId, departAt) {
+  function buildPayload(stateKey, tripId, departAt, reverse) {
     if (stateKey === 'invalid') return null;
 
     var tripStatus = stateKey === 'draft' ? 'draft' : (stateKey === 'completed' ? 'completed' : 'active');
@@ -48,8 +48,8 @@
     return {
       trip: {
         id: tripId || 'trip-mock', status: tripStatus, driver_name: 'Test Driver',
-        origin_label: ORIGIN.label, origin_lat: ORIGIN.lat, origin_lng: ORIGIN.lng,
-        dest_label: DEST.label, dest_lat: DEST.lat, dest_lng: DEST.lng,
+        origin_label: (reverse ? DEST : ORIGIN).label, origin_lat: (reverse ? DEST : ORIGIN).lat, origin_lng: (reverse ? DEST : ORIGIN).lng,
+        dest_label: (reverse ? ORIGIN : DEST).label, dest_lat: (reverse ? ORIGIN : DEST).lat, dest_lng: (reverse ? ORIGIN : DEST).lng,
         depart_at: departAt || '2026-09-24T18:30:00', seats_total: 4, price_per_seat: 10,
         join_url: 'https://pathfynder.ca/j/DEMO42'
       },
@@ -67,8 +67,8 @@
     try { return new URLSearchParams(location.search).get('fail') === '1'; }
     catch (e) { return false; }
   }
-  function dayAt(off) {
-    var d = new Date(); d.setHours(18, 30, 0, 0); d.setDate(d.getDate() + off);
+  function dayAt(off, hh, mm) {
+    var d = new Date(); d.setHours(hh == null ? 18 : hh, mm == null ? 30 : mm, 0, 0); d.setDate(d.getDate() + off);
     return d.toISOString();
   }
   /* Trip list relative to today: -4/-3/-2 completed, +2 upcoming (draft).
@@ -78,11 +78,12 @@
       { id: 'trip-m4', off: -4, key: 'completed' },
       { id: 'trip-m3', off: -3, key: 'completed' },
       { id: 'trip-m2', off: -2, key: 'completed' },
-      { id: 'trip-p2', off: 2, key: 'draft' }
+      { id: 'trip-p2', off: 2, key: 'draft' },
+      { id: 'trip-p2b', off: 2, key: 'draft', hh: 21, mm: 0, reverse: true } /* second trip same day, Essex -> Windsor */
     ];
     var raw = rawState();
     if (raw === 'draft' || raw === 'active' || raw === 'completed') defs.push({ id: 'trip-today', off: 0, key: raw });
-    defs.sort(function (a, b) { return a.off - b.off; });
+    defs.sort(function (a, b) { return (a.off - b.off) || ((a.hh == null ? 18 : a.hh) - (b.hh == null ? 18 : b.hh)); });
     return defs;
   }
   function findDef(id) {
@@ -93,7 +94,7 @@
   function getStore(id) {
     var def = findDef(id);
     if (!def) return null;
-    if (!(id in STORE)) STORE[id] = buildPayload(def.key, id, dayAt(def.off));
+    if (!(id in STORE)) STORE[id] = buildPayload(def.key, id, dayAt(def.off, def.hh, def.mm), def.reverse);
     return STORE[id];
   }
 
@@ -104,7 +105,8 @@
           if (rawState() === 'invalid') { resolve({ error: 'invalid_token' }); return; }
           resolve({ trips: tripDefs().map(function (d) {
             var st = STORE[d.id];
-            return { id: d.id, depart_at: dayAt(d.off), status: st ? st.trip.status : d.key };
+            return { id: d.id, depart_at: dayAt(d.off, d.hh, d.mm), status: st ? st.trip.status : d.key,
+              origin_label: (d.reverse ? DEST : ORIGIN).label, dest_label: (d.reverse ? ORIGIN : DEST).label };
           }) });
         }, 200);
       });

@@ -67,6 +67,10 @@ button{font:inherit}
 .date-pill__top{font-size:15px;font-weight:700;line-height:1.25}
 .date-pill__sub{font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2);line-height:1.3}
 .date-pill__sub--date{text-transform:none;letter-spacing:0;font-size:12px}
+.trip-chips{display:flex;gap:8px;overflow-x:auto;padding:4px 16px 6px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.trip-chips::-webkit-scrollbar{display:none}
+.trip-chip{flex:none;padding:8px 14px;border-radius:999px;border:1.5px solid var(--divider);background:var(--card);color:var(--text);font:inherit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+.trip-chip.is-selected{background:var(--sel-bg);border-color:var(--sel-border)}
 .date-pill.is-selected{background:var(--sel-bg);border-color:var(--sel-border)}
 
 /* Empty state */
@@ -484,28 +488,26 @@ function getToken() {
 
 /* ---------- API ---------- */
 function realList(token) {
-  /* TODO: trip_manage_list ships with task 5; until then the real path errors. */
   return db.rpc('trip_manage_list', { p_token: token }).then(function (res) {
     if (res.error) throw res.error;
     return res.data;
   });
 }
 function realGet(token, tripId) {
-  /* TODO: p_trip_id is added to trip_manage_get with task 5. */
   return db.rpc('trip_manage_get', { p_token: token, p_trip_id: tripId }).then(function (res) {
     if (res.error) throw res.error;
     return res.data;
   });
 }
-function realAction(token, action, bookingId) {
-  return db.rpc('trip_manage_action', { p_token: token, p_action: action, p_booking_id: bookingId || null }).then(function (res) {
+function realAction(token, tripId, action, bookingId) {
+  return db.rpc('trip_manage_action', { p_token: token, p_trip_id: tripId, p_action: action, p_booking_id: bookingId || null }).then(function (res) {
     if (res.error) throw res.error;
     return res.data;
   });
 }
 function apiList() { return STATE.isMock ? window.PF_MANAGE_MOCK.list(STATE.token) : realList(STATE.token); }
 function apiGet(tripId) { return STATE.isMock ? window.PF_MANAGE_MOCK.get(STATE.token, tripId) : realGet(STATE.token, tripId); }
-function apiAction(action, bookingId) { return STATE.isMock ? window.PF_MANAGE_MOCK.action(STATE.token, action, bookingId, STATE.selectedTripId) : realAction(STATE.token, action, bookingId); }
+function apiAction(action, bookingId) { return STATE.isMock ? window.PF_MANAGE_MOCK.action(STATE.token, action, bookingId, STATE.selectedTripId) : realAction(STATE.token, STATE.selectedTripId, action, bookingId); }
 
 function localDateKey(iso) {
   var d = new Date(iso);
@@ -513,9 +515,16 @@ function localDateKey(iso) {
   return d.getFullYear() + '-' + (m < 10 ? '0' : '') + m + '-' + (day < 10 ? '0' : '') + day;
 }
 function todayKey() { return localDateKey(new Date().toISOString()); }
+function tripsForDate(key) {
+  return STATE.trips.filter(function (t) { return localDateKey(t.depart_at) === key; });
+}
+/* Keeps the selected trip if it is on this date; else the active one, else the earliest. */
 function tripForDate(key) {
-  for (var i = 0; i < STATE.trips.length; i++) if (localDateKey(STATE.trips[i].depart_at) === key) return STATE.trips[i];
-  return null;
+  var list = tripsForDate(key);
+  if (!list.length) return null;
+  for (var i = 0; i < list.length; i++) if (list[i].id === STATE.selectedTripId) return list[i];
+  for (var j = 0; j < list.length; j++) if (list[j].status === 'active') return list[j];
+  return list[0];
 }
 function failLoad(e) {
   console.error('[manage] load failed', e);
@@ -552,6 +561,13 @@ function loadTrip(showSkeleton) {
 function selectDate(key) {
   if (key === STATE.selectedDate || STATE.pendingKey) return;
   STATE.selectedDate = key; STATE.stripScroll = true;
+  STATE.selectedTripId = null;
+  STATE.heroSlide = 0; STATE.expanded = {}; STATE.payload = null; STATE.sheet = null;
+  loadTrip(true);
+}
+function selectTrip(id) {
+  if (id === STATE.selectedTripId || STATE.pendingKey) return;
+  STATE.selectedTripId = id;
   STATE.heroSlide = 0; STATE.expanded = {}; STATE.payload = null; STATE.sheet = null;
   loadTrip(true);
 }
@@ -627,7 +643,7 @@ function doneStopsForSlide2(payload) {
 }
 function shareText(payload) {
   var trip = payload.trip;
-  return 'Book a seat on my ride ' + shortLabel(trip.origin_label) + ' → ' + shortLabel(trip.dest_label) + ', ' + fmtDateShort(trip.depart_at) + ': ' + trip.join_url;
+  return 'Book a seat on my ride ' + shortLabel(trip.origin_label) + ' → ' + shortLabel(trip.dest_label) + ', ' + fmtDateShort(trip.depart_at) + (trip.join_url ? ': ' + trip.join_url : '');
 }
 function doShare() {
   if (!STATE.payload) return;
@@ -796,10 +812,12 @@ function header() {
 }
 function dateStrip() {
   var today = todayKey();
-  var byDate = {}, keys = [today];
+  var byDate = {}, counts = {}, keys = [today];
   STATE.trips.forEach(function (t) {
     var k = localDateKey(t.depart_at);
     if (!byDate[k]) { byDate[k] = t; if (keys.indexOf(k) < 0) keys.push(k); }
+    counts[k] = (counts[k] || 0) + 1;
+    byDate[k].count = (byDate[k].count || 0) + 1;
   });
   keys.sort();
   var pills = keys.map(function (k) {
@@ -807,11 +825,23 @@ function dateStrip() {
     var dstr = fmtDateShort(t ? t.depart_at : new Date().toISOString());
     var top, sub;
     if (k === today) { top = 'Today'; sub = dstr; }
-    else { top = dstr; sub = t.status === 'completed' ? 'Done' : (t.status === 'active' ? 'Live' : 'Upcoming'); }
+    else { top = dstr; sub = counts[k] > 1 ? counts[k] + ' rides' : (t.status === 'completed' ? 'Done' : (t.status === 'active' ? 'Live' : 'Upcoming')); }
     return '<button type="button" class="date-pill' + (k === STATE.selectedDate ? ' is-selected' : '') + '" data-action="pick-date" data-date="' + k + '"' + (k === STATE.selectedDate ? ' aria-current="date"' : '') + '>' +
       '<span class="date-pill__top">' + esc(top) + '</span><span class="date-pill__sub' + (k === today ? ' date-pill__sub--date' : '') + '">' + esc(sub) + '</span></button>';
   }).join('');
-  return '<section class="date-strip"><p class="date-strip__label">Your rides</p><div class="date-strip__row" id="dateStrip">' + pills + '</div></section>';
+  return '<section class="date-strip"><p class="date-strip__label">Your rides</p><div class="date-strip__row" id="dateStrip">' + pills + '</div>' + tripChips() + '</section>';
+}
+function fmtTime12(iso) { return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }); }
+/* One chip per trip when the selected date has 2+ trips. */
+function tripChips() {
+  var list = tripsForDate(STATE.selectedDate);
+  if (list.length < 2) return '';
+  var chips = list.map(function (t) {
+    var sel = t.id === STATE.selectedTripId;
+    var label = fmtTime12(t.depart_at) + ' · ' + shortLabel(t.origin_label) + ' → ' + shortLabel(t.dest_label);
+    return '<button type="button" class="trip-chip' + (sel ? ' is-selected' : '') + '" data-action="pick-trip" data-id="' + esc(t.id) + '"' + (sel ? ' aria-current="true"' : '') + '>' + esc(label) + '</button>';
+  }).join('');
+  return '<div class="trip-chips" id="tripChips">' + chips + '</div>';
 }
 function emptyDay() {
   return '<div class="empty-day"><h2>No ride on this day</h2>' +
@@ -1174,6 +1204,7 @@ document.body.addEventListener('click', function (e) {
   var id = t.getAttribute('data-id');
 
   if (action === 'profile') { return; } /* TODO: profile screen */
+  if (action === 'pick-trip') { selectTrip(t.getAttribute('data-id')); return; }
   if (action === 'pick-date') { selectDate(t.getAttribute('data-date')); return; }
   if (action === 'share') { doShare(); return; }
   if (action === 'open-maps') { openMapsTap(t); return; }
