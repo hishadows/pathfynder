@@ -98,6 +98,12 @@
     return STORE[id];
   }
 
+  /* Driver profile (mock of driver_profile_get). whatsapp_masked comes pre-masked; never a raw number. */
+  var PROFILE = {
+    name: 'Test Driver', photo_url: null, whatsapp_masked: '+1 \u2022\u2022\u2022 \u2022\u2022\u2022 4821', notifications_enabled: false,
+    stats: { trips_completed: 42, member_since: '2026-09-01', passengers_drove: 118, total_earned: 1840 }
+  };
+
   global.PF_MANAGE_MOCK = {
     list: function () {
       return new Promise(function (resolve) {
@@ -119,6 +125,25 @@
           var st = getStore(tripId);
           resolve(st ? clone(st) : { error: 'invalid_token' });
         }, 300);
+      });
+    },
+    profile: function () {
+      return new Promise(function (resolve, reject) {
+        setTimeout(function () {
+          if (rawState() === 'invalid') { resolve({ error: 'invalid_token' }); return; }
+          if (new URLSearchParams(location.search).get('pfail') === '1') { reject(new Error('mock profile failure')); return; }
+          resolve(clone(PROFILE));
+        }, 200);
+      });
+    },
+    updateProfile: function (token, patch) {
+      return new Promise(function (resolve, reject) {
+        setTimeout(function () {
+          if (shouldFail()) { reject(new Error('mock profile update failure')); return; }
+          if (patch && patch.name != null) PROFILE.name = String(patch.name).trim();
+          if (patch && patch.photo != null) PROFILE.photo_url = patch.photo;
+          resolve({ name: PROFILE.name, photo_url: PROFILE.photo_url });
+        }, 200);
       });
     },
     action: function (token, action, bookingId, tripId) {

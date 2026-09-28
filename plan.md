@@ -27,6 +27,7 @@ One task per session. Status: todo / done / parked.
    - Done when: `/m/<token>` loads the trip via `trip_manage_get` and actions work via `trip_manage_action`.
    - Status: done against mock (2026-09-28) — built from Pranay's screenshot, not `design/`; goes live once task 5 ships the RPCs
    - 2026-09-28: now the driver home — date strip (trip dates + Today), empty state (Post a trip → WhatsApp bot, Explore rides), profile icon placeholder, driver info removed from trip details slide. Done against mock.
+   - 2026-09-28: profile screen built against mock (name/photo edit, masked read-only WhatsApp, rides summary, notification switch, Light/Dark/System theme, support mailto). Real path needs `driver_profile_get`/`driver_profile_update` RPCs + avatar storage (photo currently sent as data URL in `p_photo`).
 
 7. **Passenger join page `/j/<code>`** — pickup, drop-off, time, "for work" toggle + shift start, note, "Confirm on WhatsApp".
    - Done when: `/j/<code>` shows the trip and "Confirm on WhatsApp" opens WhatsApp with the filled-in details.
@@ -68,3 +69,4 @@ One task per session. Status: todo / done / parked.
 - 2026-09-28 — Manage page → driver home: date strip (trip dates + Today), empty state with Post a trip (WhatsApp bot) / Explore rides, profile icon (no page yet), driver info removed from trip slide. Mock only. Open: real path needs `trip_manage_list` + `p_trip_id` (task 5); two trips on one date show only the first.
 - 2026-09-28 — Task 5 + real links: migrations `driver_manage_tokens_and_trip_manage_rpcs`, `drivers_revoke_client_table_privileges`, `trip_manage_list_add_route_labels`; /m/<token> is now one link per driver. Days with 2+ trips show "N RIDES" + trip chips. Open: real link not browser-tested (sandbox can't reach Supabase); n8n must call `driver_manage_url` to send the link; `join_url` null until /j page exists.
 - 2026-09-28 — Manage default slide: ride details unless the trip is active (then pickup); Start trip jumps to pickup; refresh keeps swiped slide. Open: Start-failure rollback of the slide not tested.
+- 2026-09-28 — Driver profile screen in manage.html (mock only): name/photo edit, masked WhatsApp, rides summary (trips, member since, passengers, total earned), notify switch, theme toggle, support email. Loads `pf-notify-v5.js` + `pf-install-sheet-v2.js`. Open: RPCs + avatar bucket (needs approval).
