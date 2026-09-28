@@ -232,8 +232,6 @@ body.no-scroll{overflow:hidden}
 .poster__text{flex:1;min-width:0}
 .poster__name{display:block;font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .poster__sub{display:block;font-size:13px;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.poster__groups{display:inline-flex;align-items:center;gap:4px;border:0;background:none;padding:0;color:var(--primary);font-size:13px;font-weight:600;cursor:pointer}
-.poster__groups .i{width:14px;height:14px}
 .source-badge{flex:none;display:inline-flex;align-items:center;gap:4px;height:24px;padding:0 9px;border-radius:999px;border:1px solid var(--line-strong);font-size:12px;font-weight:600;color:var(--text-2);white-space:nowrap}
 .source-badge .i{width:14px;height:14px}
 .source-badge--whatsapp{border-color:transparent;background:var(--chip-soft);color:var(--chip-soft-text)}
@@ -297,12 +295,6 @@ body.no-scroll{overflow:hidden}
 .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 16px;margin:0}
 .detail-grid dt{font-size:12.5px;color:var(--text-2)}
 .detail-grid dd{margin:2px 0 0;font-size:15px;font-weight:500}
-.group-list{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px}
-.group-list li{display:flex;align-items:center;gap:10px;font-size:14.5px}
-.group-list .g-ico{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:var(--chip-soft);color:var(--chip-soft-text);flex:none}
-.group-list .g-ico .i{width:17px;height:17px}
-.group-list span{flex:1;min-width:0}
-.group-list small{font-size:12.5px;color:var(--text-2)}
 .wa-chat{padding:12px 12px 14px 20px;border-radius:10px;background:var(--wallpaper)}
 .wa-chat__day{display:table;margin:0 auto 10px;padding:4px 10px;border-radius:8px;background:var(--bubble);font-size:11.5px;font-weight:600;color:var(--text-2);letter-spacing:.03em}
 .bubble{position:relative;max-width:94%;padding:6px 8px 7px 9px;border-radius:0 8px 8px 8px;background:var(--bubble);font-size:14.5px;line-height:1.4;box-shadow:0 1px .5px rgba(11,20,26,.13)}
@@ -1443,12 +1435,6 @@ function metaList(r) {
 }
 function posterSub(r) {
   if (r.rating) return ratingHTML(r);
-  if (isWa(r) && r.groups && r.groups.length) {
-    return r.groups.length > 1
-      ? '<button class="poster__groups" data-action="groups">' + icon('groups') + 'Posted in ' + r.groups.length + ' groups</button>'
-      : ('<span>from ' + esc(r.groups[0].name) + '</span>');
-  }
-  if (r.source === 'facebook' && r.groups && r.groups.length) return '<span>from ' + esc(r.groups[0].name) + '</span>';
   if (isWa(r)) return '';
   return r.source === 'poparide' ? 'Poparide member' : ('Facebook post · ' + ago(r.posted_at));
 }
@@ -1473,7 +1459,7 @@ function cta(r, label) {
   return '<div class="ride-card__cta"><button type="button" class="btn btn--outline" data-action="contact" data-id="' + r.id + '">View on ' + SOURCE_LABEL[r.source] + icon('external') + '</button><p class="btn__hint">Opens ' + SOURCE_DOMAIN[r.source] + ' · you\'ll leave Pathfynder</p></div>';
 }
 function messagePane(r) {
-  var at = new Date((r.groups && r.groups[0] && r.groups[0].posted_at) || r.posted_at);
+  var at = new Date(r.posted_at || (r.groups && r.groups[0] && r.groups[0].posted_at));
   var bt = at.toLocaleTimeString('en-CA', { hour:'numeric', minute:'2-digit' }).replace(/\./g, '').toUpperCase();
   return '<div class="swipe-pane swipe-pane--message" aria-label="Original message"><div class="bubble bubble--card"><div class="bubble__name">' + esc(displayName(r)) + '</div><span class="bubble__text">' + esc(r.raw_text) + '</span><span class="bubble__time">' + bt + '</span></div></div>';
 }
@@ -1674,14 +1660,14 @@ function landingResultsHead(rows) {
   var noun, dateLine;
   var nearLabel = state.fromPlace ? state.fromPlace.name : null;
   if (nearLabel) {
-    noun = subject + ' near ' + esc(nearLabel);
-    dateLine = 'Within 25 km · next 3 days';
+    noun = 'Within 25 km · next 3 days';
+    dateLine = '';
   } else {
     noun = 'Upcoming ' + (state.mode === 'passenger' ? 'passenger requests' : 'rides');
     dateLine = 'Today + next 3 days';
   }
   var info = state.landingInfo === 'no-near' ? ('<p class="info-line">' + icon('info') + '<span>No rides within 25 km of you right now — showing all upcoming rides</span></p>') : '';
-  return '<div class="results-head"><div class="results-bar"><h2 class="results-title"><span>' + noun + '</span><span class="results-title__date">' + esc(dateLine) + '</span></h2>' +
+  return '<div class="results-head"><div class="results-bar"><h2 class="results-title"><span>' + noun + '</span>' + (dateLine ? '<span class="results-title__date">' + esc(dateLine) + '</span>' : '') + '</h2>' +
     '<label class="sort"><select class="js-sort" aria-label="Sort"><option value="best"' + (state.sort === 'best' ? ' selected' : '') + '>Best match</option><option value="soonest"' + (state.sort === 'soonest' ? ' selected' : '') + '>Soonest</option><option value="cheapest"' + (state.sort === 'cheapest' ? ' selected' : '') + '>Cheapest</option></select>' + icon('chev') + '</label></div>' +
     info + '</div>';
 }
@@ -1895,14 +1881,13 @@ function renderRideDetail(r) {
     r.rating ? ('<li><span class="trust-ico" style="color:var(--star)"><svg class="i" style="fill:currentColor"><use href="#i-star"/></svg></span><span><b style="color:var(--text)">' + r.rating.toFixed(1) + '</b> from ' + r.rating_count + ' ratings</span></li>') : '',
     r.verified ? ('<li><span class="trust-ico">' + icon('verified') + '</span><span>Verified on ' + SOURCE_LABEL[r.source] + '</span></li>') : '',
   ].join('');
-  var groups = (r.groups && r.groups.length) ? ('<section class="sheet-block"><h3 class="sheet-block__label">Shared on WhatsApp in ' + plural(r.groups.length, 'group') + '</h3><ul class="group-list">' +
-    r.groups.map(function (g) { return '<li><span class="g-ico">' + icon('groups') + '</span><span>' + esc(g.name) + '</span><small>' + ago(g.posted_at) + '</small></li>'; }).join('') + '</ul></section>') : '';
   var bubble = '';
-  if (r.source === 'whatsapp' && r.raw_text && r.groups && r.groups[0]) {
-    var first = new Date(r.groups[0].posted_at);
+  var postedAt = r.posted_at || (r.groups && r.groups[0] && r.groups[0].posted_at);
+  if (r.source === 'whatsapp' && r.raw_text && postedAt) {
+    var first = new Date(postedAt);
     var bt = first.toLocaleTimeString('en-CA', { hour:'numeric', minute:'2-digit' }).replace(/\./g, '').toUpperCase();
     bubble = '<section class="sheet-block"><h3 class="sheet-block__label">Original message</h3><div class="wa-chat">' +
-      '<span class="wa-chat__day">' + (dayDiff(r.groups[0].posted_at.slice(0, 10)) === -1 ? 'YESTERDAY' : 'TODAY') + '</span>' +
+      '<span class="wa-chat__day">' + (dayDiff(postedAt.slice(0, 10)) === -1 ? 'YESTERDAY' : 'TODAY') + '</span>' +
       '<div class="bubble"><div class="bubble__name">' + esc(displayName(r)) + '</div><span class="bubble__text">' + esc(r.raw_text) + '</span><span class="bubble__time">' + bt + '</span></div></div></section>';
   }
   var ctaHTML = isWa(r)
@@ -1918,7 +1903,7 @@ function renderRideDetail(r) {
     '<p class="sheet__subtitle">' + esc(r.ride_date ? dayLabel(r.ride_date, true) : 'Date not given') + ' · ' + (t ? esc(t) : 'Time flexible') + (r.arrive_time ? (' → ' + fmtTime(r.arrive_time)) : '') + '</p>' + matchNote(r) + '</div>' +
     strip + '<section class="sheet-block"><dl class="detail-grid">' + grid + '</dl></section>' + description +
     '<section class="sheet-block"><h3 class="sheet-block__label">' + (r.role === 'driver' ? 'Driver' : 'Rider') + '</h3>' + poster(r, 'poster--top') + (trust ? ('<ul class="trust-list">' + trust + '</ul>') : '') + '</section>' +
-    groups + bubble + '</div><div class="sheet__cta">' + ctaHTML + '</div>';
+    bubble + '</div><div class="sheet__cta">' + ctaHTML + '</div>';
 }
 function openDetail(id) {
   var r = state.rows.find(function (x) { return x.id === id; });
