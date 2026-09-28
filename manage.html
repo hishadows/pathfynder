@@ -145,14 +145,18 @@ button{font:inherit}
 .route-stops{display:flex;flex-direction:column}
 .route-stop{display:flex;align-items:flex-start;gap:12px;position:relative;padding-bottom:14px}
 .route-stop:last-child{padding-bottom:0}
-.route-stop:not(:last-child)::before{content:"";position:absolute;left:4.5px;top:9px;bottom:-9px;width:1px;background:var(--divider)}
-.route-stop__dot{width:10px;height:10px;border-radius:50%;flex:none;margin-top:4px;position:relative;z-index:1;background:var(--text-2)}
-.route-stop__dot--end{background:var(--primary)}
+.route-stop:not(:last-child)::before{content:"";position:absolute;left:5.5px;top:11px;bottom:-11px;width:3px;z-index:0;opacity:.45;background:repeating-linear-gradient(to bottom,var(--primary) 0 5px,transparent 5px 9px)}
+.route-stop.is-trav:not(:last-child)::before,.route-stops--complete .route-stop:not(:last-child)::before{opacity:1;background:var(--primary)}
+.route-stop__dot{width:14px;height:14px;flex:none;margin-top:4px;position:relative;z-index:1}
+.route-stop__dot::after{content:"";position:absolute;inset:1px;border-radius:50%;box-sizing:border-box;background:var(--card);border:2.5px solid var(--primary)}
+.route-stop__dot--start::after,.route-stop.is-done .route-stop__dot::after{background:var(--primary)}
+.route-stop__dot--end::after{inset:0;background:var(--primary)}
+.route-stop__dot--end::before{content:"";position:absolute;left:4.5px;top:4.5px;width:5px;height:5px;border-radius:50%;background:#fff;z-index:1}
 .route-stop__text{min-width:0;display:flex;flex-direction:column}
 .route-stop__label{font-size:14px;font-weight:600;color:var(--text);line-height:18px}
 .route-stop__addr{font-size:12.5px;color:var(--text-2);line-height:17px}
 .route-stop__addr b{font-weight:600}
-.route-stop.is-done{opacity:.55}
+.route-stop.is-done .route-stop__text{opacity:.55}
 .hero-slide--route{background:var(--card);color:var(--text);border:1px solid var(--divider)}
 .ns-hint{margin:8px 0 0;font-size:12.5px;color:var(--text-2);text-align:center}
 .ns-btns .btn.is-off{opacity:.5;cursor:default;pointer-events:none}
@@ -1042,14 +1046,14 @@ function heroSection(payload) {
 
   var route = computeRoute(payload);
   var doneItems = doneStopsForSlide2(payload);
-  var rows = '<div class="route-stop"><span class="route-stop__dot route-stop__dot--end"></span><div class="route-stop__text"><span class="route-stop__label">' + esc(route.origin.isGps ? 'Your location' : shortLabel(route.origin.label)) + '</span><span class="route-stop__addr">Start</span></div></div>';
+  var rows = '<div class="route-stop' + (doneItems.length ? ' is-trav' : '') + '"><span class="route-stop__dot route-stop__dot--start"></span><div class="route-stop__text"><span class="route-stop__label">' + esc(route.origin.isGps ? 'Your location' : shortLabel(route.origin.label)) + '</span><span class="route-stop__addr">Start</span></div></div>';
   rows += doneItems.map(function (d, n) {
-    return '<div class="route-stop is-done"><span class="route-stop__dot"></span>' +
+    return '<div class="route-stop is-done' + (n < doneItems.length - 1 ? ' is-trav' : '') + '"><span class="route-stop__dot"></span>' +
       '<div class="route-stop__text"><span class="route-stop__label">' + esc(shortLabel(d.label)) + '</span><span class="route-stop__addr">Stop ' + (n + 1) + ' · ' + (d.kind === 'pickup' ? 'Picked: ' : 'Dropped: ') + '<b style="color:' + colorFor(d.id) + '">' + esc(firstName(d.name)) + '</b> ✓</span></div></div>';
   }).join('');
   rows += route.stops.map(function (st, n) { return routeStopRow(payload, st, doneItems.length + n + 1); }).join('');
   rows += '<div class="route-stop"><span class="route-stop__dot route-stop__dot--end"></span><div class="route-stop__text"><span class="route-stop__label">' + esc(shortLabel(trip.dest_label)) + '</span><span class="route-stop__addr">Destination</span></div></div>';
-  var slide2 = '<h3 class="hero-slide__title">Your route</h3><div class="route-stops">' + rows + '</div>';
+  var slide2 = '<h3 class="hero-slide__title">Your route</h3><div class="route-stops' + (trip.status === 'completed' ? ' route-stops--complete' : '') + '">' + rows + '</div>';
 
   var dots = [0, 1, 2].map(function (i) { return '<button type="button" class="hero-dot' + (STATE.heroSlide === i ? ' is-active' : '') + '" data-action="dot" data-index="' + i + '" aria-label="Slide ' + (i + 1) + '"></button>'; }).join('');
 

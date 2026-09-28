@@ -69,3 +69,4 @@ One task per session. Status: todo / done / parked.
 - 2026-09-28 — Task 5 + real links: migrations `driver_manage_tokens_and_trip_manage_rpcs`, `drivers_revoke_client_table_privileges`, `trip_manage_list_add_route_labels`; /m/<token> is now one link per driver. Days with 2+ trips show "N RIDES" + trip chips. Open: real link not browser-tested (sandbox can't reach Supabase); n8n must call `driver_manage_url` to send the link; `join_url` null until /j page exists.
 - 2026-09-28 — Manage default slide: ride details unless the trip is active (then pickup); Start trip jumps to pickup; refresh keeps swiped slide. Open: Start-failure rollback of the slide not tested.
 - 2026-09-28 — Manage: past=DONE, pickup buttons gated on started trip (client + RPC), slides reordered (details/route/next), route timeline + per-passenger colours. Open: passenger card avatars not coloured yet.
+- 2026-09-28 — Route slide line: solid travelled / dashed ahead, transit-style markers.
