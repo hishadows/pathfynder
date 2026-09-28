@@ -142,16 +142,24 @@ button{font:inherit}
 .hero-bar__fill{height:100%;background:var(--hero-fill);border-radius:4px}
 
 .hero-slide__title{margin:0 0 12px;font-size:15px;font-weight:700}
-.route-stops{display:flex;flex-direction:column;gap:10px}
-.route-stop{display:flex;align-items:flex-start;gap:10px}
-.route-stop__dot{width:10px;height:10px;border-radius:50%;flex:none;margin-top:4px}
+.route-stops{display:flex;flex-direction:column}
+.route-stop{display:flex;align-items:flex-start;gap:12px;position:relative;padding-bottom:14px}
+.route-stop:last-child{padding-bottom:0}
+.route-stop:not(:last-child)::before{content:"";position:absolute;left:5.5px;top:11px;bottom:-11px;width:3px;z-index:0;opacity:.45;background:repeating-linear-gradient(to bottom,var(--primary) 0 5px,transparent 5px 9px)}
+.route-stop.is-trav:not(:last-child)::before,.route-stops--complete .route-stop:not(:last-child)::before{opacity:1;background:var(--primary)}
+.route-stop__dot{width:14px;height:14px;flex:none;margin-top:4px;position:relative;z-index:1}
+.route-stop__dot::after{content:"";position:absolute;inset:1px;border-radius:50%;box-sizing:border-box;background:var(--card);border:2.5px solid var(--primary)}
+.route-stop__dot--start::after,.route-stop.is-done .route-stop__dot::after{background:var(--primary)}
+.route-stop__dot--end::after{inset:0;background:var(--primary)}
+.route-stop__dot--end::before{content:"";position:absolute;left:4.5px;top:4.5px;width:5px;height:5px;border-radius:50%;background:#fff;z-index:1}
 .route-stop__text{min-width:0;display:flex;flex-direction:column}
-.route-stop__label{font-size:14px;font-weight:600}
-.route-stop__addr{font-size:12.5px;color:rgba(255,255,255,.75);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.route-stop.is-done .route-stop__label,.route-stop.is-done .route-stop__addr{text-decoration:line-through;opacity:.55}
+.route-stop__label{font-size:14px;font-weight:600;color:var(--text);line-height:18px}
+.route-stop__addr{font-size:12.5px;color:var(--text-2);line-height:17px}
+.route-stop__addr b{font-weight:600}
+.route-stop.is-done .route-stop__text{opacity:.55}
 .hero-slide--route{background:var(--card);color:var(--text);border:1px solid var(--divider)}
-.hero-slide--route .route-stop__addr{color:var(--text-2)}
-.hero-slide--route .route-stop.is-done .route-stop__label,.hero-slide--route .route-stop.is-done .route-stop__addr{color:var(--text-2)}
+.ns-hint{margin:8px 0 0;font-size:12.5px;color:var(--text-2);text-align:center}
+.ns-btns .btn.is-off{opacity:.5;cursor:default;pointer-events:none}
 
 /* Next stop slide */
 .hero-slide--next{background:var(--card);color:var(--text);border:1px solid var(--divider)}
@@ -292,8 +300,13 @@ var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, f
 function clone(o) { return o == null ? o : JSON.parse(JSON.stringify(o)); }
 function initial(name) { var m = (String(name || '')).match(/\p{L}/u); return m ? m[0].toUpperCase() : '?'; }
 function firstName(name) { return String(name || '').split(' ')[0]; }
-var PALETTE = ['#F59E0B','#3B82F6','#EF4444','#10B981','#8B5CF6','#EC4899','#14B8A6','#F97316'];
-function colorFor(id) { var h = 0, s = String(id || ''); for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return PALETTE[h % PALETTE.length]; }
+var PALETTE = ['#5B7DB1','#C0664A','#5E9A6E','#8E6BAF','#B8893A','#3F8F8F','#B8617E','#7D8B45'];
+/* Per-trip colour by booking order (payload.bookings is created_at order); hash fallback for unknown ids. */
+function colorFor(id) {
+  var bk = STATE.payload && STATE.payload.bookings;
+  if (bk) { for (var j = 0; j < bk.length; j++) if (bk[j].id === id) return PALETTE[j % PALETTE.length]; }
+  var h = 0, s = String(id || ''); for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return PALETTE[h % PALETTE.length];
+}
 var PROV_MAP = { Ontario:'ON', Quebec:'QC', 'British Columbia':'BC', Alberta:'AB', Manitoba:'MB', Saskatchewan:'SK', 'Nova Scotia':'NS', 'New Brunswick':'NB', 'Newfoundland and Labrador':'NL', 'Prince Edward Island':'PE', 'Northwest Territories':'NT', Yukon:'YT', Nunavut:'NU' };
 function shortLabel(label) {
   var parts = String(label || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean);
@@ -558,9 +571,9 @@ function loadTrip(showSkeleton) {
       var prevStatus = STATE.payload && STATE.payload.trip ? STATE.payload.trip.status : null;
       STATE.errorType = null; STATE.payload = data;
       var newStatus = data.trip.status;
-      /* Default slide once per opened trip: active -> next stop (0), else ride details (1). Background refreshes keep the swiped slide, except a trip that just became active. */
-      if (STATE.slideAuto) { STATE.heroSlide = newStatus === 'active' ? 0 : 1; STATE.slideAuto = false; }
-      else if (prevStatus && prevStatus !== 'active' && newStatus === 'active') STATE.heroSlide = 0;
+      /* Default slide once per opened trip: active -> next stop (2), else ride details (0). Background refreshes keep the swiped slide, except a trip that just became active. */
+      if (STATE.slideAuto) { STATE.heroSlide = newStatus === 'active' ? 2 : 0; STATE.slideAuto = false; }
+      else if (prevStatus && prevStatus !== 'active' && newStatus === 'active') STATE.heroSlide = 2;
     }
     render();
   }).catch(function (e) { if (STATE.selectedTripId === wanted) failLoad(e); });
@@ -585,7 +598,7 @@ function doAction(action, bookingId, pendingKey) {
   var prevSlide = STATE.heroSlide;
   STATE.pendingKey = pendingKey;
   applyOptimistic(action, bookingId);
-  if (action === 'start') STATE.heroSlide = 0;
+  if (action === 'start') STATE.heroSlide = 2;
   render();
   apiAction(action, bookingId).then(function (data) {
     STATE.pendingKey = null;
@@ -835,6 +848,7 @@ function dateStrip() {
     var dstr = fmtDateShort(t ? t.depart_at : new Date().toISOString());
     var top, sub;
     if (k === today) { top = 'Today'; sub = dstr; }
+    else if (k < today) { top = dstr; sub = counts[k] > 1 ? counts[k] + ' rides' : 'Done'; }
     else { top = dstr; sub = counts[k] > 1 ? counts[k] + ' rides' : (t.status === 'completed' ? 'Done' : (t.status === 'active' ? 'Live' : 'Upcoming')); }
     return '<button type="button" class="date-pill' + (k === STATE.selectedDate ? ' is-selected' : '') + '" data-action="pick-date" data-date="' + k + '"' + (k === STATE.selectedDate ? ' aria-current="date"' : '') + '>' +
       '<span class="date-pill__top">' + esc(top) + '</span><span class="date-pill__sub' + (k === today ? ' date-pill__sub--date' : '') + '">' + esc(sub) + '</span></button>';
@@ -873,17 +887,15 @@ function errorPage() {
 }
 
 /* ---------- Render: hero ---------- */
-function routeStopRow(payload, stop, isDone) {
+function routePax(payload, id) { return '<b style="color:' + colorFor(id) + '">' + esc(nameForId(payload, id)) + '</b>'; }
+function routeStopRow(payload, stop, num) {
   var pickups = stop.members.filter(function (m) { return m.kind === 'pickup'; });
   var dropoffs = stop.members.filter(function (m) { return m.kind === 'dropoff'; });
-  var labelParts = [];
-  if (pickups.length) labelParts.push('Pick up ' + pickups.map(function (m) { return esc(nameForId(payload, m.passengerId)); }).join(', '));
-  if (dropoffs.length) labelParts.push('Drop off ' + dropoffs.map(function (m) { return esc(nameForId(payload, m.passengerId)); }).join(', '));
-  var dotColor = colorFor(stop.members[0].passengerId);
-  return '<div class="route-stop' + (isDone ? ' is-done' : '') + '">' +
-    '<span class="route-stop__dot" style="background:' + dotColor + '"></span>' +
-    '<div class="route-stop__text"><span class="route-stop__label">' + labelParts.join(' · ') + '</span><span class="route-stop__addr">' + esc(shortLabel(stop.label)) + '</span></div>' +
-  '</div>';
+  var parts = ['Stop ' + num];
+  if (pickups.length) parts.push('Pick: ' + pickups.map(function (m) { return routePax(payload, m.passengerId); }).join(', '));
+  if (dropoffs.length) parts.push('Drop: ' + dropoffs.map(function (m) { return routePax(payload, m.passengerId); }).join(', '));
+  return '<div class="route-stop"><span class="route-stop__dot"></span>' +
+    '<div class="route-stop__text"><span class="route-stop__label">' + esc(shortLabel(stop.label)) + '</span><span class="route-stop__addr">' + parts.join(' · ') + '</span></div></div>';
 }
 function mapsCard(payload) {
   if (payload.trip.status === 'completed') return '';
@@ -918,21 +930,21 @@ function nsDoneCount(payload, remaining) {
   });
   return Object.keys(keys).filter(function (k) { return !rem[k]; }).length;
 }
-function nsButtons(b, kind, compact) {
+function nsButtons(b, kind, compact, off) {
   var digits = String(b.phone || '').replace(/\D/g, '');
   var out = '';
   if (kind === 'pickup') {
     var outsideHref = 'https://wa.me/' + digits + '?text=' + encodeURIComponent('Hi ' + firstName(b.name) + ", I'm outside at " + b.pickup_label + ' 🚗');
     var pend = STATE.pendingKey === 'picked_up:' + b.id;
-    out = (digits ? '<a class="btn btn-secondary" href="' + outsideHref + '" target="_blank" rel="noopener">' + ico('bellRing') + 'I’m outside</a>' : '') +
-      '<button type="button" class="btn btn-cta" data-action="picked_up" data-id="' + b.id + '"' + (pend ? ' disabled' : '') + '>' + ico('userCheck') + 'Picked up</button>';
+    out = (digits ? (off ? '<button type="button" class="btn btn-secondary is-off" disabled>' + ico('bellRing') + 'I’m outside</button>' : '<a class="btn btn-secondary" href="' + outsideHref + '" target="_blank" rel="noopener">' + ico('bellRing') + 'I’m outside</a>') : '') +
+      '<button type="button" class="btn btn-cta" data-action="picked_up" data-id="' + b.id + '"' + (pend || off ? ' disabled' : '') + '>' + ico('userCheck') + 'Picked up</button>';
   } else {
     var pendD = STATE.pendingKey === 'dropped_off:' + b.id;
-    out = '<button type="button" class="btn btn-cta btn-full" data-action="dropped_off" data-id="' + b.id + '"' + (pendD ? ' disabled' : '') + '>' + ico('checkCircle') + 'Dropped off</button>';
+    out = '<button type="button" class="btn btn-cta btn-full" data-action="dropped_off" data-id="' + b.id + '"' + (pendD || off ? ' disabled' : '') + '>' + ico('checkCircle') + 'Dropped off</button>';
   }
   return '<div class="ns-btns' + (compact ? '' : ' ns-btns--main') + '">' + out + '</div>';
 }
-function nsPaxRow(b, kind, multi, canAct) {
+function nsPaxRow(b, kind, multi, canAct, off) {
   var digits = String(b.phone || '').replace(/\D/g, '');
   var contacts = digits ?
     '<a class="ns-ic" href="tel:+' + digits + '" aria-label="Call ' + esc(firstName(b.name)) + '">' + NS_ICON_PHONE + '</a>' +
@@ -943,13 +955,14 @@ function nsPaxRow(b, kind, multi, canAct) {
     '<div class="ns-pax__id"><span class="ns-pax__name">' + esc(b.name) + '</span><span class="ns-pax__seats">' + seats + '</span></div>' +
     contacts + '</div>' +
     (b.note ? '<div class="ns-note">' + NS_ICON_NOTE + '<span>' + esc(b.note) + '</span></div>' : '') +
-    (multi && canAct ? nsButtons(b, kind, true) : '') +
+    (multi && canAct ? nsButtons(b, kind, true, off) : '') +
   '</div>';
 }
 function nextStopSlide(payload) {
   var trip = payload.trip, bookings = payload.bookings;
   var completed = trip.status === 'completed';
   var canAct = !completed;
+  var off = trip.status !== 'active'; /* draft: buttons shown but disabled until the trip starts */
   var route = computeRoute(payload);
   var remaining = completed ? [] : route.stops;
   var undropped = bookings.filter(function (b) { return !b.dropped_off_at; });
@@ -1002,8 +1015,9 @@ function nextStopSlide(payload) {
     var multi = members.length > 1;
     body = '<div class="ns-pillrow"><span class="ns-pill">' + pillText + '</span>' + (eta ? '<span class="ns-eta">' + eta + '</span>' : '') + '</div>' +
       '<div class="ns-addr"><span class="ns-addr__label">' + addrLabel + '</span><div class="ns-addr__row">' + NS_ICON_PIN + '<span class="ns-addr__text">' + esc(addrText) + '</span></div></div>' +
-      members.map(function (m) { return nsPaxRow(m.b, m.kind, multi, canAct); }).join('') +
-      (!multi && canAct && members.length ? nsButtons(members[0].b, members[0].kind, false) : '');
+      members.map(function (m) { return nsPaxRow(m.b, m.kind, multi, canAct, off); }).join('') +
+      (!multi && canAct && members.length ? nsButtons(members[0].b, members[0].kind, false, off) : '') +
+      (off && canAct && members.length ? '<p class="ns-hint">Start the trip to pick up passengers</p>' : '');
   }
   return prog + body;
 }
@@ -1032,22 +1046,21 @@ function heroSection(payload) {
 
   var route = computeRoute(payload);
   var doneItems = doneStopsForSlide2(payload);
-  var originLabel = route.origin.isGps ? 'Start: your location' : ('Start: ' + shortLabel(route.origin.label));
-  var rows = '<div class="route-stop"><span class="route-stop__dot" style="background:var(--primary)"></span><div class="route-stop__text"><span class="route-stop__label">' + esc(originLabel) + '</span></div></div>';
-  rows += route.stops.map(function (s) { return routeStopRow(payload, s, false); }).join('');
-  rows += '<div class="route-stop"><span class="route-stop__dot" style="background:var(--primary)"></span><div class="route-stop__text"><span class="route-stop__label">Destination: ' + esc(shortLabel(trip.dest_label)) + '</span></div></div>';
-  rows += doneItems.map(function (d) {
-    return '<div class="route-stop is-done"><span class="route-stop__dot" style="background:' + colorFor(d.id) + '"></span>' +
-      '<div class="route-stop__text"><span class="route-stop__label">' + (d.kind === 'pickup' ? 'Picked up ' : 'Dropped off ') + esc(firstName(d.name)) + '</span><span class="route-stop__addr">' + esc(shortLabel(d.label)) + '</span></div></div>';
+  var rows = '<div class="route-stop' + (doneItems.length ? ' is-trav' : '') + '"><span class="route-stop__dot route-stop__dot--start"></span><div class="route-stop__text"><span class="route-stop__label">' + esc(route.origin.isGps ? 'Your location' : shortLabel(route.origin.label)) + '</span><span class="route-stop__addr">Start</span></div></div>';
+  rows += doneItems.map(function (d, n) {
+    return '<div class="route-stop is-done' + (n < doneItems.length - 1 ? ' is-trav' : '') + '"><span class="route-stop__dot"></span>' +
+      '<div class="route-stop__text"><span class="route-stop__label">' + esc(shortLabel(d.label)) + '</span><span class="route-stop__addr">Stop ' + (n + 1) + ' · ' + (d.kind === 'pickup' ? 'Picked: ' : 'Dropped: ') + '<b style="color:' + colorFor(d.id) + '">' + esc(firstName(d.name)) + '</b> ✓</span></div></div>';
   }).join('');
-  var slide2 = '<h3 class="hero-slide__title">Your route</h3><div class="route-stops">' + rows + '</div>';
+  rows += route.stops.map(function (st, n) { return routeStopRow(payload, st, doneItems.length + n + 1); }).join('');
+  rows += '<div class="route-stop"><span class="route-stop__dot route-stop__dot--end"></span><div class="route-stop__text"><span class="route-stop__label">' + esc(shortLabel(trip.dest_label)) + '</span><span class="route-stop__addr">Destination</span></div></div>';
+  var slide2 = '<h3 class="hero-slide__title">Your route</h3><div class="route-stops' + (trip.status === 'completed' ? ' route-stops--complete' : '') + '">' + rows + '</div>';
 
   var dots = [0, 1, 2].map(function (i) { return '<button type="button" class="hero-dot' + (STATE.heroSlide === i ? ' is-active' : '') + '" data-action="dot" data-index="' + i + '" aria-label="Slide ' + (i + 1) + '"></button>'; }).join('');
 
   return '<section class="hero-wrap"><div class="hero-track" id="heroTrack">' +
-      '<div class="hero-slide hero-slide--next">' + nextStopSlide(payload) + '</div>' +
       '<div class="hero-slide">' + slide1 + '</div>' +
       '<div class="hero-slide hero-slide--route">' + slide2 + '</div>' +
+      '<div class="hero-slide hero-slide--next">' + nextStopSlide(payload) + '</div>' +
     '</div></section>' +
     '<div class="hero-dots">' + dots + '</div>' +
     mapsCard(payload);
@@ -1239,6 +1252,7 @@ document.body.addEventListener('click', function (e) {
     return;
   }
   if (action === 'picked_up' || action === 'dropped_off') {
+    if (!STATE.payload || STATE.payload.trip.status !== 'active') return;
     doAction(action, id, action + ':' + id);
     return;
   }
