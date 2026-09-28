@@ -157,3 +157,9 @@
   - Mock: added a "....." airport passenger ride to explore-mock.js.
   - Verified: `node --check`, Playwright at 390px light/dark before/after.
   - Files: explore.html, explore-mock.js.
+- 2026-09-28 — Toned down the bright #25D366 "Message on WhatsApp" button on /explore:
+  - Ride cards now use a soft mint pill (`.btn--wa-soft`: light #E7F5EF / #00674F text, dark #103A31 / #3DDC97 text) so the list isn't a wall of bright green.
+  - Solid CTA tokens are calmer: light `--cta` #008069 with white text, dark #005C4B with #E9EDEF text (affects the detail-sheet WhatsApp button, "Turn on notifications", and the group-card send button).
+  - New filled `i-whatsapp` sprite icon replaces the chat bubble on both WhatsApp buttons.
+  - Verified: `node --check`, Playwright at 390px light/dark (list + detail sheet).
+  - Files: explore.html.

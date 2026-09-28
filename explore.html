@@ -44,7 +44,8 @@
 :root{
   --header:#008069; --header-text:#FFFFFF; --header-sub:rgba(255,255,255,.82); --header-hover:rgba(255,255,255,.12);
   --brand-bg:#FFFFFF; --brand-fg:#008069;
-  --primary:#008069; --cta:#25D366; --cta-hover:#1EBE5A; --cta-text:#111B21;
+  --primary:#008069; --cta:#008069; --cta-hover:#006D5B; --cta-text:#FFFFFF;
+  --cta-soft:#E7F5EF; --cta-soft-hover:#D6EEE3; --cta-soft-text:#00674F;
   --bg:#F0F2F5; --card:#FFFFFF; --surface:#F0F2F5;
   --text:#111B21; --text-2:#667781; --divider:#E9EDEF; --line-strong:#D1D7DB; --route-line:#AEBAC1;
   --chip-soft:#D9FDD3; --chip-soft-text:#006D5B;
@@ -60,7 +61,8 @@
   :root:not([data-theme="light"]){
     --header:#202C33; --header-text:#E9EDEF; --header-sub:#8696A0; --header-hover:rgba(233,237,239,.08);
     --brand-bg:#00A884; --brand-fg:#111B21;
-    --primary:#00A884; --cta:#00A884; --cta-hover:#06CF9C; --cta-text:#111B21;
+    --primary:#00A884; --cta:#005C4B; --cta-hover:#006D5B; --cta-text:#E9EDEF;
+    --cta-soft:#103A31; --cta-soft-hover:#144A3E; --cta-soft-text:#3DDC97;
     --bg:#0B141A; --card:#202C33; --surface:#111B21;
     --text:#E9EDEF; --text-2:#8696A0; --divider:#2A3942; --line-strong:#3B4A54; --route-line:#54656F;
     --chip-soft:#0A332C; --chip-soft-text:#25D366;
@@ -76,7 +78,8 @@
 :root[data-theme="dark"]{
   --header:#202C33; --header-text:#E9EDEF; --header-sub:#8696A0; --header-hover:rgba(233,237,239,.08);
   --brand-bg:#00A884; --brand-fg:#111B21;
-  --primary:#00A884; --cta:#00A884; --cta-hover:#06CF9C; --cta-text:#111B21;
+  --primary:#00A884; --cta:#005C4B; --cta-hover:#006D5B; --cta-text:#E9EDEF;
+  --cta-soft:#103A31; --cta-soft-hover:#144A3E; --cta-soft-text:#3DDC97;
   --bg:#0B141A; --card:#202C33; --surface:#111B21;
   --text:#E9EDEF; --text-2:#8696A0; --divider:#2A3942; --line-strong:#3B4A54; --route-line:#54656F;
   --chip-soft:#0A332C; --chip-soft-text:#25D366;
@@ -241,6 +244,9 @@ body.no-scroll{overflow:hidden}
 .btn .i{width:19px;height:19px}
 .btn--wa{background:var(--cta);color:var(--cta-text)}
 .btn--wa:hover{background:var(--cta-hover)}
+.btn--wa-soft{background:var(--cta-soft);color:var(--cta-soft-text)}
+.btn--wa-soft:hover{background:var(--cta-soft-hover)}
+.btn--wa-soft .i{fill:currentColor}
 .btn--outline{background:transparent;color:var(--text);border:1px solid var(--line-strong);font-weight:500}
 .btn--outline:hover{background:var(--surface)}
 .btn--outline .i{width:16px;height:16px;color:var(--text-2)}
@@ -533,6 +539,7 @@ body.no-scroll{overflow:hidden}
   <symbol id="i-route" viewBox="0 0 24 24"><circle cx="6" cy="18" r="2.3"/><circle cx="18" cy="6" r="2.3"/><path d="M8.5 18H15a3.5 3.5 0 0 0 0-7H9a3.5 3.5 0 0 1 0-7h6.5"/></symbol>
   <symbol id="i-chev-r" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
   <symbol id="i-send" viewBox="0 0 24 24"><path d="M4 12 20 4l-6 16-3-7z"/></symbol>
+  <symbol id="i-whatsapp" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="M12.04 2a9.9 9.9 0 0 0-8.5 14.98L2 22l5.17-1.5A9.9 9.9 0 1 0 12.04 2zm0 18.1a8.2 8.2 0 0 1-4.18-1.15l-.3-.18-3.07.89.9-2.99-.2-.31a8.2 8.2 0 1 1 6.85 3.74zm4.5-6.14c-.25-.12-1.46-.72-1.69-.8-.23-.09-.39-.13-.56.12-.16.25-.64.8-.78.97-.15.16-.29.18-.54.06a6.7 6.7 0 0 1-3.34-2.92c-.25-.43.25-.4.72-1.34.08-.16.04-.3-.02-.43l-.76-1.83c-.2-.48-.4-.41-.56-.42h-.47a.9.9 0 0 0-.65.3 2.7 2.7 0 0 0-.85 2.02c0 1.19.87 2.34.99 2.5.12.16 1.71 2.61 4.14 3.66 1.54.66 2.14.72 2.91.6.47-.07 1.46-.6 1.66-1.17.2-.58.2-1.07.14-1.17-.06-.1-.22-.16-.47-.28z"/></symbol>
 </svg>
 
 <div class="app" id="app"></div>
@@ -1462,7 +1469,7 @@ function poster(r, extra) {
 }
 function cta(r, label) {
   if (isWa(r))
-    return '<div class="ride-card__cta"><button type="button" class="btn btn--wa" data-action="contact" data-id="' + r.id + '">' + icon('chat') + (label || 'Message on WhatsApp') + '</button></div>';
+    return '<div class="ride-card__cta"><button type="button" class="btn btn--wa-soft" data-action="contact" data-id="' + r.id + '">' + icon('whatsapp') + (label || 'Message on WhatsApp') + '</button></div>';
   return '<div class="ride-card__cta"><button type="button" class="btn btn--outline" data-action="contact" data-id="' + r.id + '">View on ' + SOURCE_LABEL[r.source] + icon('external') + '</button><p class="btn__hint">Opens ' + SOURCE_DOMAIN[r.source] + ' · you\'ll leave Pathfynder</p></div>';
 }
 function messagePane(r) {
@@ -1899,7 +1906,7 @@ function renderRideDetail(r) {
       '<div class="bubble"><div class="bubble__name">' + esc(displayName(r)) + '</div><span class="bubble__text">' + esc(r.raw_text) + '</span><span class="bubble__time">' + bt + '</span></div></div></section>';
   }
   var ctaHTML = isWa(r)
-    ? '<button type="button" class="btn btn--wa" data-action="contact" data-id="' + r.id + '">' + icon('chat') + 'Message ' + esc(displayName(r).split(' ')[0]) + ' on WhatsApp</button><p class="btn__hint">' + (r.source === 'pathfynder' ? 'Opens WhatsApp · Confirm the ride there · Pay in the car' : 'Opens WhatsApp with a message ready to send') + '</p>'
+    ? '<button type="button" class="btn btn--wa" data-action="contact" data-id="' + r.id + '">' + icon('whatsapp') + 'Message ' + esc(displayName(r).split(' ')[0]) + ' on WhatsApp</button><p class="btn__hint">' + (r.source === 'pathfynder' ? 'Opens WhatsApp · Confirm the ride there · Pay in the car' : 'Opens WhatsApp with a message ready to send') + '</p>'
     : '<button type="button" class="btn btn--outline btn--strong" data-action="contact" data-id="' + r.id + '">View on ' + SOURCE_LABEL[r.source] + icon('external') + '</button><p class="btn__hint">Opens ' + SOURCE_DOMAIN[r.source] + ' to book · you\'ll leave Pathfynder</p>';
   var strip = (r.role === 'driver' && r.match_type === 'along_route' && r.route_km != null && r.pickup_pct != null && r.dropoff_pct != null)
     ? ('<section class="sheet-block"><h3 class="sheet-block__label">How this ride fits your trip</h3>' + routeStrip(r) + '</section>') : '';
