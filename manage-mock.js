@@ -15,7 +15,7 @@
   function isoOffset(ms) { return new Date(Date.now() + ms).toISOString(); }
   function clone(o) { return o == null ? o : JSON.parse(JSON.stringify(o)); }
 
-  function buildPayload(stateKey, tripId, departAt, reverse) {
+  function buildPayload(stateKey, tripId, departAt, reverse, empty) {
     if (stateKey === 'invalid') return null;
 
     var tripStatus = stateKey === 'draft' ? 'draft' : (stateKey === 'completed' ? 'completed' : 'active');
@@ -55,6 +55,8 @@
       bookings.forEach(function (b) { b.picked_up_at = isoOffset(-40 * 60e3); b.dropped_off_at = isoOffset(-10 * 60e3); });
     }
 
+    if (empty) bookings = [];
+
     return {
       trip: {
         id: tripId || 'trip-mock', status: tripStatus, driver_name: 'Test Driver',
@@ -89,7 +91,7 @@
       { id: 'trip-m3', off: -3, key: 'completed' },
       { id: 'trip-m2', off: -2, key: 'completed' },
       { id: 'trip-p2', off: 2, key: 'draft' },
-      { id: 'trip-p2b', off: 2, key: 'draft', hh: 21, mm: 0, reverse: true } /* second trip same day, Essex -> Windsor */
+      { id: 'trip-p2b', off: 2, key: 'draft', hh: 21, mm: 0, reverse: true, empty: true } /* second trip same day, Essex -> Windsor, no bookings (editable) */
     ];
     var raw = rawState();
     if (raw === 'draft' || raw === 'active' || raw === 'completed') defs.push({ id: 'trip-today', off: 0, key: raw });
@@ -104,7 +106,7 @@
   function getStore(id) {
     var def = findDef(id);
     if (!def) return null;
-    if (!(id in STORE)) STORE[id] = buildPayload(def.key, id, dayAt(def.off, def.hh, def.mm), def.reverse);
+    if (!(id in STORE)) STORE[id] = buildPayload(def.key, id, dayAt(def.off, def.hh, def.mm), def.reverse, def.empty);
     return STORE[id];
   }
 
@@ -121,8 +123,8 @@
           if (rawState() === 'invalid') { resolve({ error: 'invalid_token' }); return; }
           resolve({ trips: tripDefs().map(function (d) {
             var st = STORE[d.id];
-            return { id: d.id, depart_at: dayAt(d.off, d.hh, d.mm), status: st ? st.trip.status : d.key,
-              origin_label: (d.reverse ? DEST : ORIGIN).label, dest_label: (d.reverse ? ORIGIN : DEST).label };
+            return { id: d.id, depart_at: st ? st.trip.depart_at : dayAt(d.off, d.hh, d.mm), status: st ? st.trip.status : d.key,
+              origin_label: st ? st.trip.origin_label : (d.reverse ? DEST : ORIGIN).label, dest_label: st ? st.trip.dest_label : (d.reverse ? ORIGIN : DEST).label };
           }) });
         }, 200);
       });
@@ -154,6 +156,30 @@
           if (patch && patch.photo != null) PROFILE.photo_url = patch.photo;
           resolve({ name: PROFILE.name, photo_url: PROFILE.photo_url });
         }, 200);
+      });
+    },
+    /* Mirrors trip_manage_update: f = { origin_label/lat/lng, dest_label/lat/lng, depart_at (ISO), seats, price } */
+    update: function (token, tripId, f) {
+      return new Promise(function (resolve, reject) {
+        setTimeout(function () {
+          if (shouldFail()) { reject(new Error('mock update failure')); return; }
+          var st = getStore(tripId);
+          if (!st) { resolve({ error: 'invalid_token' }); return; }
+          if (st.bookings.length > 0) { resolve({ error: 'has_passengers' }); return; }
+          if (st.trip.status !== 'draft') { resolve({ error: 'not_editable' }); return; }
+          var bad = !(f.seats >= 1 && f.seats <= 8 && Math.floor(f.seats) === f.seats) || (f.price != null && f.price < 0) ||
+            !f.origin_label || !f.dest_label ||
+            [f.origin_lat, f.origin_lng, f.dest_lat, f.dest_lng].some(function (n) { return typeof n !== 'number' || !isFinite(n); }) ||
+            Math.abs(f.origin_lat) > 90 || Math.abs(f.dest_lat) > 90 || Math.abs(f.origin_lng) > 180 || Math.abs(f.dest_lng) > 180 ||
+            isNaN(new Date(f.depart_at).getTime());
+          if (bad) { resolve({ error: 'invalid_input' }); return; }
+          if (new Date(f.depart_at).getTime() < Date.now()) { resolve({ error: 'past_time' }); return; }
+          var t = st.trip;
+          t.origin_label = f.origin_label; t.origin_lat = f.origin_lat; t.origin_lng = f.origin_lng;
+          t.dest_label = f.dest_label; t.dest_lat = f.dest_lat; t.dest_lng = f.dest_lng;
+          t.depart_at = new Date(f.depart_at).toISOString(); t.seats_total = f.seats; t.price_per_seat = f.price == null ? null : f.price;
+          resolve(clone(st));
+        }, 300);
       });
     },
     action: function (token, action, bookingId, tripId) {
