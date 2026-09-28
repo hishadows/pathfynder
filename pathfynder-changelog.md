@@ -165,3 +165,4 @@
   - New filled `i-whatsapp` sprite icon replaces the chat bubble on both WhatsApp buttons.
   - Verified: `node --check`, Playwright at 390px light/dark (list + detail sheet).
   - Files: explore.html.
+- 2026-09-28 — Manage ride: "Your route" hero slide uses the card background (white light / #202C33 dark) with normal text, muted done stops and primary-green start/destination dots; slide 1 unchanged. CSS + one class. Verified with `node --check` + Playwright light/dark. Files: manage.html.
