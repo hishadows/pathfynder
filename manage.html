@@ -1465,12 +1465,13 @@ function renderProfile(app) {
   if (STATE.profileLoading && !STATE.profile) body = '<div class="pf-wrap"><div class="pf-skel"></div><div class="pf-skel"></div><div class="pf-skel"></div></div>';
   else if (!STATE.profile) body = '<div class="pf-wrap"><div class="pf-card"><p class="pf-err">' + esc(STATE.profileError || "We couldn't load your profile. Please try again.") + '</p><button type="button" class="btn btn-secondary btn-full" data-action="pf-retry">Try again</button></div></div>';
   else body = profileBody(STATE.profile);
+  var y = window.pageYOffset || 0; /* keep scroll across re-renders; opening the profile resets it in profileAction */
   app.innerHTML = profileHeader() + body;
   var inp = document.getElementById('pfNameInput');
-  if (inp) { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
+  if (inp) { inp.focus({ preventScroll: true }); inp.setSelectionRange(inp.value.length, inp.value.length); }
   var f = document.getElementById('pfPhotoInput');
   if (f) f.onchange = function () { if (f.files && f.files[0]) handlePhoto(f.files[0]); f.value = ''; };
-  window.scrollTo(0, 0);
+  window.scrollTo(0, y);
 }
 function loadProfile() {
   STATE.profileLoading = true; STATE.profileError = null; render();
@@ -1559,7 +1560,7 @@ function toggleNotif() {
 }
 /* Returns true when handled. */
 function profileAction(action, t) {
-  if (action === 'profile') { STATE.view = 'profile'; STATE.editingName = false; if (STATE.profile) render(); if (!STATE.profile || !STATE.profileLoading) loadProfile(); return true; }
+  if (action === 'profile') { STATE.view = 'profile'; STATE.editingName = false; window.scrollTo(0, 0); if (STATE.profile) render(); if (!STATE.profile || !STATE.profileLoading) loadProfile(); return true; }
   if (action === 'pf-back') { STATE.view = 'home'; STATE.editingName = false; render(); return true; }
   if (action === 'pf-retry') { loadProfile(); return true; }
   if (action === 'pf-photo') { var f = document.getElementById('pfPhotoInput'); if (f) f.click(); return true; }
