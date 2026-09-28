@@ -198,7 +198,7 @@
             !(f.seats >= 1 && f.seats <= 8 && Math.floor(f.seats) === f.seats) || (f.price != null && f.price < 0) || (f.note != null && f.note.length > 300) ||
             !Array.isArray(stops) || stops.length > 5 ||
             stops.some(function (x) { return !x || !x.label || !num(x.lat, 90) || !num(x.lng, 180); }) ||
-            deps.length < 1 || deps.length > 7 || rets.length > 7 || !uniq(deps) || !uniq(rets) ||
+            deps.length < 1 || deps.length > 30 || rets.length > 30 || !uniq(deps) || !uniq(rets) ||
             deps.concat(rets).some(function (iso) { return isNaN(new Date(iso).getTime()); });
           if (bad) { resolve({ error: 'invalid_input' }); return; }
           if (deps.concat(rets).some(function (iso) { return new Date(iso).getTime() < Date.now(); })) { resolve({ error: 'past_time' }); return; }
@@ -219,6 +219,22 @@
           rets.forEach(function (iso) { add(iso, true); });
           resolve({ trip_ids: ids });
         }, 300);
+      });
+    },
+    /* Mirrors trip_post_recent: last distinct routes -> { trips: [...] } | { error } */
+    recent: function (token) {
+      return new Promise(function (resolve) {
+        setTimeout(function () {
+          if (rawState() === 'invalid') { resolve({ error: 'invalid_token' }); return; }
+          resolve({ trips: [
+            { origin_label: 'Windsor, Ontario, Canada', origin_lat: 42.3149, origin_lng: -83.0364, dest_label: 'Toronto, Ontario, Canada', dest_lat: 43.6532, dest_lng: -79.3832,
+              stops: [{ label: 'Leamington, Ontario, Canada', lat: 42.0534, lng: -82.5999 }], seats: 3, price: 20, note: 'Pickup at the Tim Hortons' },
+            { origin_label: 'London, Ontario, Canada', origin_lat: 42.9849, origin_lng: -81.2453, dest_label: 'Ottawa, Ontario, Canada', dest_lat: 45.4215, dest_lng: -75.6972,
+              stops: [], seats: 4, price: 50, note: null },
+            { origin_label: 'Windsor, Ontario, Canada', origin_lat: 42.3149, origin_lng: -83.0364, dest_label: 'London, Ontario, Canada', dest_lat: 42.9849, dest_lng: -81.2453,
+              stops: [], seats: 2, price: null, note: null }
+          ] });
+        }, 200);
       });
     },
     action: function (token, action, bookingId, tripId) {
