@@ -1402,7 +1402,7 @@ function profileBody(p) {
       '<div class="pf-stat"><b>' + esc(Number(s.trips_completed) || 0) + '</b><span>Trips completed</span></div>' +
       '<div class="pf-stat"><b>' + esc(fmtMemberSince(s.member_since)) + '</b><span>Member since</span></div>' +
       '<div class="pf-stat"><b>' + esc(Number(s.passengers_drove) || 0) + '</b><span>Passengers drove</span></div>' +
-      '<div class="pf-stat"><b>' + esc(fmtCAD(s.total_earned)) + '</b><span>Total earned (CAD)</span></div></div></section>' +
+      '<div class="pf-stat"><b>' + esc(fmtCAD(s.total_earned)) + '</b><span>Total saved (CAD)</span></div></div></section>' +
     '<section class="pf-card"><h2 class="pf-h">Notification alerts</h2><div class="pf-row"><span class="pf-row-ic">' + ico('bell') + '</span><div class="pf-row__t"><b>Ride alerts</b><span id="pfNotifSub">' + esc(nv.hint || (nv.on ? 'On for this device' : 'Off')) + '</span></div>' +
       '<button type="button" class="pf-switch" id="pfNotifSwitch" role="switch" data-action="pf-notif" aria-checked="' + nv.on + '" aria-label="Notification alerts"' + (nv.disabled ? ' disabled' : '') + '></button></div></section>' +
     '<section class="pf-card"><h2 class="pf-h">Appearance</h2><div class="pf-seg" role="group" aria-label="Theme">' + seg('light', 'Light') + seg('dark', 'Dark') + seg('system', 'System') + '</div></section>' +
