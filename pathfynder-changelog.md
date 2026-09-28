@@ -173,3 +173,4 @@
   - Before the start, each card has "Remove passenger", which opens a pop-up with "Message <name> first" (WhatsApp, pre-filled), "Remove passenger" (red) and Cancel. After the start it shows "I'm outside" + "Picked up", then "Dropped off". The extra pre-pickup "Dropped off" button is gone.
   - Verified: `node --check`, Playwright at 390px light/dark (draft, active, completed + start/end/remove pop-ups, click-through in mock), no page errors.
   - Files: manage.html.
+- 2026-09-28 — Manage ride: "Your route" hero slide uses the card background (white light / #202C33 dark) with normal text, muted done stops and primary-green start/destination dots; slide 1 unchanged. CSS + one class. Verified with `node --check` + Playwright light/dark. Files: manage.html.

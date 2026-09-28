@@ -125,6 +125,9 @@ button{font:inherit}
 .route-stop__label{font-size:14px;font-weight:600}
 .route-stop__addr{font-size:12.5px;color:rgba(255,255,255,.75);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .route-stop.is-done .route-stop__label,.route-stop.is-done .route-stop__addr{text-decoration:line-through;opacity:.55}
+.hero-slide--route{background:var(--card);color:var(--text);border:1px solid var(--divider)}
+.hero-slide--route .route-stop__addr{color:var(--text-2)}
+.hero-slide--route .route-stop.is-done .route-stop__label,.hero-slide--route .route-stop.is-done .route-stop__addr{color:var(--text-2)}
 
 /* Sections */
 .section{padding:16px 12px 0}
@@ -739,9 +742,9 @@ function heroSection(payload) {
   var route = computeRoute(payload);
   var doneItems = doneStopsForSlide2(payload);
   var originLabel = route.origin.isGps ? 'Start: your location' : ('Start: ' + shortLabel(route.origin.label));
-  var rows = '<div class="route-stop"><span class="route-stop__dot" style="background:#FFFFFF"></span><div class="route-stop__text"><span class="route-stop__label">' + esc(originLabel) + '</span></div></div>';
+  var rows = '<div class="route-stop"><span class="route-stop__dot" style="background:var(--primary)"></span><div class="route-stop__text"><span class="route-stop__label">' + esc(originLabel) + '</span></div></div>';
   rows += route.stops.map(function (s) { return routeStopRow(payload, s, false); }).join('');
-  rows += '<div class="route-stop"><span class="route-stop__dot" style="background:#FFFFFF"></span><div class="route-stop__text"><span class="route-stop__label">Destination: ' + esc(shortLabel(trip.dest_label)) + '</span></div></div>';
+  rows += '<div class="route-stop"><span class="route-stop__dot" style="background:var(--primary)"></span><div class="route-stop__text"><span class="route-stop__label">Destination: ' + esc(shortLabel(trip.dest_label)) + '</span></div></div>';
   rows += doneItems.map(function (d) {
     return '<div class="route-stop is-done"><span class="route-stop__dot" style="background:' + colorFor(d.id) + '"></span>' +
       '<div class="route-stop__text"><span class="route-stop__label">' + (d.kind === 'pickup' ? 'Picked up ' : 'Dropped off ') + esc(firstName(d.name)) + '</span><span class="route-stop__addr">' + esc(shortLabel(d.label)) + '</span></div></div>';
@@ -752,7 +755,7 @@ function heroSection(payload) {
 
   return '<section class="hero-wrap"><div class="hero-track" id="heroTrack">' +
       '<div class="hero-slide">' + slide1 + '</div>' +
-      '<div class="hero-slide">' + slide2 + '</div>' +
+      '<div class="hero-slide hero-slide--route">' + slide2 + '</div>' +
     '</div></section>' +
     '<div class="hero-dots">' + dots + '</div>' +
     mapsCard(payload);
