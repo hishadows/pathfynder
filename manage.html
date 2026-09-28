@@ -72,8 +72,8 @@ button{font:inherit}
 .btn .i{width:19px;height:19px;flex:none}
 .btn-secondary{background:var(--muted-card);color:var(--text);border:1px solid var(--divider)}
 .btn-danger{background:var(--danger);color:#FFFFFF}
+.btn-secondary.btn-danger-text{color:var(--danger)}
 .btn-full{width:100%}
-.btn-text-danger{background:transparent;border:0;color:var(--danger);font-size:14px;font-weight:600;min-height:44px;cursor:pointer}
 
 /* Hero */
 .hero-wrap{padding:12px 12px 0}
@@ -83,6 +83,15 @@ button{font:inherit}
 .hero-dots{display:flex;justify-content:center;gap:6px;padding:10px 0 4px}
 .hero-dot{width:7px;height:7px;border-radius:4px;background:var(--divider);border:0;padding:0;cursor:pointer}
 .hero-dot.is-active{width:18px;background:var(--primary)}
+
+/* Maps card */
+.maps-card{display:flex;align-items:center;gap:12px;width:calc(100% - 24px);margin:4px 12px 0;padding:14px 16px;border:0;border-radius:16px;background:var(--hero-bg);color:var(--hero-text);text-align:left;font:inherit;cursor:pointer}
+.maps-card__icon{width:40px;height:40px;border-radius:12px;background:rgba(255,255,255,.12);display:grid;place-items:center;flex:none}
+.maps-card__icon svg{width:22px;height:22px}
+.maps-card__text{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.maps-card__title{font-size:15px;font-weight:700}
+.maps-card__sub{font-size:12.5px;opacity:.75}
+.maps-card__btn{flex:none;display:inline-flex;align-items:center;height:34px;padding:0 16px;border-radius:999px;background:#FFFFFF;color:#0B141A;font-size:14px;font-weight:600}
 
 .hero-top{display:flex;align-items:center;gap:10px;margin-bottom:14px}
 .hero-avatar{width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.18);display:grid;place-items:center;font-weight:700;font-size:16px;flex:none}
@@ -132,10 +141,8 @@ button{font:inherit}
 .pax-card__id{flex:1;min-width:0}
 .pax-card__name{font-size:14.5px;font-weight:700;display:block}
 .pax-card__meta{font-size:12px;color:var(--text-2)}
-.pax-card__tagwrap{display:flex;align-items:center;gap:6px}
-.pax-tag{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.02em;padding:4px 8px;border-radius:999px;background:var(--chip-soft);color:var(--chip-soft-text)}
-.pax-tag--muted{background:var(--divider);color:var(--text-2)}
-.pax-remove{width:32px;height:32px;min-width:44px;min-height:44px;display:grid;place-items:center;border:0;background:transparent;color:var(--danger);cursor:pointer;font-size:18px;line-height:1;border-radius:50%}
+.pax-contact{margin-left:auto;flex:none;width:38px;height:38px;border-radius:50%;background:var(--chip-soft);color:var(--chip-soft-text);display:grid;place-items:center;text-decoration:none}
+.pax-contact svg{width:20px;height:20px}
 
 .pax-timeline{position:relative;padding-left:18px;margin-bottom:10px}
 .pax-timeline::before{content:"";position:absolute;left:4px;top:6px;bottom:6px;border-left:2px dotted var(--divider)}
@@ -147,9 +154,6 @@ button{font:inherit}
 .pax-stop__chip{font-size:11.5px;font-weight:600;color:var(--text-2);background:var(--muted-card);border-radius:999px;padding:2px 8px}
 .pax-stop__addr{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-.pax-side{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
-.pax-side__price{font-size:14px;font-weight:700}
-.pax-side__seats{font-size:12.5px;color:var(--text-2)}
 .pax-onboard{display:inline-block;font-size:12px;font-weight:600;color:var(--chip-soft-text);background:var(--chip-soft);border-radius:999px;padding:4px 10px;margin-bottom:10px}
 
 .pax-actions{display:flex;gap:8px}
@@ -161,7 +165,6 @@ button{font:inherit}
 .action-bar{position:fixed;left:0;right:0;bottom:0;z-index:4;background:var(--card);border-top:1px solid var(--divider);box-shadow:var(--shadow);padding:10px 12px calc(10px + env(safe-area-inset-bottom))}
 .action-bar__row{display:flex;gap:10px}
 .action-bar__row .btn{flex:1}
-.end-trip-wrap{padding:8px 16px 4px;text-align:center}
 
 /* Sheet */
 .sheet-layer{position:fixed;inset:0;z-index:10;display:none}
@@ -637,8 +640,9 @@ function isMobileOrPwa() {
 function openMapsTap(btn) {
   if (!STATE.payload) return;
   var trip = STATE.payload.trip;
-  var origLabel = btn.textContent;
-  btn.textContent = 'Opening…';
+  var lab = btn.querySelector('[data-maps-label]') || btn;
+  var origLabel = lab.textContent;
+  lab.textContent = 'Opening…';
   var mobile = isMobileOrPwa();
   var w = null;
   if (!mobile) { try { w = window.open('about:blank', '_blank'); } catch (e) { w = null; } }
@@ -662,10 +666,10 @@ function openMapsTap(btn) {
     } else {
       w.location.href = url;
     }
-    btn.textContent = origLabel;
+    lab.textContent = origLabel;
   }).catch(function (e) {
     console.error('[manage] open maps failed', e);
-    btn.textContent = origLabel;
+    lab.textContent = origLabel;
   });
 }
 
@@ -699,6 +703,15 @@ function routeStopRow(payload, stop, isDone) {
     '<span class="route-stop__dot" style="background:' + dotColor + '"></span>' +
     '<div class="route-stop__text"><span class="route-stop__label">' + labelParts.join(' · ') + '</span><span class="route-stop__addr">' + esc(shortLabel(stop.label)) + '</span></div>' +
   '</div>';
+}
+function mapsCard(payload) {
+  if (payload.trip.status === 'completed') return '';
+  var n = computeRoute(payload).stops.length;
+  var sub = n > 0 ? (n + ' stop' + (n === 1 ? '' : 's') + ' · shortest order') : 'Pickup to destination';
+  return '<button type="button" class="maps-card" data-action="open-maps">' +
+    '<span class="maps-card__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14"/></svg></span>' +
+    '<span class="maps-card__text"><span class="maps-card__title">Full route in Maps</span><span class="maps-card__sub" data-maps-label>' + esc(sub) + '</span></span>' +
+    '<span class="maps-card__btn">Open</span></button>';
 }
 function heroSection(payload) {
   var trip = payload.trip;
@@ -741,14 +754,14 @@ function heroSection(payload) {
       '<div class="hero-slide">' + slide1 + '</div>' +
       '<div class="hero-slide">' + slide2 + '</div>' +
     '</div></section>' +
-    '<div class="hero-dots">' + dots + '</div>';
+    '<div class="hero-dots">' + dots + '</div>' +
+    mapsCard(payload);
 }
 
 /* ---------- Render: passengers ---------- */
 function passengerCard(b, trip) {
   var digits = String(b.phone || '').replace(/\D/g, '');
   var outsideHref = 'https://wa.me/' + digits + '?text=' + encodeURIComponent('Hi ' + firstName(b.name) + ", I'm outside at " + b.pickup_label + ' 🚗');
-  var priceText = trip.price_per_seat != null ? fmtMoneyShort(b.seats * trip.price_per_seat) : '–';
   var pickupDist = PFRoute.haversineKm(trip.origin_lat, trip.origin_lng, b.pickup_lat, b.pickup_lng);
   var dropoffDist = PFRoute.haversineKm(b.dropoff_lat, b.dropoff_lng, trip.dest_lat, trip.dest_lng);
   var completed = trip.status === 'completed';
@@ -762,16 +775,15 @@ function passengerCard(b, trip) {
     '</div>';
   }
 
-  var tagText = dropped ? 'dropped off' : (picked ? 'picked up' : 'confirmed');
   var cardClass = 'pax-card' + (picked ? ' pax-card--muted' : '');
-  var removeBtn = (!completed && !dropped) ?
-    '<button type="button" class="pax-remove" data-action="remove" data-id="' + b.id + '" aria-label="Remove ' + esc(b.name) + '">✕</button>' : '';
+  var contactBtn = digits ?
+    '<a class="pax-contact" href="https://wa.me/' + digits + '?text=' + encodeURIComponent('Hi ' + firstName(b.name) + ', ') + '" target="_blank" rel="noopener" aria-label="Message ' + esc(b.name) + ' on WhatsApp"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" stroke="none" d="M12.04 2a9.9 9.9 0 0 0-8.5 14.98L2 22l5.17-1.5A9.9 9.9 0 1 0 12.04 2zm0 18.1a8.2 8.2 0 0 1-4.18-1.15l-.3-.18-3.07.89.9-2.99-.2-.31a8.2 8.2 0 1 1 6.85 3.74zm4.5-6.14c-.25-.12-1.46-.72-1.69-.8-.23-.09-.39-.13-.56.12-.16.25-.64.8-.78.97-.15.16-.29.18-.54.06a6.7 6.7 0 0 1-3.34-2.92c-.25-.43.25-.4.72-1.34.08-.16.04-.3-.02-.43l-.76-1.83c-.2-.48-.4-.41-.56-.42h-.47a.9.9 0 0 0-.65.3 2.7 2.7 0 0 0-.85 2.02c0 1.19.87 2.34.99 2.5.12.16 1.71 2.61 4.14 3.66 1.54.66 2.14.72 2.91.6.47-.07 1.46-.6 1.66-1.17.2-.58.2-1.07.14-1.17-.06-.1-.22-.16-.47-.28z"/></svg></a>' : '';
   var toggleAttrs = dropped ? ' data-action="toggle-expand" data-id="' + b.id + '" style="cursor:pointer"' : '';
 
   var head = '<div class="pax-card__top"' + toggleAttrs + '>' +
     '<span class="pax-avatar">' + esc(initial(b.name)) + '</span>' +
     '<div class="pax-card__id"><span class="pax-card__name">' + esc(b.name) + '</span><span class="pax-card__meta">' + relTime(b.created_at) + '</span></div>' +
-    '<div class="pax-card__tagwrap"><span class="pax-tag' + ((picked || dropped) ? ' pax-tag--muted' : '') + '">' + tagText + '</span>' + removeBtn + '</div>' +
+    contactBtn +
   '</div>';
 
   var timeline = '<div class="pax-timeline">' +
@@ -779,7 +791,6 @@ function passengerCard(b, trip) {
     '<div class="pax-stop"><span class="pax-stop__dot"></span><div class="pax-stop__head"><span class="pax-stop__label">Dropoff</span>' + (dropoffDist != null ? '<span class="pax-stop__chip">' + km1(dropoffDist) + '</span>' : '') + '</div><div class="pax-stop__addr">' + esc(b.dropoff_label) + '</div></div>' +
   '</div>';
 
-  var side = '<div class="pax-side"><span class="pax-side__price">' + esc(priceText) + '</span><span class="pax-side__seats">' + b.seats + ' seat' + (b.seats === 1 ? '' : 's') + '</span></div>';
 
   var actions = '';
   if (!completed) {
@@ -787,18 +798,18 @@ function passengerCard(b, trip) {
       var pendingDropped = STATE.pendingKey === 'dropped_off:' + b.id;
       actions = '<span class="pax-onboard">On board</span>' +
         '<div class="pax-actions"><button type="button" class="btn btn-cta btn-full" data-action="dropped_off" data-id="' + b.id + '"' + (pendingDropped ? ' disabled' : '') + '>Dropped off</button></div>';
+    } else if (!dropped && trip.status === 'draft') {
+      actions = '<div class="pax-actions"><button type="button" class="btn btn-secondary btn-danger-text btn-full" data-action="remove" data-id="' + b.id + '">Remove passenger</button></div>';
     } else if (!dropped) {
       var pendingPicked = STATE.pendingKey === 'picked_up:' + b.id;
-      var pendingDropped2 = STATE.pendingKey === 'dropped_off:' + b.id;
       actions = '<div class="pax-actions">' +
           '<a class="btn btn-secondary" href="' + outsideHref + '" target="_blank" rel="noopener">I’m outside</a>' +
           '<button type="button" class="btn btn-cta" data-action="picked_up" data-id="' + b.id + '"' + (pendingPicked ? ' disabled' : '') + '>Picked up</button>' +
-        '</div>' +
-        '<div class="pax-actions" style="margin-top:8px"><button type="button" class="btn btn-secondary btn-full" data-action="dropped_off" data-id="' + b.id + '"' + (pendingDropped2 ? ' disabled' : '') + '>Dropped off</button></div>';
+        '</div>';
     }
   }
 
-  return '<div class="' + cardClass + '">' + head + timeline + side + actions + '</div>';
+  return '<div class="' + cardClass + '">' + head + timeline + actions + '</div>';
 }
 function passengersSection(payload) {
   var trip = payload.trip;
@@ -814,22 +825,12 @@ function passengersSection(payload) {
 function actionBar(payload) {
   var trip = payload.trip;
   if (trip.status === 'completed') return '';
-  var pendingStart = STATE.pendingKey === 'start';
-  if (trip.status === 'draft') {
-    return '<div class="action-bar"><div class="action-bar__row">' +
-      '<button type="button" class="btn btn-secondary" data-action="share">Share link</button>' +
-      '<button type="button" class="btn btn-cta" data-action="open-start-sheet"' + (pendingStart ? ' disabled' : '') + '>Start trip</button>' +
-    '</div></div>';
-  }
+  var main = trip.status === 'draft' ?
+    '<button type="button" class="btn btn-cta" data-action="open-start-sheet"' + (STATE.pendingKey === 'start' ? ' disabled' : '') + '>Start trip</button>' :
+    '<button type="button" class="btn btn-cta" data-action="open-end-sheet"' + (STATE.pendingKey === 'end' ? ' disabled' : '') + '>End trip</button>';
   return '<div class="action-bar"><div class="action-bar__row">' +
-    '<button type="button" class="btn btn-secondary" data-action="share">Share link</button>' +
-    '<button type="button" class="btn btn-secondary" data-action="open-maps">Open in Maps</button>' +
+    '<button type="button" class="btn btn-secondary" data-action="share">Invite passengers</button>' + main +
   '</div></div>';
-}
-function endTripLink(payload) {
-  if (payload.trip.status !== 'active') return '';
-  var pending = STATE.pendingKey === 'end';
-  return '<div class="end-trip-wrap"><button type="button" class="btn-text-danger" data-action="open-end-sheet"' + (pending ? ' disabled' : '') + '>End trip</button></div>';
 }
 
 /* ---------- Sheet ---------- */
@@ -841,6 +842,7 @@ function sheetHtml() {
   document.getElementById('sheetBody').innerHTML =
     '<h3>' + esc(s.title) + '</h3><p>' + esc(s.message) + '</p>' +
     '<div class="sheet__actions">' +
+      (s.linkHref ? '<a class="btn btn-secondary" href="' + esc(s.linkHref) + '" target="_blank" rel="noopener"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" stroke="none" d="M12.04 2a9.9 9.9 0 0 0-8.5 14.98L2 22l5.17-1.5A9.9 9.9 0 1 0 12.04 2zm0 18.1a8.2 8.2 0 0 1-4.18-1.15l-.3-.18-3.07.89.9-2.99-.2-.31a8.2 8.2 0 1 1 6.85 3.74zm4.5-6.14c-.25-.12-1.46-.72-1.69-.8-.23-.09-.39-.13-.56.12-.16.25-.64.8-.78.97-.15.16-.29.18-.54.06a6.7 6.7 0 0 1-3.34-2.92c-.25-.43.25-.4.72-1.34.08-.16.04-.3-.02-.43l-.76-1.83c-.2-.48-.4-.41-.56-.42h-.47a.9.9 0 0 0-.65.3 2.7 2.7 0 0 0-.85 2.02c0 1.19.87 2.34.99 2.5.12.16 1.71 2.61 4.14 3.66 1.54.66 2.14.72 2.91.6.47-.07 1.46-.6 1.66-1.17.2-.58.2-1.07.14-1.17-.06-.1-.22-.16-.47-.28z"/></svg>' + esc(s.linkLabel) + '</a>' : '') +
       '<button type="button" class="btn ' + (s.danger ? 'btn-danger' : 'btn-cta') + '" data-action="sheet-confirm">' + esc(s.confirmLabel) + '</button>' +
       '<button type="button" class="btn btn-secondary" data-action="sheet-cancel">Cancel</button>' +
     '</div>';
@@ -857,7 +859,7 @@ function render() {
   var payload = STATE.payload;
   var showBar = payload.trip.status !== 'completed';
   app.classList.toggle('has-bar', showBar);
-  app.innerHTML = header() + heroSection(payload) + passengersSection(payload) + endTripLink(payload) + '<div class="footer-space"></div>' + actionBar(payload);
+  app.innerHTML = header() + heroSection(payload) + passengersSection(payload) + '<div class="footer-space"></div>' + actionBar(payload);
   sheetHtml();
 
   var track = document.getElementById('heroTrack');
@@ -877,6 +879,7 @@ function render() {
 document.body.addEventListener('click', function (e) {
   var t = e.target.closest('[data-action]');
   if (!t) return;
+  if (e.target.closest('a.pax-contact')) return;
   var action = t.getAttribute('data-action');
   var id = t.getAttribute('data-id');
 
@@ -891,11 +894,15 @@ document.body.addEventListener('click', function (e) {
     return;
   }
   if (action === 'toggle-expand') { STATE.expanded[id] = !STATE.expanded[id]; render(); return; }
-  if (action === 'open-start-sheet') { openSheet({ title: 'Start trip now?', message: 'Passengers will be notified the trip has started.', confirmLabel: 'Start trip', danger: false, doAction: 'start', bookingId: null }); return; }
-  if (action === 'open-end-sheet') { openSheet({ title: 'End trip?', message: "You can't restart it.", confirmLabel: 'End trip', danger: true, doAction: 'end', bookingId: null }); return; }
+  if (action === 'open-start-sheet') { openSheet({ title: 'Start this ride now?', message: 'Your passengers will see that the ride has started.', confirmLabel: 'Start ride', danger: false, doAction: 'start', bookingId: null }); return; }
+  if (action === 'open-end-sheet') { openSheet({ title: 'End this ride?', message: "Make sure everyone has been dropped off. This can't be undone.", confirmLabel: 'End ride', danger: true, doAction: 'end', bookingId: null }); return; }
   if (action === 'remove') {
     var b = STATE.payload && STATE.payload.bookings.find(function (x) { return x.id === id; });
-    openSheet({ title: 'Remove ' + (b ? b.name : 'passenger') + ' from this trip?', message: 'They will no longer be part of this ride.', confirmLabel: 'Remove', danger: true, doAction: 'remove', bookingId: id });
+    var fn = b ? firstName(b.name) : 'this passenger';
+    var bd = b ? String(b.phone || '').replace(/\D/g, '') : '';
+    openSheet({ title: 'Remove ' + fn + ' from this ride?', message: fn + ' booked a seat with you. Let them know before you remove them, so they have time to find another ride.', confirmLabel: 'Remove passenger', danger: true, doAction: 'remove', bookingId: id,
+      linkLabel: bd ? 'Message ' + fn + ' first' : null,
+      linkHref: bd ? 'https://wa.me/' + bd + '?text=' + encodeURIComponent('Hi ' + fn + ", sorry — I can't take you on this ride anymore. ") : null });
     return;
   }
   if (action === 'picked_up' || action === 'dropped_off') {
