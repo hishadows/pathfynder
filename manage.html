@@ -16,6 +16,7 @@
   --chip-soft:#D9FDD3; --chip-soft-text:#006D5B; --danger:#D93025;
   --hero-bg:#075E54; --hero-text:#FFFFFF; --hero-chip:rgba(255,255,255,.12); --hero-fill:#25D366;
   --overlay:rgba(11,20,26,.42); --shadow:0 -1px 4px rgba(11,20,26,.08);
+  --sel-bg:#E3F1EA; --sel-border:#075E54;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
@@ -26,6 +27,7 @@
     --chip-soft:#0A332C; --chip-soft-text:#25D366; --danger:#F15C6D;
     --hero-bg:#075E54; --hero-text:#FFFFFF; --hero-chip:rgba(255,255,255,.12); --hero-fill:#25D366;
     --overlay:rgba(0,0,0,.62); --shadow:0 -1px 4px rgba(0,0,0,.4);
+    --sel-bg:#0A332C; --sel-border:#00A884;
   }
 }
 :root[data-theme="dark"]{
@@ -36,6 +38,7 @@
   --chip-soft:#0A332C; --chip-soft-text:#25D366; --danger:#F15C6D;
   --hero-bg:#075E54; --hero-text:#FFFFFF; --hero-chip:rgba(255,255,255,.12); --hero-fill:#25D366;
   --overlay:rgba(0,0,0,.62); --shadow:0 -1px 4px rgba(0,0,0,.4);
+  --sel-bg:#0A332C; --sel-border:#00A884;
 }
 *{box-sizing:border-box}
 html,body{margin:0;overflow-x:hidden}
@@ -52,6 +55,25 @@ button{font:inherit}
 .brand img{width:22px;height:22px;object-fit:contain}
 .app-bar__title{margin:0;font-size:18px;font-weight:600;line-height:1.2}
 .app-bar__sub{margin:0;font-size:12.5px;color:var(--header-sub)}
+.profile-btn{margin-left:auto;flex:none;width:40px;height:40px;border-radius:50%;border:0;padding:0;background:rgba(255,255,255,.16);color:var(--header-text);display:grid;place-items:center;cursor:pointer}
+.profile-btn svg{width:22px;height:22px}
+
+/* Date strip */
+.date-strip{padding:12px 0 4px}
+.date-strip__label{margin:0 16px 8px;font-size:12.5px;font-weight:600;color:var(--text-2)}
+.date-strip__row{display:flex;gap:8px;overflow-x:auto;padding:2px 16px 6px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.date-strip__row::-webkit-scrollbar{display:none}
+.date-pill{flex:none;min-width:84px;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 14px;border-radius:14px;border:1.5px solid var(--divider);background:var(--card);color:var(--text);cursor:pointer;font:inherit}
+.date-pill__top{font-size:15px;font-weight:700;line-height:1.25}
+.date-pill__sub{font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2);line-height:1.3}
+.date-pill__sub--date{text-transform:none;letter-spacing:0;font-size:12px}
+.date-pill.is-selected{background:var(--sel-bg);border-color:var(--sel-border)}
+
+/* Empty state */
+.empty-day{display:flex;flex-direction:column;align-items:center;text-align:center;padding:40px 24px}
+.empty-day h2{margin:0 0 8px;font-size:19px}
+.empty-day p{margin:0 0 20px;color:var(--text-2);font-size:14.5px;max-width:320px}
+.empty-day__btns{display:flex;flex-direction:column;gap:10px;width:100%;max-width:320px}
 
 /* Skeleton */
 .skel{padding:16px}
@@ -94,9 +116,7 @@ button{font:inherit}
 .maps-card__btn{flex:none;display:inline-flex;align-items:center;height:34px;padding:0 16px;border-radius:999px;background:#FFFFFF;color:#0B141A;font-size:14px;font-weight:600}
 
 .hero-top{display:flex;align-items:center;gap:10px;margin-bottom:14px}
-.hero-avatar{width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.18);display:grid;place-items:center;font-weight:700;font-size:16px;flex:none}
 .hero-top__text{display:flex;flex-direction:column;gap:4px;min-width:0}
-.hero-top__text strong{font-size:16px;font-weight:600}
 .hero-pill{align-self:flex-start;font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px;background:var(--hero-chip)}
 
 .hero-route{position:relative;padding-left:20px;margin-bottom:14px}
@@ -446,7 +466,7 @@ return { haversineKm: haversineKm, buildStops: buildStops, dedupeStops: dedupeSt
 
 /* ---------- State ---------- */
 var STATE = {
-  token: null, isMock: false, payload: null, loading: true, errorType: null,
+  token: null, isMock: false, payload: null, trips: [], selectedDate: null, selectedTripId: null, stripScroll: false, loading: true, errorType: null,
   heroSlide: 0, pendingKey: null, expanded: {}, sheet: null,
   gps: { fix: null, label: null, denied: false },
   routeThrottle: { ts: 0, lat: null, lng: null }
@@ -463,8 +483,16 @@ function getToken() {
 }
 
 /* ---------- API ---------- */
-function realGet(token) {
-  return db.rpc('trip_manage_get', { p_token: token }).then(function (res) {
+function realList(token) {
+  /* TODO: trip_manage_list ships with task 5; until then the real path errors. */
+  return db.rpc('trip_manage_list', { p_token: token }).then(function (res) {
+    if (res.error) throw res.error;
+    return res.data;
+  });
+}
+function realGet(token, tripId) {
+  /* TODO: p_trip_id is added to trip_manage_get with task 5. */
+  return db.rpc('trip_manage_get', { p_token: token, p_trip_id: tripId }).then(function (res) {
     if (res.error) throw res.error;
     return res.data;
   });
@@ -475,22 +503,57 @@ function realAction(token, action, bookingId) {
     return res.data;
   });
 }
-function apiGet() { return STATE.isMock ? window.PF_MANAGE_MOCK.get(STATE.token) : realGet(STATE.token); }
-function apiAction(action, bookingId) { return STATE.isMock ? window.PF_MANAGE_MOCK.action(STATE.token, action, bookingId) : realAction(STATE.token, action, bookingId); }
+function apiList() { return STATE.isMock ? window.PF_MANAGE_MOCK.list(STATE.token) : realList(STATE.token); }
+function apiGet(tripId) { return STATE.isMock ? window.PF_MANAGE_MOCK.get(STATE.token, tripId) : realGet(STATE.token, tripId); }
+function apiAction(action, bookingId) { return STATE.isMock ? window.PF_MANAGE_MOCK.action(STATE.token, action, bookingId, STATE.selectedTripId) : realAction(STATE.token, action, bookingId); }
 
+function localDateKey(iso) {
+  var d = new Date(iso);
+  var m = d.getMonth() + 1, day = d.getDate();
+  return d.getFullYear() + '-' + (m < 10 ? '0' : '') + m + '-' + (day < 10 ? '0' : '') + day;
+}
+function todayKey() { return localDateKey(new Date().toISOString()); }
+function tripForDate(key) {
+  for (var i = 0; i < STATE.trips.length; i++) if (localDateKey(STATE.trips[i].depart_at) === key) return STATE.trips[i];
+  return null;
+}
+function failLoad(e) {
+  console.error('[manage] load failed', e);
+  STATE.loading = false; STATE.errorType = 'rpc_error'; STATE.payload = null;
+  render();
+}
+/* Loads the trip list, then the trip for the selected date (today by default). */
 function load(showSkeleton) {
   if (showSkeleton) { STATE.loading = true; render(); }
-  apiGet().then(function (data) {
+  apiList().then(function (list) {
+    if (!list || list.error === 'invalid_token') { STATE.loading = false; STATE.errorType = 'invalid_token'; STATE.payload = null; render(); return; }
+    if (!list.trips) { STATE.loading = false; STATE.errorType = 'rpc_error'; STATE.payload = null; render(); return; }
+    STATE.trips = list.trips.slice().sort(function (a, b) { return new Date(a.depart_at) - new Date(b.depart_at); });
+    if (!STATE.selectedDate) { STATE.selectedDate = todayKey(); STATE.stripScroll = true; }
+    loadTrip(false);
+  }).catch(failLoad);
+}
+/* Loads the trip on STATE.selectedDate (or shows the empty state). */
+function loadTrip(showSkeleton) {
+  var t = tripForDate(STATE.selectedDate);
+  STATE.selectedTripId = t ? t.id : null;
+  if (!t) { STATE.loading = false; STATE.errorType = null; STATE.payload = null; render(); return; }
+  if (showSkeleton) { STATE.loading = true; render(); }
+  var wanted = t.id;
+  apiGet(wanted).then(function (data) {
+    if (STATE.selectedTripId !== wanted) return; /* user switched dates meanwhile */
     STATE.loading = false;
     if (!data || data.error === 'invalid_token') { STATE.errorType = 'invalid_token'; STATE.payload = null; }
     else if (!data.trip) { STATE.errorType = 'rpc_error'; STATE.payload = null; }
     else { STATE.errorType = null; STATE.payload = data; }
     render();
-  }).catch(function (e) {
-    console.error('[manage] load failed', e);
-    STATE.loading = false; STATE.errorType = 'rpc_error'; STATE.payload = null;
-    render();
-  });
+  }).catch(function (e) { if (STATE.selectedTripId === wanted) failLoad(e); });
+}
+function selectDate(key) {
+  if (key === STATE.selectedDate || STATE.pendingKey) return;
+  STATE.selectedDate = key; STATE.stripScroll = true;
+  STATE.heroSlide = 0; STATE.expanded = {}; STATE.payload = null; STATE.sheet = null;
+  loadTrip(true);
 }
 
 function doAction(action, bookingId, pendingKey) {
@@ -726,8 +789,37 @@ function openMapsTap(btn) {
 function header() {
   return '<header class="app-bar"><div class="app-bar__inner">' +
     '<span class="brand"><img src="/logo.png" alt=""></span>' +
-    '<div><h1 class="app-bar__title">Pathfynder</h1><p class="app-bar__sub">Manage ride</p></div>' +
+    '<div><h1 class="app-bar__title">Pathfynder</h1><p class="app-bar__sub">Driver home</p></div>' +
+    /* TODO: profile screen is not built yet; button does nothing for now. */
+    '<button type="button" class="profile-btn" data-action="profile" aria-label="Profile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></button>' +
     '</div></header>';
+}
+function dateStrip() {
+  var today = todayKey();
+  var byDate = {}, keys = [today];
+  STATE.trips.forEach(function (t) {
+    var k = localDateKey(t.depart_at);
+    if (!byDate[k]) { byDate[k] = t; if (keys.indexOf(k) < 0) keys.push(k); }
+  });
+  keys.sort();
+  var pills = keys.map(function (k) {
+    var t = byDate[k];
+    var dstr = fmtDateShort(t ? t.depart_at : new Date().toISOString());
+    var top, sub;
+    if (k === today) { top = 'Today'; sub = dstr; }
+    else { top = dstr; sub = t.status === 'completed' ? 'Done' : (t.status === 'active' ? 'Live' : 'Upcoming'); }
+    return '<button type="button" class="date-pill' + (k === STATE.selectedDate ? ' is-selected' : '') + '" data-action="pick-date" data-date="' + k + '"' + (k === STATE.selectedDate ? ' aria-current="date"' : '') + '>' +
+      '<span class="date-pill__top">' + esc(top) + '</span><span class="date-pill__sub' + (k === today ? ' date-pill__sub--date' : '') + '">' + esc(sub) + '</span></button>';
+  }).join('');
+  return '<section class="date-strip"><p class="date-strip__label">Your rides</p><div class="date-strip__row" id="dateStrip">' + pills + '</div></section>';
+}
+function emptyDay() {
+  return '<div class="empty-day"><h2>No ride on this day</h2>' +
+    '<p>Post a trip so passengers can book, or find a ride to join.</p>' +
+    '<div class="empty-day__btns">' +
+    '<a class="btn btn-cta" href="https://wa.me/916356600421?text=' + encodeURIComponent('Hi, I want to post a trip') + '" target="_blank" rel="noopener">Post a trip</a>' +
+    '<a class="btn btn-secondary" href="/explore">Explore rides</a>' +
+    '</div></div>';
 }
 function skeleton() {
   return '<div class="skel"><div class="skel__block"></div><div class="skel__line"></div><div class="skel__line"></div><div class="skel__line"></div></div>';
@@ -886,8 +978,7 @@ function heroSection(payload) {
 
   var slide1 =
     '<div class="hero-top">' +
-      '<span class="hero-avatar">' + esc(initial(trip.driver_name)) + '</span>' +
-      '<div class="hero-top__text"><strong>' + esc(trip.driver_name) + '</strong><span class="hero-pill">' + statusLabel + '</span></div>' +
+      '<div class="hero-top__text"><span class="hero-pill">' + statusLabel + '</span></div>' +
     '</div>' +
     '<div class="hero-route">' +
       '<div class="hero-route__stop"><span class="hero-route__dot"></span><div><span class="hero-route__city">' + esc(shortLabel(trip.origin_label)) + '</span><span class="hero-route__sub">Pickup</span></div></div>' +
@@ -1027,13 +1118,31 @@ function closeSheet() { STATE.sheet = null; sheetHtml(); }
 function render() {
   var app = document.getElementById('app');
   if (STATE.errorType) { app.classList.remove('has-bar'); app.innerHTML = errorPage(); sheetHtml(); return; }
-  if (STATE.loading || !STATE.payload) { app.classList.remove('has-bar'); app.innerHTML = header() + skeleton(); sheetHtml(); return; }
-
-  var payload = STATE.payload;
-  var showBar = payload.trip.status !== 'completed';
+  var oldStrip = document.getElementById('dateStrip');
+  var keepScroll = oldStrip ? oldStrip.scrollLeft : 0;
+  var body = '', showBar = false, payload = STATE.payload;
+  if (STATE.loading) body = skeleton();
+  else if (!payload) body = emptyDay();
+  else {
+    showBar = payload.trip.status !== 'completed';
+    body = heroSection(payload) + passengersSection(payload) + '<div class="footer-space"></div>' + actionBar(payload);
+  }
+  if (payload) {
+    STATE.trips.forEach(function (t) { if (t.id === payload.trip.id) t.status = payload.trip.status; });
+  }
   app.classList.toggle('has-bar', showBar);
-  app.innerHTML = header() + heroSection(payload) + passengersSection(payload) + '<div class="footer-space"></div>' + actionBar(payload);
+  app.innerHTML = header() + dateStrip() + body;
   sheetHtml();
+
+  var strip = document.getElementById('dateStrip');
+  if (strip) {
+    var sel = strip.querySelector('.is-selected');
+    if (STATE.stripScroll && sel) {
+      STATE.stripScroll = false;
+      strip.scrollLeft = sel.offsetLeft - (strip.clientWidth - sel.offsetWidth) / 2;
+    } else { strip.scrollLeft = keepScroll; }
+  }
+  if (STATE.loading || !payload) return;
 
   var car = document.querySelector('.ns-car');
   if (car) {
@@ -1064,6 +1173,8 @@ document.body.addEventListener('click', function (e) {
   var action = t.getAttribute('data-action');
   var id = t.getAttribute('data-id');
 
+  if (action === 'profile') { return; } /* TODO: profile screen */
+  if (action === 'pick-date') { selectDate(t.getAttribute('data-date')); return; }
   if (action === 'share') { doShare(); return; }
   if (action === 'open-maps') { openMapsTap(t); return; }
   if (action === 'dot') {
@@ -1108,10 +1219,10 @@ function boot() {
   load(true);
 }
 document.addEventListener('visibilitychange', function () {
-  if (document.visibilityState === 'visible' && !STATE.pendingKey && !STATE.errorType && STATE.payload) load(false);
+  if (document.visibilityState === 'visible' && !STATE.pendingKey && !STATE.errorType && !STATE.loading) load(false);
 });
 setInterval(function () {
-  if (document.visibilityState === 'visible' && !STATE.pendingKey && !STATE.errorType && STATE.payload) load(false);
+  if (document.visibilityState === 'visible' && !STATE.pendingKey && !STATE.errorType && !STATE.loading) load(false);
 }, 30000);
 
 boot();
