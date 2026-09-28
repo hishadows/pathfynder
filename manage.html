@@ -148,7 +148,7 @@ button{font:inherit}
 .hero-track{display:flex;align-items:flex-start;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;border-radius:16px;-webkit-overflow-scrolling:touch;scrollbar-width:none;transition:height .25s ease}
 @media (prefers-reduced-motion:reduce){.hero-track{transition:none}}
 .hero-track::-webkit-scrollbar{display:none}
-.hero-slide{align-self:flex-start;box-sizing:border-box;flex:0 0 100%;scroll-snap-align:start;min-width:100%;background:var(--hero-bg);color:var(--hero-text);padding:14px;border-radius:16px}
+.hero-slide{align-self:flex-start;box-sizing:border-box;flex:0 0 100%;scroll-snap-align:start;scroll-snap-stop:always;min-width:100%;min-height:var(--hero-min,0);background:var(--hero-bg);color:var(--hero-text);padding:14px;border-radius:16px}
 .hero-dots{display:flex;justify-content:center;gap:6px;padding:12px 0 0;margin:0 0 -4px}
 .hero-dot{width:7px;height:7px;border-radius:4px;background:var(--divider);border:0;padding:0;cursor:pointer}
 .hero-dot.is-active{width:18px;background:var(--primary)}
@@ -1279,6 +1279,7 @@ function closeSheet() { STATE.sheet = null; sheetHtml(); }
 
 /* ---------- Full render ---------- */
 function render() {
+  if (heroSwiping) { STATE.renderPending = true; return; }
   var app = document.getElementById('app');
   if (STATE.view === 'profile') { app.classList.remove('has-bar'); renderProfile(app); sheetHtml(); return; }
   if (STATE.errorType) { app.classList.remove('has-bar'); app.innerHTML = errorPage(); sheetHtml(); return; }
@@ -1319,21 +1320,71 @@ function render() {
   var track = document.getElementById('heroTrack');
   if (heroRO) { heroRO.disconnect(); heroRO = null; }
   if (track) {
+    measureHeroMin();
     track.scrollLeft = STATE.heroSlide * track.clientWidth;
     fitHero(false);
     if (window.ResizeObserver) {
-      heroRO = new ResizeObserver(function () { fitHero(true); });
+      heroRO = new ResizeObserver(function () { if (heroSwiping) return; measureHeroMin(); fitHero(true); });
       track.querySelectorAll('.hero-slide').forEach(function (sl) { heroRO.observe(sl); });
     }
-    track.onscroll = function () {
-      var idx = Math.round(track.scrollLeft / Math.max(1, track.clientWidth));
-      if (idx !== STATE.heroSlide) {
-        STATE.heroSlide = idx;
-        document.querySelectorAll('.hero-dot').forEach(function (d, i) { d.classList.toggle('is-active', i === idx); });
-        fitHero(true);
-      }
-    };
+    track.onscroll = heroScrolled;
+    if (HERO_SCROLLEND) track.onscrollend = heroSettle;
   }
+}
+
+/* Swipe state: heights change and re-renders happen only after the swipe settles */
+var heroSwiping = false, heroTouch = false, heroTimer = null;
+var HERO_SCROLLEND = 'onscrollend' in window;
+function heroArm(ms) { clearTimeout(heroTimer); heroTimer = setTimeout(heroSettle, ms); }
+function heroAligned(track) { var cw = Math.max(1, track.clientWidth); return Math.abs(track.scrollLeft - Math.round(track.scrollLeft / cw) * cw) <= 1; }
+function heroScrolled() {
+  var track = this;
+  var idx = Math.round(track.scrollLeft / Math.max(1, track.clientWidth));
+  if (idx !== STATE.heroSlide) {
+    STATE.heroSlide = idx;
+    document.querySelectorAll('.hero-dot').forEach(function (d, i) { d.classList.toggle('is-active', i === idx); });
+  }
+  if (!heroAligned(track) || heroTouch) heroSwiping = true;
+  if (heroSwiping) heroArm(HERO_SCROLLEND ? 600 : 120);
+}
+function heroSettle() {
+  if (heroTouch) return;
+  clearTimeout(heroTimer);
+  heroSwiping = false;
+  measureHeroMin();
+  fitHero(true);
+  if (STATE.renderPending) { STATE.renderPending = false; render(); }
+}
+document.addEventListener('touchstart', function (e) {
+  if (e.target.closest && e.target.closest('#heroTrack')) { heroTouch = true; heroSwiping = true; clearTimeout(heroTimer); }
+}, { passive: true, capture: true });
+function heroTouchEnd() {
+  if (!heroTouch) return;
+  heroTouch = false;
+  var track = document.getElementById('heroTrack');
+  if (!track || heroAligned(track)) heroSettle(); else heroArm(150);
+}
+document.addEventListener('touchend', heroTouchEnd, { passive: true, capture: true });
+document.addEventListener('touchcancel', heroTouchEnd, { passive: true, capture: true });
+window.addEventListener('resize', function () {
+  var track = document.getElementById('heroTrack');
+  if (!track || heroSwiping) return;
+  measureHeroMin();
+  track.scrollLeft = STATE.heroSlide * track.clientWidth;
+  fitHero(false);
+});
+
+/* Every slide is at least as tall as Trip details (slide 1) at its natural height */
+function measureHeroMin() {
+  var track = document.getElementById('heroTrack');
+  if (!track) return;
+  var sl = track.querySelectorAll('.hero-slide')[1];
+  if (!sl) return;
+  var old = track.style.getPropertyValue('--hero-min');
+  track.style.setProperty('--hero-min', '0px');
+  var h = sl.offsetHeight;
+  var next = h ? h + 'px' : old;
+  if (next) track.style.setProperty('--hero-min', next); else track.style.removeProperty('--hero-min');
 }
 
 /* Size the hero track to the active slide so short slides leave no empty space */
