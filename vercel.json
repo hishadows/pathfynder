@@ -4,6 +4,7 @@
   "outputDirectory": "public",
   "cleanUrls": true,
   "rewrites": [
-    { "source": "/r/:code", "destination": "/api/r?code=:code" }
+    { "source": "/r/:code", "destination": "/api/r?code=:code" },
+    { "source": "/m/:token", "destination": "/manage" }
   ]
 }
