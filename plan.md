@@ -79,3 +79,4 @@ One task per session. Status: todo / done / parked.
 - 2026-09-28 — Driver profile real backend: migration `driver_profile_rpcs` (3 RPCs + `drivers.photo`); notify switch now links via `driver_notify_set` (was passing the wrong token). Open: real push + iOS untested; enabling creates a short-lived unlinked notify row that the RPC adopts; no remove-photo button yet.
 - 2026-09-28 — Manage swipe fix (resize on settle, no mid-swipe renders, snap-stop) + min height = Trip details. Confirmed by Pranay on iPhone: no half stops.
 - 2026-09-28 — Profile screen no longer jumps to the top when toggling ride alerts / Appearance / editing the name: `renderProfile` keeps scroll; only opening the profile resets it. Tested in mock (scrollY unchanged).
+- 2026-09-28 — Manage: trip details row (date/time/price), Find passengers → Explore, Edit trip sheet + `trip_manage_update` RPC (only with 0 passengers, not started). Open: places/Mapbox suggestions not exercised live (sandbox).

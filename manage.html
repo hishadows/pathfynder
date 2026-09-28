@@ -183,6 +183,10 @@ button{font:inherit}
 .hero-panel__value{display:block;font-size:15px;font-weight:700}
 .hero-bar{height:6px;border-radius:4px;background:rgba(255,255,255,.25);overflow:hidden}
 .hero-bar__fill{height:100%;background:var(--hero-fill);border-radius:4px}
+.hero-actions{display:flex;gap:8px;margin-top:12px}
+.hero-btn{flex:1 1 0;min-width:0;min-height:40px;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 10px;border-radius:12px;background:transparent;border:1px solid rgba(255,255,255,.3);color:var(--hero-text);font:inherit;font-size:13.5px;font-weight:600;cursor:pointer;text-decoration:none;white-space:nowrap}
+.hero-btn .i{width:15px;height:15px;flex:none}
+.hero-btn.is-off{opacity:.5}
 
 .hero-slide__title{margin:0 0 12px;font-size:15px;font-weight:700}
 .route-stops{display:flex;flex-direction:column}
@@ -302,10 +306,22 @@ button{font:inherit}
 .sheet p{margin:0 0 18px;color:var(--text-2);font-size:14px}
 .sheet__actions{display:flex;flex-direction:column;gap:8px}
 .sheet__actions .btn{width:100%}
+.sheet--edit{max-height:90vh;overflow-y:auto;overscroll-behavior:contain}
+.ef{display:block;margin:0 0 12px}
+.ef__label{display:block;font-size:12.5px;font-weight:600;color:var(--text-2);margin:0 0 4px}
+.ef input,.ef select{width:100%;box-sizing:border-box;min-height:44px;padding:0 12px;border:1px solid var(--divider);border-radius:10px;background:var(--muted-card);color:var(--text);font:inherit;font-size:16px;color-scheme:light dark}
+.ef-row{display:flex;gap:10px}
+.ef-row .ef{flex:1 1 0;min-width:0}
+.ef-sug{display:none;margin-top:4px;border:1px solid var(--divider);border-radius:10px;overflow:hidden;background:var(--card)}
+.ef-sug.is-open{display:block}
+.ef-sug__item{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid var(--divider);background:transparent;color:var(--text);font:inherit;font-size:14px;padding:9px 12px;cursor:pointer}
+.ef-sug__item:last-child{border-bottom:0}
+.ef-sug__item small{display:block;color:var(--text-2);font-size:12px}
 
 /* Toast */
 .toast{position:fixed;left:16px;right:16px;bottom:90px;z-index:20;background:#111B21;color:#FFFFFF;font-size:13.5px;text-align:center;padding:11px 16px;border-radius:10px;opacity:0;pointer-events:none;transition:opacity .2s}
 .toast.is-visible{opacity:1}
+.toast--top{bottom:auto;top:calc(12px + env(safe-area-inset-top))}
 
 .footer-space{height:8px}
 </style>
@@ -368,7 +384,10 @@ function shortLabel(label) {
 }
 function fmtDateShort(iso) { var d = new Date(iso); return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); }
 function timeOfDay(iso) { var h = new Date(iso).getHours(); return h < 12 ? 'Morning' : (h < 17 ? 'Afternoon' : 'Evening'); }
+function fmtTime12(iso) { return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }); }
+function hhmm(iso) { var d = new Date(iso); return (d.getHours() < 10 ? '0' : '') + d.getHours() + ':' + (d.getMinutes() < 10 ? '0' : '') + d.getMinutes(); }
 function fmtPrice2(n) { return '$' + Number(n).toFixed(2); }
+function fmtSeatPrice(n) { var v = Number(n); return Number.isInteger(v) ? '$' + v : '$' + v.toFixed(2); }
 function fmtMoneyShort(n) { var v = Number(n); return '$' + (Math.round(v * 100) / 100).toString(); }
 function relTime(iso) {
   var min = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 6e4));
@@ -577,6 +596,15 @@ function realAction(token, tripId, action, bookingId) {
     return res.data;
   });
 }
+function realUpdate(token, tripId, f) {
+  return db.rpc('trip_manage_update', { p_token: token, p_trip_id: tripId,
+    p_origin_label: f.origin_label, p_origin_lat: f.origin_lat, p_origin_lng: f.origin_lng,
+    p_dest_label: f.dest_label, p_dest_lat: f.dest_lat, p_dest_lng: f.dest_lng,
+    p_depart_at: f.depart_at, p_seats: f.seats, p_price: f.price }).then(function (res) {
+    if (res.error) throw res.error;
+    return res.data;
+  });
+}
 function realProfileGet(token) {
   return db.rpc('driver_profile_get', { p_token: token }).then(function (res) {
     if (res.error) throw res.error;
@@ -591,6 +619,7 @@ function realProfileUpdate(token, patch) {
 }
 function apiList() { return STATE.isMock ? window.PF_MANAGE_MOCK.list(STATE.token) : realList(STATE.token); }
 function apiGet(tripId) { return STATE.isMock ? window.PF_MANAGE_MOCK.get(STATE.token, tripId) : realGet(STATE.token, tripId); }
+function apiUpdate(tripId, f) { return STATE.isMock ? window.PF_MANAGE_MOCK.update(STATE.token, tripId, f) : realUpdate(STATE.token, tripId, f); }
 function apiProfileGet() { return STATE.isMock ? window.PF_MANAGE_MOCK.profile(STATE.token) : realProfileGet(STATE.token); }
 function apiProfileUpdate(patch) { return STATE.isMock ? window.PF_MANAGE_MOCK.updateProfile(STATE.token, patch) : realProfileUpdate(STATE.token, patch); }
 function apiAction(action, bookingId) { return STATE.isMock ? window.PF_MANAGE_MOCK.action(STATE.token, action, bookingId, STATE.selectedTripId) : realAction(STATE.token, STATE.selectedTripId, action, bookingId); }
@@ -700,6 +729,7 @@ function applyOptimistic(action, bookingId) {
 function toast(msg) {
   var el = document.getElementById('toast');
   el.textContent = msg;
+  el.classList.toggle('toast--top', document.getElementById('sheetLayer').classList.contains('is-open'));
   el.classList.add('is-visible');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(function () { el.classList.remove('is-visible'); }, 3000);
@@ -1131,8 +1161,11 @@ function heroSection(payload) {
   var statusLabel = trip.status === 'draft' ? 'Not started' : (trip.status === 'active' ? 'Started' : 'Ended');
   var taken = seatsTaken(payload);
   var pct = trip.seats_total > 0 ? Math.min(100, Math.round(taken / trip.seats_total * 100)) : 0;
-  var pricePanel = trip.price_per_seat != null ?
-    '<div class="hero-panel"><span class="hero-panel__label">Price</span><span class="hero-panel__value">' + esc(fmtPrice2(trip.price_per_seat)) + ' per seat</span></div>' : '';
+  var priceChip = trip.price_per_seat != null ? '<span class="hero-chip">' + esc(fmtSeatPrice(trip.price_per_seat)) + '/seat</span>' : '';
+  var editWhy = editBlockReason(payload);
+  var findHref = '/explore?type=passenger&from=' + encodeURIComponent(trip.origin_label || '') + '&to=' + encodeURIComponent(trip.dest_label || '') +
+    '&o=' + trip.origin_lat + ',' + trip.origin_lng + '&d=' + trip.dest_lat + ',' + trip.dest_lng +
+    '&date=' + localDateKey(trip.depart_at) + '&time=' + hhmm(trip.depart_at) + '&flex=60';
 
   var slideDetails =
     '<div class="hero-top">' +
@@ -1142,10 +1175,13 @@ function heroSection(payload) {
       '<div class="hero-route__stop"><span class="hero-route__dot"></span><div><span class="hero-route__city">' + esc(shortLabel(trip.origin_label)) + '</span><span class="hero-route__sub">Pickup</span></div></div>' +
       '<div class="hero-route__stop"><span class="hero-route__dot hero-route__dot--to"></span><div><span class="hero-route__city">' + esc(shortLabel(trip.dest_label)) + '</span><span class="hero-route__sub">Dropoff</span></div></div>' +
     '</div>' +
-    '<div class="hero-chips"><span class="hero-chip">' + esc(fmtDateShort(trip.depart_at)) + '</span><span class="hero-chip">' + esc(timeOfDay(trip.depart_at)) + '</span></div>' +
+    '<div class="hero-chips"><span class="hero-chip">' + esc(fmtDateShort(trip.depart_at)) + '</span><span class="hero-chip">' + esc(fmtTime12(trip.depart_at)) + '</span>' + priceChip + '</div>' +
     '<div class="hero-panels">' +
       '<div class="hero-panel"><span class="hero-panel__label">' + taken + ' of ' + trip.seats_total + ' seats taken</span><div class="hero-bar"><div class="hero-bar__fill" style="width:' + pct + '%"></div></div></div>' +
-      pricePanel +
+    '</div>' +
+    '<div class="hero-actions">' +
+      '<a class="hero-btn" href="' + esc(findHref) + '">' + ico('search') + 'Find passengers</a>' +
+      '<button type="button" class="hero-btn' + (editWhy ? ' is-off' : '') + '" data-action="open-edit"' + (editWhy ? ' aria-disabled="true"' : '') + '>' + ico('pencil') + 'Edit trip</button>' +
     '</div>';
 
   var route = computeRoute(payload);
@@ -1242,7 +1278,8 @@ var PATHS = {
   pencil: '<path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/>',
   lock: '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
   bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
-  mail: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/>'
+  mail: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/>',
+  search: '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>'
 };
 function ico(name) {
   return '<svg class="i" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + PATHS[name] + '</svg>';
@@ -1264,9 +1301,15 @@ function actionBar(payload) {
 function sheetHtml() {
   var s = STATE.sheet;
   var layer = document.getElementById('sheetLayer');
-  if (!s) { layer.classList.remove('is-open'); document.getElementById('sheetBody').innerHTML = ''; return; }
+  var sb = document.getElementById('sheetBody');
+  if (!s) { layer.classList.remove('is-open'); sb.classList.remove('sheet--edit'); sb.innerHTML = ''; return; }
   layer.classList.add('is-open');
-  document.getElementById('sheetBody').innerHTML =
+  if (s.kind === 'edit') { /* built once: background refreshes must not wipe what the driver is typing */
+    if (!s.built) { s.built = true; sb.classList.add('sheet--edit'); sb.innerHTML = editSheetHtml(s); wireEdit(sb); }
+    return;
+  }
+  sb.classList.remove('sheet--edit');
+  sb.innerHTML =
     '<h3>' + esc(s.title) + '</h3><p>' + esc(s.message) + '</p>' +
     '<div class="sheet__actions">' +
       (s.linkHref ? '<a class="btn btn-secondary" href="' + esc(s.linkHref) + '" target="_blank" rel="noopener"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" stroke="none" d="M12.04 2a9.9 9.9 0 0 0-8.5 14.98L2 22l5.17-1.5A9.9 9.9 0 1 0 12.04 2zm0 18.1a8.2 8.2 0 0 1-4.18-1.15l-.3-.18-3.07.89.9-2.99-.2-.31a8.2 8.2 0 1 1 6.85 3.74zm4.5-6.14c-.25-.12-1.46-.72-1.69-.8-.23-.09-.39-.13-.56.12-.16.25-.64.8-.78.97-.15.16-.29.18-.54.06a6.7 6.7 0 0 1-3.34-2.92c-.25-.43.25-.4.72-1.34.08-.16.04-.3-.02-.43l-.76-1.83c-.2-.48-.4-.41-.56-.42h-.47a.9.9 0 0 0-.65.3 2.7 2.7 0 0 0-.85 2.02c0 1.19.87 2.34.99 2.5.12.16 1.71 2.61 4.14 3.66 1.54.66 2.14.72 2.91.6.47-.07 1.46-.6 1.66-1.17.2-.58.2-1.07.14-1.17-.06-.1-.22-.16-.47-.28z"/></svg>' + esc(s.linkLabel) + '</a>' : '') +
@@ -1274,7 +1317,143 @@ function sheetHtml() {
       '<button type="button" class="btn btn-secondary" data-action="sheet-cancel">Cancel</button>' +
     '</div>';
 }
-function openSheet(opts) { STATE.sheet = opts; sheetHtml(); }
+/* ---------- Edit trip ---------- */
+function editBlockReason(payload) {
+  if (payload.bookings.length > 0) return "You can't edit a trip once passengers have joined.";
+  if (payload.trip.status !== 'draft') return "You can't edit a trip once it has started.";
+  return null;
+}
+var EF = { timers: {}, seq: {}, session: {}, rows: {}, pts: {}, saving: false };
+function efToken() { return (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : (Date.now() + '-' + Math.random().toString(16).slice(2)); }
+function efNorm(x) { return String(x || '').toLowerCase().replace(/\./g, '').replace(/\s+/g, ' ').trim(); }
+function mapboxSuggest(query, sessionToken) {
+  var params = new URLSearchParams();
+  params.set('q', query); params.set('access_token', MAPBOX_TOKEN); params.set('session_token', sessionToken);
+  params.set('country', 'ca'); params.set('language', 'en'); params.set('limit', '6');
+  params.set('types', 'poi,address,place,locality,neighborhood,street'); params.set('proximity', 'ip');
+  return fetch('https://api.mapbox.com/search/searchbox/v1/suggest?' + params.toString())
+    .then(function (res) { return res.ok ? res.json() : { suggestions: [] }; })
+    .then(function (json) {
+      return (json.suggestions || []).map(function (x) {
+        var sub = x.full_address || x.place_formatted;
+        return { name: x.name, sub: sub, label: sub ? (x.name + ', ' + sub) : x.name, mapbox_id: x.mapbox_id };
+      }).filter(function (r) { return r.name && r.mapbox_id; });
+    }).catch(function () { return []; });
+}
+function mapboxRetrieve(mapboxId, sessionToken) {
+  var params = new URLSearchParams();
+  params.set('access_token', MAPBOX_TOKEN); params.set('session_token', sessionToken);
+  return fetch('https://api.mapbox.com/search/searchbox/v1/retrieve/' + encodeURIComponent(mapboxId) + '?' + params.toString())
+    .then(function (res) { return res.ok ? res.json() : null; })
+    .then(function (json) {
+      var f = json && json.features && json.features[0]; if (!f) return null;
+      var props = f.properties || {}, c = (f.geometry && f.geometry.coordinates) || [];
+      if (c[0] == null || c[1] == null) return null;
+      var pt = props.place_formatted || props.full_address;
+      return { label: pt ? (props.name + ', ' + pt) : props.name, lng: c[0], lat: c[1] };
+    }).catch(function () { return null; });
+}
+function efPlaces(q) {
+  if (!db) return Promise.resolve([]);
+  return Promise.resolve(db.from('places').select('name,province,lat,lng').like('norm_key', efNorm(q) + '%').gte('popularity', 20).order('popularity', { ascending: false }).limit(4))
+    .then(function (res) {
+      return (res.data || []).map(function (p) { return { name: p.name, sub: p.province, label: p.name + ', ' + p.province + ', Canada', lat: p.lat, lng: p.lng }; });
+    }).catch(function () { return []; });
+}
+function efSearch(key, q) {
+  var seq = (EF.seq[key] = (EF.seq[key] || 0) + 1);
+  var tok = EF.session[key] || (EF.session[key] = efToken());
+  Promise.all([efPlaces(q), mapboxSuggest(q, tok)]).then(function (r) {
+    if (seq !== EF.seq[key] || !STATE.sheet || STATE.sheet.kind !== 'edit') return;
+    var seen = {}, rows = [];
+    r[0].concat(r[1]).forEach(function (x) { var k = efNorm(x.name); if (seen[k] || rows.length >= 7) return; seen[k] = true; rows.push(x); });
+    EF.rows[key] = rows;
+    var list = document.getElementById('efSug-' + key); if (!list) return;
+    list.innerHTML = rows.map(function (x, i) { return '<button type="button" class="ef-sug__item" data-i="' + i + '">' + esc(x.name) + (x.sub ? '<small>' + esc(x.sub) + '</small>' : '') + '</button>'; }).join('');
+    list.classList.toggle('is-open', rows.length > 0);
+  });
+}
+function efUpdateSave() {
+  var b = document.getElementById('efSave'); if (!b) return;
+  b.disabled = EF.saving || !(EF.pts.o && EF.pts.d);
+}
+function efPick(key, x) {
+  var input = document.getElementById('ef-' + key), list = document.getElementById('efSug-' + key);
+  list.classList.remove('is-open'); list.innerHTML = '';
+  var done = function (pt) {
+    if (!pt) { toast("Couldn't load that place — try another"); return; }
+    EF.pts[key] = pt; input.value = pt.label; efUpdateSave();
+  };
+  if (x.mapbox_id) {
+    input.value = x.label;
+    var tok = EF.session[key]; EF.session[key] = null;
+    mapboxRetrieve(x.mapbox_id, tok).then(done);
+  } else done({ label: x.label, lat: x.lat, lng: x.lng });
+}
+function editSheetHtml(s) {
+  var t = s.trip, d = new Date(t.depart_at);
+  EF.pts = { o: { label: t.origin_label, lat: t.origin_lat, lng: t.origin_lng }, d: { label: t.dest_label, lat: t.dest_lat, lng: t.dest_lng } };
+  EF.rows = {}; EF.saving = false;
+  var seats = '';
+  for (var i = 1; i <= 8; i++) seats += '<option value="' + i + '"' + (i === t.seats_total ? ' selected' : '') + '>' + i + '</option>';
+  return '<h3>Edit trip</h3>' +
+    '<label class="ef"><span class="ef__label">From</span><input id="ef-o" type="text" autocomplete="off" value="' + esc(t.origin_label) + '"><div class="ef-sug" id="efSug-o"></div></label>' +
+    '<label class="ef"><span class="ef__label">To</span><input id="ef-d" type="text" autocomplete="off" value="' + esc(t.dest_label) + '"><div class="ef-sug" id="efSug-d"></div></label>' +
+    '<div class="ef-row"><label class="ef"><span class="ef__label">Date</span><input id="ef-date" type="date" min="' + todayKey() + '" value="' + localDateKey(t.depart_at) + '"></label>' +
+    '<label class="ef"><span class="ef__label">Time</span><input id="ef-time" type="time" value="' + hhmm(t.depart_at) + '"></label></div>' +
+    '<div class="ef-row"><label class="ef"><span class="ef__label">Seats</span><select id="ef-seats">' + seats + '</select></label>' +
+    '<label class="ef"><span class="ef__label">Price per seat ($)</span><input id="ef-price" type="number" inputmode="decimal" min="0" step="0.01" placeholder="Optional" value="' + (t.price_per_seat != null ? esc(t.price_per_seat) : '') + '"></label></div>' +
+    '<div class="sheet__actions"><button type="button" class="btn btn-cta" id="efSave" data-action="edit-save">Save</button>' +
+    '<button type="button" class="btn btn-secondary" data-action="sheet-cancel">Cancel</button></div>';
+}
+function wireEdit(sb) {
+  ['o', 'd'].forEach(function (key) {
+    var input = document.getElementById('ef-' + key), list = document.getElementById('efSug-' + key);
+    input.addEventListener('input', function () {
+      if (EF.pts[key] && input.value !== EF.pts[key].label) { EF.pts[key] = null; efUpdateSave(); }
+      clearTimeout(EF.timers[key]);
+      var q = input.value.trim();
+      if (q.length < 3) { EF.seq[key] = (EF.seq[key] || 0) + 1; list.classList.remove('is-open'); list.innerHTML = ''; return; }
+      EF.timers[key] = setTimeout(function () { efSearch(key, q); }, 300);
+    });
+    /* pointerdown so one tap selects before the input blur dismisses the keyboard */
+    list.addEventListener('pointerdown', function (e) {
+      var b = e.target.closest('.ef-sug__item'); if (!b) return;
+      e.preventDefault();
+      var x = (EF.rows[key] || [])[Number(b.getAttribute('data-i'))]; if (x) efPick(key, x);
+    });
+  });
+  efUpdateSave();
+}
+function hideToast() { clearTimeout(toastTimer); document.getElementById('toast').classList.remove('is-visible'); }
+function openEditSheet(trip) { hideToast(); STATE.sheet = { kind: 'edit', trip: trip, tripId: trip.id }; sheetHtml(); }
+function saveEdit() {
+  var s = STATE.sheet; if (!s || s.kind !== 'edit' || EF.saving || !EF.pts.o || !EF.pts.d) return;
+  var date = document.getElementById('ef-date').value, time = document.getElementById('ef-time').value;
+  var seats = Number(document.getElementById('ef-seats').value), pv = document.getElementById('ef-price').value.trim();
+  var price = pv === '' ? null : Number(pv);
+  if (!date || !time || (price != null && (!isFinite(price) || price < 0))) { toast('Please check the details and try again.'); return; }
+  var at = new Date(date + 'T' + time);
+  if (isNaN(at.getTime())) { toast('Please check the details and try again.'); return; }
+  if (at.getTime() < Date.now()) { toast("That time has already passed — pick a later time."); return; }
+  var f = { origin_label: EF.pts.o.label, origin_lat: EF.pts.o.lat, origin_lng: EF.pts.o.lng,
+    dest_label: EF.pts.d.label, dest_lat: EF.pts.d.lat, dest_lng: EF.pts.d.lng,
+    depart_at: at.toISOString(), seats: seats, price: price };
+  EF.saving = true; efUpdateSave();
+  var msgs = { has_passengers: "You can't edit a trip once passengers have joined.", not_editable: "You can't edit a trip once it has started.",
+    invalid_input: 'Please check the details and try again.', past_time: "That time has already passed — pick a later time.", invalid_token: 'This link is no longer valid.' };
+  apiUpdate(s.tripId, f).then(function (data) {
+    EF.saving = false;
+    if (!data || data.error || !data.trip) { efUpdateSave(); toast(msgs[data && data.error] || "Couldn't save — try again"); return; }
+    closeSheet();
+    toast('Trip updated');
+    STATE.selectedDate = localDateKey(data.trip.depart_at); STATE.selectedTripId = data.trip.id; STATE.stripScroll = true;
+    STATE.payload = data;
+    load(false);
+  }).catch(function (e) { console.error('[manage] update failed', e); EF.saving = false; efUpdateSave(); toast("Couldn't save — try again"); });
+}
+
+function openSheet(opts) { hideToast(); STATE.sheet = opts; sheetHtml(); }
 function closeSheet() { STATE.sheet = null; sheetHtml(); }
 
 /* ---------- Full render ---------- */
@@ -1620,6 +1799,14 @@ document.body.addEventListener('click', function (e) {
     doAction(action, id, action + ':' + id);
     return;
   }
+  if (action === 'open-edit') {
+    if (!STATE.payload) return;
+    var why = editBlockReason(STATE.payload);
+    if (why) { toast(why); return; }
+    openEditSheet(STATE.payload.trip);
+    return;
+  }
+  if (action === 'edit-save') { saveEdit(); return; }
   if (action === 'sheet-cancel' || action === 'close-sheet') { closeSheet(); return; }
   if (action === 'sheet-confirm') {
     var s = STATE.sheet;
