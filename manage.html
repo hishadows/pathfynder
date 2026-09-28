@@ -1445,6 +1445,28 @@ function handlePhoto(file) {
     return saveProfile({ photo: dataUrl }, 'Photo updated');
   }).then(function () { render(); }).catch(function () { toast("Couldn't use that image. Try another."); });
 }
+/* Links this browser's push subscription to the driver via driver_notify_set (manage token, not a notify_requests uuid).
+   PFNotify.enable(null) reuses the shared permission/VAPID/subscribe code; the server adopts that unlinked row. Resolves to the new on/off state. */
+function driverNotifySet(turnOn) {
+  function currentSub() {
+    return navigator.serviceWorker.ready.then(function (reg) { return reg.pushManager.getSubscription(); });
+  }
+  function call(sub, on) {
+    var j = sub.toJSON();
+    return db.rpc('driver_notify_set', { p_token: STATE.token, p_endpoint: j.endpoint, p_p256dh: (j.keys || {}).p256dh || null, p_auth: (j.keys || {}).auth || null, p_on: on }).then(function (res) {
+      if (res.error) throw res.error;
+      if (!res.data || res.data.error) throw new Error((res.data && res.data.error) || 'notify_failed');
+      return on;
+    });
+  }
+  if (turnOn) {
+    return window.PFNotify.enable(null).then(function (st) {
+      if (st !== 'granted') return false;
+      return currentSub().then(function (sub) { if (!sub) throw new Error('no_subscription'); return call(sub, true); });
+    });
+  }
+  return currentSub().then(function (sub) { return sub ? call(sub, false) : false; });
+}
 function toggleNotif() {
   var nv = notifView();
   if (nv.disabled || STATE.notifBusy) return;
@@ -1452,9 +1474,8 @@ function toggleNotif() {
   var turnOn = !nv.on;
   if (STATE.isMock) { STATE.profile.notifications_enabled = turnOn; render(); return; } /* mock: don't hit the real notify RPCs */
   STATE.notifBusy = true; render();
-  var run = turnOn ? window.PFNotify.enable(STATE.token) : window.PFNotify.disable(STATE.token);
-  run.then(function () {
-    STATE.profile.notifications_enabled = turnOn && window.PFNotify.state() === 'granted';
+  driverNotifySet(turnOn).then(function (on) {
+    STATE.profile.notifications_enabled = on;
   }).catch(function (e) {
     console.error('[manage] notif toggle failed', e);
     toast("Couldn't change alerts. Please try again.");
