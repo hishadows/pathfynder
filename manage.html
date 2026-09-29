@@ -913,6 +913,7 @@ function shareText(payload) {
 }
 function doShare() {
   if (!STATE.payload) return;
+  if (!STATE.payload.trip || !STATE.payload.trip.join_url) { toast('Invite link not ready'); return; }
   var text = shareText(STATE.payload);
   if (navigator.share) {
     navigator.share({ text: text }).catch(function (e) { if (e && e.name === 'AbortError') return; copyToClipboard(text); });
