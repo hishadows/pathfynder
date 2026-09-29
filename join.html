@@ -117,6 +117,10 @@ textarea.input{padding:12px 14px;min-height:88px;resize:vertical}
 .sum li{display:flex;justify-content:space-between;gap:16px;padding:11px 0;border-bottom:1px solid var(--divider);font-size:14.5px}
 .sum li span{color:var(--text-2);flex:none}
 .sum li b{text-align:right;overflow-wrap:anywhere}
+.modal{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.5);overflow-y:auto}
+.modal__box{width:100%;max-width:380px;max-height:100%;overflow-y:auto;background:var(--card);color:var(--text);border:1px solid var(--divider);border-radius:16px;padding:20px 16px 16px;box-shadow:0 8px 32px rgba(0,0,0,.35)}
+.modal__box h2{margin:0 0 6px;font-size:20px}
+.modal__box p{margin:0;color:var(--text-2);font-size:14.5px;line-height:1.45}
 .skel{height:150px;border-radius:16px;background:var(--card);border:1px solid var(--divider)}
 .skel + .skel{height:220px}
 </style>
@@ -336,7 +340,7 @@ function stepper() {
     '<p class="hint">' + max + (max === 1 ? ' seat' : ' seats') + ' left on this trip.</p>';
 }
 function stepHtml() {
-  var last = '<button type="button" class="btn" data-a="confirm" id="mainBtn">' + (STATE.returning ? 'Confirm my seat' : 'Continue') + '</button>';
+  var last = '<button type="button" class="btn" data-a="confirm" id="mainBtn">Book ride</button>';
   return '<div class="card"><h3 class="h">Where</h3>' +
     '<div class="field"><label class="label" for="in-pickup">Pickup</label><input class="input" id="in-pickup" type="text" autocomplete="off" placeholder="Where should the driver pick you up?" value="' + esc(STATE.pickupTxt) + '"><div class="sug" id="sug-pickup"></div></div>' +
     '<div class="field"><label class="label" for="in-dropoff">Dropoff</label><input class="input" id="in-dropoff" type="text" autocomplete="off" placeholder="Where are you getting off?" value="' + esc(STATE.dropoffTxt) + '"><div class="sug" id="sug-dropoff"></div></div>' +
@@ -399,7 +403,7 @@ function render() {
 function syncBusy() {
   var b = document.getElementById('mainBtn'); if (!b) return;
   b.disabled = STATE.busy;
-  b.textContent = STATE.busy ? (STATE.returning ? 'Booking…' : 'One moment…') : (STATE.view === 'claimexpired' ? 'Get a new code' : (STATE.returning ? 'Confirm my seat' : 'Continue'));
+  b.textContent = STATE.busy ? (STATE.returning ? 'Booking…' : 'One moment…') : (STATE.view === 'claimexpired' ? 'Get a new code' : 'Book ride');
 }
 function confirmedHtml() {
   var b = STATE.booking || {};
@@ -431,10 +435,58 @@ function finishBooking(b, token) {
     booked_at: new Date().toISOString()
   }, token);
 }
+/* Book ride: validate, then ask for confirmation in a popup. */
+var modalEl = null, modalPrev = null;
+function closeModal() {
+  if (!modalEl) return;
+  document.removeEventListener('keydown', modalKey, true);
+  modalEl.parentNode.removeChild(modalEl); modalEl = null;
+  document.body.style.overflow = '';
+  if (modalPrev && modalPrev.focus && document.contains(modalPrev)) { try { modalPrev.focus(); } catch (e) {} }
+  modalPrev = null;
+}
+function modalKey(e) {
+  if (!modalEl) return;
+  if (e.key === 'Escape') { e.preventDefault(); closeModal(); return; }
+  if (e.key === 'Tab') {
+    var f = modalEl.querySelectorAll('button'), first = f[0], last = f[f.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    else if (!modalEl.contains(document.activeElement)) { e.preventDefault(); first.focus(); }
+  }
+}
+function openModal() {
+  if (modalEl) return;
+  var t = STATE.trip || {};
+  modalPrev = document.activeElement;
+  modalEl = document.createElement('div');
+  modalEl.className = 'modal';
+  modalEl.innerHTML = '<div class="modal__box" role="dialog" aria-modal="true" aria-labelledby="mdTitle" aria-describedby="mdText">' +
+    '<h2 id="mdTitle">Book this ride?</h2><p id="mdText">Your ride will be booked.</p>' +
+    '<ul class="sum"><li><span>Route</span><b>' + esc(STATE.pickup.label) + ' → ' + esc(STATE.dropoff.label) + '</b></li>' +
+    '<li><span>Seats</span><b>' + esc(STATE.seats) + '</b></li>' +
+    (t.schedule_text ? '<li><span>When</span><b>' + esc(t.schedule_text) + '</b></li>' : '') + '</ul>' +
+    '<div class="btns"><button type="button" class="btn btn--line" data-m="cancel">Cancel</button>' +
+    '<button type="button" class="btn" data-m="book" id="mdBook">Book</button></div></div>';
+  modalEl.addEventListener('click', function (e) {
+    if (e.target === modalEl) { closeModal(); return; }
+    var m = e.target.closest('[data-m]'); if (!m) return;
+    if (m.getAttribute('data-m') === 'cancel') closeModal();
+    else if (m.getAttribute('data-m') === 'book') { if (STATE.busy) return; closeModal(); doBook(); }
+  });
+  document.body.appendChild(modalEl);
+  document.body.style.overflow = 'hidden';
+  document.addEventListener('keydown', modalKey, true);
+  document.getElementById('mdBook').focus();
+}
 function confirm() {
-  if (STATE.busy) return;
+  if (STATE.busy || modalEl) return;
   readNote();
   if (!validStep1()) return;
+  openModal();
+}
+function doBook() {
+  if (STATE.busy) return;
   if (!STATE.returning) { startClaim(); return; }
   STATE.busy = true; setErr(''); syncBusy();
   /* returning device: name + number come from the saved passenger on the server */
