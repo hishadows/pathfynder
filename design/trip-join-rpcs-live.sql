@@ -3,7 +3,8 @@
 -- Verified against the live schema on 2026-09-29 (project omussxfyrztjahbdrrpi).
 -- Applied as migrations: trip_join_rpcs_live (Parts A+B),
 --   trip_manage_payload_join_url (Part C),
---   passenger_requests_notify_triggers_pending_only (Part D).
+--   passenger_requests_notify_triggers_pending_only (Part D),
+--   trip_join_notify_driver (Part E).
 -- Supersedes design/trip-join-rpcs.sql (which only raised 'proposal only').
 --
 -- Live column mapping used below:
@@ -328,3 +329,244 @@ create trigger trg_new_passenger_request
 --   create trigger trg_new_passenger_request
 --     after insert on public.passenger_requests for each row
 --     execute function notify_n8n_on_new_request();
+
+
+-- =====================================================================
+-- PART E: driver web push when a passenger joins (NEW booking only)
+-- (applied: trip_join_notify_driver)
+-- Replaces Part B's trip_join. Same signature/security/grants; adds a guarded
+-- notify_send call (kind 'passenger_joined', dedupe 'join:<booking id>') after the
+-- insert branch. Own begin/exception block: a notify failure never fails the booking.
+-- Update branch (same passenger re-submits) and full/invalid/expired: no push.
+-- =====================================================================
+create or replace function public.trip_join(
+  p_code text, p_pickup jsonb, p_dropoff jsonb, p_seats int,
+  p_name text, p_whatsapp text, p_note text default null)
+returns jsonb
+language plpgsql security definer set search_path = public, extensions
+as $$
+declare
+  v_code text := upper(trim(coalesce(p_code, '')));
+  v_wa text := regexp_replace(coalesce(p_whatsapp, ''), '\D', '', 'g');
+  v_name text := trim(coalesce(p_name, ''));
+  v_note text := nullif(left(trim(coalesce(p_note, '')), 300), '');
+  t record;
+  v_ex_id uuid;
+  v_taken int;
+  v_left int;
+  v_id uuid;
+  v_plabel text; v_dlabel text;
+  v_plat float8; v_plng float8; v_dlat float8; v_dlng float8;
+  v_ins boolean := false;
+  v_dwa text; v_tok text; v_first text; v_lft int; v_title text; v_body text;
+begin
+  -- input validation (before touching the trip)
+  if v_code = '' then return jsonb_build_object('error', 'invalid_code'); end if;
+  if p_seats is null or p_seats < 1 or p_seats > 8 then return jsonb_build_object('error', 'invalid_input'); end if;
+  if v_name = '' or length(v_name) > 80 then return jsonb_build_object('error', 'invalid_input'); end if;
+  if length(v_wa) < 10 or length(v_wa) > 15 then return jsonb_build_object('error', 'invalid_input'); end if;
+  if p_pickup is null or p_dropoff is null
+     or jsonb_typeof(p_pickup) <> 'object' or jsonb_typeof(p_dropoff) <> 'object' then
+    return jsonb_build_object('error', 'invalid_input');
+  end if;
+
+  begin
+    v_plabel := nullif(trim(p_pickup->>'label'), '');
+    v_dlabel := nullif(trim(p_dropoff->>'label'), '');
+    v_plat := (p_pickup->>'lat')::float8;  v_plng := (p_pickup->>'lng')::float8;
+    v_dlat := (p_dropoff->>'lat')::float8; v_dlng := (p_dropoff->>'lng')::float8;
+  exception when others then
+    return jsonb_build_object('error', 'invalid_input');
+  end;
+  if v_plabel is null or v_dlabel is null
+     or v_plat is null or v_plng is null or v_dlat is null or v_dlng is null
+     or v_plat not between -90 and 90 or v_dlat not between -90 and 90
+     or v_plng not between -180 and 180 or v_dlng not between -180 and 180 then
+    return jsonb_build_object('error', 'invalid_input');
+  end if;
+
+  -- lock the trip row so concurrent joins serialise
+  select id, ended_at, is_active, ride_status, departure_datetime, available_seats into t
+  from public.driver_routines where join_code = v_code for update;
+  if not found then return jsonb_build_object('error', 'invalid_code'); end if;
+
+  if t.ended_at is not null
+     or coalesce(t.is_active, false) = false
+     or coalesce(t.ride_status, '') in ('cancelled', 'canceled', 'completed', 'ended')
+     or (t.departure_datetime is not null and t.departure_datetime < now() - interval '3 hours') then
+    return jsonb_build_object('error', 'expired');
+  end if;
+
+  -- same whatsapp on same trip = update that booking (idempotent double submit)
+  select id into v_ex_id
+  from public.passenger_requests
+  where ride_id = t.id and passenger_wa_id = v_wa
+    and removed_at is null
+    and coalesce(status, '') not in ('declined', 'cancelled', 'canceled', 'removed')
+  order by created_at desc nulls last
+  limit 1;
+
+  select coalesce(sum(greatest(coalesce(seats, 1), 1)), 0)::int into v_taken
+  from public.passenger_requests
+  where ride_id = t.id
+    and removed_at is null
+    and coalesce(status, '') not in ('declined', 'cancelled', 'canceled', 'removed')
+    and id is distinct from v_ex_id;   -- an existing booking is replaced, not added on top
+
+  v_left := greatest(coalesce(t.available_seats, 0), 0) - v_taken;
+  if p_seats > v_left then return jsonb_build_object('error', 'full'); end if;
+
+  if v_ex_id is not null then
+    update public.passenger_requests
+       set seats = p_seats, passenger_name = v_name, note = v_note, status = 'confirmed',
+           pickup_label = v_plabel, pickup_lat = v_plat, pickup_lng = v_plng,
+           dropoff_label = v_dlabel, dropoff_lat = v_dlat, dropoff_lng = v_dlng
+     where id = v_ex_id
+     returning id into v_id;
+  else
+    insert into public.passenger_requests
+      (ride_id, passenger_wa_id, passenger_name, seats, note, status,
+       pickup_label, pickup_lat, pickup_lng, dropoff_label, dropoff_lat, dropoff_lng)
+    values
+      (t.id, v_wa, v_name, p_seats, v_note, 'confirmed',
+       v_plabel, v_plat, v_plng, v_dlabel, v_dlat, v_dlng)
+    returning id into v_id;
+    v_ins := true;
+  end if;
+
+  -- notify the driver (web push) about a NEW booking only; never fail the booking
+  if v_ins then
+    begin
+      select coalesce(nullif(dr.driver_wa_id, ''), d.wa_id), d.manage_token
+        into v_dwa, v_tok
+      from public.driver_routines dr
+      left join public.drivers d on d.id = dr.driver_id
+      where dr.id = t.id;
+
+      if nullif(v_dwa, '') is not null and nullif(v_tok, '') is not null then
+        v_lft := v_left - p_seats;
+        v_first := split_part(v_name, ' ', 1);
+        v_title := left(coalesce(nullif(v_first, ''), 'A passenger'), 40) || ' joined your ride';
+        v_body := p_seats || case when p_seats = 1 then ' seat' else ' seats' end
+          || ' · ' || initcap(trim(split_part(v_plabel, ',', 1)))
+          || ' → ' || initcap(trim(split_part(v_dlabel, ',', 1)))
+          || ' · ' || case when v_lft <= 0 then 'Ride is now full'
+                           else v_lft || case when v_lft = 1 then ' seat left' else ' seats left' end end;
+        perform public.notify_send(v_dwa, 'passenger_joined', v_title, v_body,
+                                   '/m/' || v_tok || '?t=' || t.id::text, 'join:' || v_id::text);
+      end if;
+    exception when others then
+      null;  -- notification failure must never affect the booking
+    end;
+  end if;
+
+  return jsonb_build_object(
+    'booking', jsonb_build_object(
+      'id', v_id, 'seats', p_seats, 'status', 'confirmed',
+      'pickup_label', v_plabel, 'dropoff_label', v_dlabel),
+    'trip', public._trip_join_trip_json(t.id));
+end $$;
+
+revoke all on function public.trip_join(text, jsonb, jsonb, int, text, text, text) from public, anon;
+grant execute on function public.trip_join(text, jsonb, jsonb, int, text, text, text) to anon;
+
+
+-- ROLLBACK for Part E (restores Part B's trip_join body; grants unchanged):
+--   create or replace function public.trip_join(
+--     p_code text, p_pickup jsonb, p_dropoff jsonb, p_seats int,
+--     p_name text, p_whatsapp text, p_note text default null)
+--   returns jsonb
+--   language plpgsql security definer set search_path = public, extensions
+--   as $$
+--   declare
+--     v_code text := upper(trim(coalesce(p_code, '')));
+--     v_wa text := regexp_replace(coalesce(p_whatsapp, ''), '\D', '', 'g');
+--     v_name text := trim(coalesce(p_name, ''));
+--     v_note text := nullif(left(trim(coalesce(p_note, '')), 300), '');
+--     t record;
+--     v_ex_id uuid;
+--     v_taken int;
+--     v_left int;
+--     v_id uuid;
+--     v_plabel text; v_dlabel text;
+--     v_plat float8; v_plng float8; v_dlat float8; v_dlng float8;
+--   begin
+--     -- input validation (before touching the trip)
+--     if v_code = '' then return jsonb_build_object('error', 'invalid_code'); end if;
+--     if p_seats is null or p_seats < 1 or p_seats > 8 then return jsonb_build_object('error', 'invalid_input'); end if;
+--     if v_name = '' or length(v_name) > 80 then return jsonb_build_object('error', 'invalid_input'); end if;
+--     if length(v_wa) < 10 or length(v_wa) > 15 then return jsonb_build_object('error', 'invalid_input'); end if;
+--     if p_pickup is null or p_dropoff is null
+--        or jsonb_typeof(p_pickup) <> 'object' or jsonb_typeof(p_dropoff) <> 'object' then
+--       return jsonb_build_object('error', 'invalid_input');
+--     end if;
+--
+--     begin
+--       v_plabel := nullif(trim(p_pickup->>'label'), '');
+--       v_dlabel := nullif(trim(p_dropoff->>'label'), '');
+--       v_plat := (p_pickup->>'lat')::float8;  v_plng := (p_pickup->>'lng')::float8;
+--       v_dlat := (p_dropoff->>'lat')::float8; v_dlng := (p_dropoff->>'lng')::float8;
+--     exception when others then
+--       return jsonb_build_object('error', 'invalid_input');
+--     end;
+--     if v_plabel is null or v_dlabel is null
+--        or v_plat is null or v_plng is null or v_dlat is null or v_dlng is null
+--        or v_plat not between -90 and 90 or v_dlat not between -90 and 90
+--        or v_plng not between -180 and 180 or v_dlng not between -180 and 180 then
+--       return jsonb_build_object('error', 'invalid_input');
+--     end if;
+--
+--     -- lock the trip row so concurrent joins serialise
+--     select id, ended_at, is_active, ride_status, departure_datetime, available_seats into t
+--     from public.driver_routines where join_code = v_code for update;
+--     if not found then return jsonb_build_object('error', 'invalid_code'); end if;
+--
+--     if t.ended_at is not null
+--        or coalesce(t.is_active, false) = false
+--        or coalesce(t.ride_status, '') in ('cancelled', 'canceled', 'completed', 'ended')
+--        or (t.departure_datetime is not null and t.departure_datetime < now() - interval '3 hours') then
+--       return jsonb_build_object('error', 'expired');
+--     end if;
+--
+--     -- same whatsapp on same trip = update that booking (idempotent double submit)
+--     select id into v_ex_id
+--     from public.passenger_requests
+--     where ride_id = t.id and passenger_wa_id = v_wa
+--       and removed_at is null
+--       and coalesce(status, '') not in ('declined', 'cancelled', 'canceled', 'removed')
+--     order by created_at desc nulls last
+--     limit 1;
+--
+--     select coalesce(sum(greatest(coalesce(seats, 1), 1)), 0)::int into v_taken
+--     from public.passenger_requests
+--     where ride_id = t.id
+--       and removed_at is null
+--       and coalesce(status, '') not in ('declined', 'cancelled', 'canceled', 'removed')
+--       and id is distinct from v_ex_id;   -- an existing booking is replaced, not added on top
+--
+--     v_left := greatest(coalesce(t.available_seats, 0), 0) - v_taken;
+--     if p_seats > v_left then return jsonb_build_object('error', 'full'); end if;
+--
+--     if v_ex_id is not null then
+--       update public.passenger_requests
+--          set seats = p_seats, passenger_name = v_name, note = v_note, status = 'confirmed',
+--              pickup_label = v_plabel, pickup_lat = v_plat, pickup_lng = v_plng,
+--              dropoff_label = v_dlabel, dropoff_lat = v_dlat, dropoff_lng = v_dlng
+--        where id = v_ex_id
+--        returning id into v_id;
+--     else
+--       insert into public.passenger_requests
+--         (ride_id, passenger_wa_id, passenger_name, seats, note, status,
+--          pickup_label, pickup_lat, pickup_lng, dropoff_label, dropoff_lat, dropoff_lng)
+--       values
+--         (t.id, v_wa, v_name, p_seats, v_note, 'confirmed',
+--          v_plabel, v_plat, v_plng, v_dlabel, v_dlat, v_dlng)
+--       returning id into v_id;
+--     end if;
+--
+--     return jsonb_build_object(
+--       'booking', jsonb_build_object(
+--         'id', v_id, 'seats', p_seats, 'status', 'confirmed',
+--         'pickup_label', v_plabel, 'dropoff_label', v_dlabel),
+--       'trip', public._trip_join_trip_json(t.id));
+--   end $$;
