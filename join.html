@@ -309,8 +309,7 @@ function tripCard(t) {
   var joined = Number(t.joined_count) || 0;
   return '<section class="card" aria-label="Trip details">' +
     '<div class="t-head"><div class="avatar" aria-hidden="true">' + esc(first.charAt(0).toUpperCase()) + '</div>' +
-    '<div class="t-who">Ride from ' + esc(first) + '</div>' +
-    '<span class="pill">' + (t.round_trip ? 'Round trip' : 'One way') + '</span>' +
+    '<div class="t-who">' + esc(first) + '</div>' +
     (/^https:\/\//i.test(String(t.message_url || '')) ? '<a class="t-msg" href="' + esc(t.message_url) + '" target="_blank" rel="noopener" aria-label="Message driver">' + IC_MSG + '</a>' : '') + '</div>' +
     (t.schedule_text ? '<p class="t-when">' + esc(t.schedule_text) + '</p>' : '') +
     '<div class="route"><div class="route__rail"><span class="route__dot route__dot--o"></span><span class="route__line"></span><span class="route__dot route__dot--d"></span></div>' +
