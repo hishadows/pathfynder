@@ -221,3 +221,5 @@
 - 2026-09-29 — Passenger home recolored from blue to teal (CSS color variables, theme-color meta, three hard-coded hero/toast colors; light + dark; semantic red/green/amber unchanged; CTA #0E8085 for 4.7:1 with white text). Files: passenger.html.
 - 2026-09-29 — Passenger home: the "Explore rides" button on a "Looking for a driver" request now deep-links to /explore prefilled with the request (from/to, o/d coords when present, local date, time, flex=60 = ±1h). Files: passenger.html.
 - 2026-09-29 — `passenger_home_list` request rows now include pickup_lat, pickup_lng, dropoff_lat, dropoff_lng (Supabase migration `passenger_home_list_request_coords`), so the Explore link on a request gets o=/d=. Files: design/passenger-home-rpcs.sql, passenger-mock.js.
+
+- 2026-09-29 — Passenger booked-ride view: hero now shows only the passenger own pickup and drop-off (tags removed); "Your booking" is now "Trip details" (driver route, note, picked-up time) with the driver row merged in as a muted block; separate "Your driver" card removed; tighter card spacing (combined block about 185px shorter). Files: passenger.html.

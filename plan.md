@@ -103,3 +103,5 @@ One task per session. Status: todo / done / parked.
 - Passenger home recolor blue -> teal (passenger.html only; passenger-mock.js had no blue). Tested in mock (Playwright 390px light + dark, node --check). Open: request form / profile / notifications sheets not re-screenshotted; not checked on a real device.
 - 2026-09-29 — Passenger home: request card "Explore rides" now opens /explore prefilled with the request (route, date, time ±1h). (Coordinates gap since fixed, see next note.)
 - 2026-09-29 — `passenger_home_list` request rows now return pickup_lat/pickup_lng/dropoff_lat/dropoff_lng (migration `passenger_home_list_request_coords`), so the Explore link gets o=/d= in production. Live-verified read-only; design SQL + passenger-mock.js updated to match.
+
+- 2026-09-29 — Passenger booked view: hero shows only own pickup/drop-off; Trip details card (driver route + note + status) now contains the driver row; removed "Your driver" card, tighter spacing. Verified at 390px light+dark via ?mock=1. Open: routeRows no longer uses isNear(), which is now unused in passenger.html.
