@@ -35,7 +35,7 @@
     return { trip: {
       code: code, status: full ? 'full' : 'open',
       driver_first_name: 'Rahul', round_trip: true, title: 'Windsor to Essex daily commute',
-      message_url: 'https://example.com/message-driver', // mock only: real RPC must return message_url (no raw phone)
+      message_url: qp('nomsg') ? null : 'https://wa.me/15550000000?text=Hi%20Rahul', // mock only; live RPC builds it (no raw phone); ?nomsg=1 omits it
       origin_label: 'Windsor, ON', dest_label: 'Essex, ON', stops_count: 2,
       schedule_text: 'Mon, Tue, Wed, Thu, Fri · 7:30 AM out · 5:15 PM back',
       price_per_seat: 10, seats_total: 4, seats_left: full ? 0 : 3, joined_count: full ? 4 : 1
