@@ -39,11 +39,15 @@ button{font:inherit}
 .wrap{max-width:560px;margin:0 auto;padding:16px 16px 40px;display:flex;flex-direction:column;gap:14px}
 .card{background:var(--card);border:1px solid var(--divider);border-radius:16px;padding:16px;box-shadow:var(--shadow)}
 /* Trip card */
-.t-head{display:flex;align-items:center;gap:12px}
+.t-head{display:flex;align-items:center;gap:8px}
 .avatar{flex:none;width:44px;height:44px;border-radius:50%;background:var(--primary);color:#FFFFFF;display:grid;place-items:center;font-weight:700;font-size:18px}
-.t-who{flex:1;min-width:0;font-size:16px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.t-who{flex:1;min-width:0;font-size:15.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pill{flex:none;border-radius:999px;padding:5px 11px;font-size:12.5px;font-weight:600;background:var(--chip);color:var(--chip-text)}
-.t-title{margin:12px 0 0;font-size:17px;font-weight:700;line-height:1.3}
+.t-msg{flex:none;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--chip);color:var(--chip-text);text-decoration:none}
+.t-msg:hover{filter:brightness(.97)}
+.t-msg:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+.t-when{margin:14px 0 0;padding:12px 14px;border-radius:12px;background:var(--chip);color:var(--chip-text);font-size:17px;font-weight:700;line-height:1.3;overflow-wrap:anywhere}
+.route__lbl{display:block;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2);margin-bottom:2px}
 .route{display:grid;grid-template-columns:14px 1fr;column-gap:12px;margin-top:14px}
 .route__rail{display:flex;flex-direction:column;align-items:center;padding:5px 0}
 .route__dot{width:12px;height:12px;border-radius:50%;flex:none}
@@ -53,7 +57,6 @@ button{font:inherit}
 .route__txt{display:flex;flex-direction:column;justify-content:space-between;gap:10px;min-width:0}
 .route__pt{font-size:15px;font-weight:600;overflow-wrap:anywhere}
 .route__stops{font-size:13px;color:var(--text-2)}
-.t-when{margin:14px 0 0;font-size:14px;color:var(--text-2);line-height:1.4}
 .t-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px;padding-top:14px;border-top:1px solid var(--divider)}
 .t-price{font-size:18px;font-weight:700}
 .t-price small{font-size:13px;font-weight:500;color:var(--text-2)}
@@ -286,13 +289,13 @@ function tripCard(t) {
   return '<section class="card" aria-label="Trip details">' +
     '<div class="t-head"><div class="avatar" aria-hidden="true">' + esc(first.charAt(0).toUpperCase()) + '</div>' +
     '<div class="t-who">Ride from ' + esc(first) + '</div>' +
-    '<span class="pill">' + (t.round_trip ? 'Round trip' : 'One way') + '</span></div>' +
-    (t.title ? '<h2 class="t-title">' + esc(t.title) + '</h2>' : '') +
-    '<div class="route"><div class="route__rail"><span class="route__dot route__dot--o"></span><span class="route__line"></span><span class="route__dot route__dot--d"></span></div>' +
-    '<div class="route__txt"><div class="route__pt">' + esc(t.origin_label) + '</div>' +
-    (stops > 0 ? '<div class="route__stops">+ ' + stops + (stops === 1 ? ' stop' : ' stops') + '</div>' : '') +
-    '<div class="route__pt">' + esc(t.dest_label) + '</div></div></div>' +
+    '<span class="pill">' + (t.round_trip ? 'Round trip' : 'One way') + '</span>' +
+    (/^https:\/\//i.test(String(t.message_url || '')) ? '<a class="t-msg" href="' + esc(t.message_url) + '" target="_blank" rel="noopener" aria-label="Message driver">' + IC_MSG + '</a>' : '') + '</div>' +
     (t.schedule_text ? '<p class="t-when">' + esc(t.schedule_text) + '</p>' : '') +
+    '<div class="route"><div class="route__rail"><span class="route__dot route__dot--o"></span><span class="route__line"></span><span class="route__dot route__dot--d"></span></div>' +
+    '<div class="route__txt"><div><span class="route__lbl">Origin</span><div class="route__pt">' + esc(t.origin_label) + '</div></div>' +
+    (stops > 0 ? '<div class="route__stops">+ ' + stops + (stops === 1 ? ' stop' : ' stops') + '</div>' : '') +
+    '<div><span class="route__lbl">Destination</span><div class="route__pt">' + esc(t.dest_label) + '</div></div></div></div>' +
     '<div class="t-foot"><div class="t-price">' + (t.price_per_seat != null ? '$' + esc(money(t.price_per_seat)) + ' <small>/ seat</small>' : '<small>Price set by driver</small>') + '</div>' +
     '<span class="chip' + (isFull() ? ' chip--full' : '') + '">' + (isFull() ? 'Trip full' : joined + ' joined') + '</span></div></section>';
 }
@@ -301,6 +304,7 @@ function stateScreen(icon, title, text) {
     '<div class="btns"><a class="btn" href="/explore" style="text-decoration:none">Explore rides</a></div></div>';
 }
 var IC_WARN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 17h.01"/></svg>';
+var IC_MSG = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>';
 var IC_OK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
 
 function stepper() {
