@@ -234,7 +234,8 @@ $$;
 revoke all on function public._pax_booking_status(text, timestamptz, timestamptz, timestamptz, timestamptz, timestamptz, text) from public, anon, authenticated;
 
 -- { rides:[{booking_id, trip_id, depart_at, status, kind:'booking', origin_label, dest_label}],
---   requests:[{id, depart_at, pickup_label, dropoff_label, seats, status, kind:'request'}] }
+--   requests:[{id, depart_at, pickup_label, dropoff_label, pickup_lat, pickup_lng, dropoff_lat, dropoff_lng, seats, status, kind:'request'}] }
+-- 2026-09-29: request rows now carry coordinates (migration passenger_home_list_request_coords); matches live.
 -- Rides include cancelled / driver-removed bookings (status 'cancelled') so the passenger can see them.
 create or replace function public.passenger_home_list(p_token text)
 returns jsonb
@@ -265,6 +266,8 @@ begin
   select coalesce(jsonb_agg(jsonb_build_object(
            'id', pr.id, 'depart_at', pr.requested_datetime,
            'pickup_label', pr.pickup_label, 'dropoff_label', pr.dropoff_label,
+           'pickup_lat', pr.pickup_lat, 'pickup_lng', pr.pickup_lng,
+           'dropoff_lat', pr.dropoff_lat, 'dropoff_lng', pr.dropoff_lng,
            'seats', pr.seats, 'status', pr.status, 'kind', 'request')
          order by pr.requested_datetime, pr.created_at), '[]'::jsonb) into v_reqs
   from public.passenger_requests pr
