@@ -186,10 +186,31 @@ textarea.pt-input{padding:12px 14px;min-height:88px;resize:vertical}
 .empty-day__btns{display:flex;flex-direction:column;gap:10px;width:100%;max-width:320px}
 
 /* Skeleton */
-.skel{padding:16px}
-.skel__block{background:var(--divider);border-radius:16px;height:220px;margin-bottom:12px;animation:pulse 1.2s ease-in-out infinite}
-.skel__line{background:var(--divider);border-radius:8px;height:70px;margin-bottom:8px;animation:pulse 1.2s ease-in-out infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+.sk{background:linear-gradient(90deg,var(--divider) 0%,var(--muted-card) 50%,var(--divider) 100%);background-size:200% 100%;animation:shimmer 1.4s linear infinite}
+@keyframes shimmer{from{background-position:200% 0}to{background-position:-200% 0}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.fade-in{animation:fadeIn .2s ease-out}
+.is-stale{opacity:.6;pointer-events:none;transition:opacity .15s}
+.skel-hero{box-sizing:border-box;min-height:var(--skel-hero,273px);padding:14px;border-radius:16px;background:var(--card);border:1px solid var(--divider)}
+.skel-pill{width:92px;height:22px;border-radius:999px;margin-bottom:14px}
+.skel-stop{display:flex;align-items:center;gap:12px;min-height:30px;margin-bottom:6px}
+.skel-stop__dot{width:9px;height:9px;border-radius:50%;flex:none}
+.skel-stop__lines{display:flex;flex-direction:column;gap:6px}
+.skel-line{height:13px;border-radius:7px}
+.skel-chips{display:flex;gap:8px;margin:14px 0 12px}
+.skel-chip{width:76px;height:26px;border-radius:999px}
+.skel-panel{border-radius:12px;padding:10px 12px;background:var(--muted-card)}
+.skel-bar{height:6px;border-radius:4px;margin-top:10px}
+.skel-maps{display:flex;align-items:center;gap:12px;margin:4px 12px 0;padding:14px 16px;border-radius:16px;background:var(--card);border:1px solid var(--divider)}
+.skel-maps__icon{width:40px;height:40px;border-radius:12px;flex:none}
+.skel-maps__text{flex:1;display:flex;flex-direction:column;gap:7px}
+.skel-maps__btn{width:60px;height:34px;border-radius:999px;flex:none}
+.skel-title{width:130px;height:16px;border-radius:8px;margin-bottom:10px}
+.skel-pax{display:flex;align-items:center;gap:10px;background:var(--card);border-radius:16px;padding:12px 14px;margin-bottom:10px;min-height:60px}
+.skel-avatar{width:36px;height:36px;border-radius:50%;flex:none}
+.skel-pax__lines{flex:1;display:flex;flex-direction:column;gap:7px}
+@media (prefers-reduced-motion:reduce){.sk{animation:none;background:var(--divider)}.fade-in{animation:none}.is-stale{transition:none}}
+.action-bar--ph .btn{background:var(--divider);border:0;color:transparent}
 
 /* Error page */
 .error-page{display:flex;flex-direction:column;align-items:center;text-align:center;padding:60px 24px}
@@ -626,7 +647,7 @@ return { haversineKm: haversineKm, buildStops: buildStops, dedupeStops: dedupeSt
 var STATE = {
   token: null, isMock: false, payload: null, trips: [], selectedDate: null, selectedTripId: null, stripScroll: false, loading: true, errorType: null,
   view: 'home', profile: null, profileLoading: false, profileError: null, editingName: false, nameDraft: '', nameError: null, notifBusy: false,
-  heroSlide: 1, slideAuto: true, pendingKey: null, expanded: {}, sheet: null,
+  heroSlide: 1, slideAuto: true, tripCache: {}, stale: null, skelShown: true, skelTimer: null, fade: false, pendingKey: null, expanded: {}, sheet: null,
   gps: { fix: null, label: null, denied: false },
   routeThrottle: { ts: 0, lat: null, lng: null }
 };
@@ -723,7 +744,7 @@ function failLoad(e) {
 }
 /* Loads the trip list, then the trip for the selected date (today by default). */
 function load(showSkeleton) {
-  if (showSkeleton) { STATE.loading = true; render(); }
+  if (showSkeleton) { STATE.loading = true; STATE.stale = null; STATE.skelShown = true; render(); }
   apiList().then(function (list) {
     if (!list || list.error === 'invalid_token') { STATE.loading = false; STATE.errorType = 'invalid_token'; STATE.payload = null; render(); return; }
     if (!list.trips) { STATE.loading = false; STATE.errorType = 'rpc_error'; STATE.payload = null; render(); return; }
@@ -732,25 +753,46 @@ function load(showSkeleton) {
     loadTrip(false);
   }).catch(failLoad);
 }
-/* Loads the trip on STATE.selectedDate (or shows the empty state). */
+/* Loads the trip on STATE.selectedDate (or shows the empty state).
+   Cached trip: shown at once, then revalidated silently. Uncached: previous screen stays dimmed for SKEL_DELAY ms, then the skeleton. */
+var SKEL_DELAY = 150;
+function endLoading() { clearTimeout(STATE.skelTimer); STATE.loading = false; STATE.stale = null; STATE.skelShown = true; }
+function cacheTrip(data) { if (data && data.trip) STATE.tripCache[data.trip.id] = clone(data); }
 function loadTrip(showSkeleton) {
   var t = tripForDate(STATE.selectedDate);
   STATE.selectedTripId = t ? t.id : null;
-  if (!t) { STATE.loading = false; STATE.errorType = null; STATE.payload = null; render(); return; }
-  if (showSkeleton) { STATE.loading = true; render(); }
-  var wanted = t.id;
+  clearTimeout(STATE.skelTimer);
+  if (!t) { endLoading(); STATE.errorType = null; STATE.payload = null; render(); return; }
+  var wanted = t.id, revalidate = false;
+  if (showSkeleton) {
+    var hit = STATE.tripCache[wanted];
+    if (hit) {
+      revalidate = true; endLoading();
+      STATE.errorType = null; STATE.payload = clone(hit);
+      STATE.heroSlide = STATE.payload.trip.status === 'active' ? 2 : 1; STATE.slideAuto = false;
+      STATE.fade = true; render();
+    } else {
+      STATE.loading = true; STATE.skelShown = !STATE.stale;
+      if (!STATE.skelShown) STATE.skelTimer = setTimeout(function () { if (STATE.loading && STATE.selectedTripId === wanted) { STATE.skelShown = true; render(); } }, SKEL_DELAY);
+      render();
+    }
+  }
   apiGet(wanted).then(function (data) {
     if (STATE.selectedTripId !== wanted) return; /* user switched dates meanwhile */
-    STATE.loading = false;
+    var wasLoading = STATE.loading;
+    endLoading();
     if (!data || data.error === 'invalid_token') { STATE.errorType = 'invalid_token'; STATE.payload = null; }
     else if (!data.trip) { STATE.errorType = 'rpc_error'; STATE.payload = null; }
     else {
+      if (revalidate && (STATE.pendingKey || (STATE.payload && JSON.stringify(STATE.payload) === JSON.stringify(data)))) { cacheTrip(data); return; }
+      cacheTrip(data);
       var prevStatus = STATE.payload && STATE.payload.trip ? STATE.payload.trip.status : null;
       STATE.errorType = null; STATE.payload = data;
       var newStatus = data.trip.status;
       /* Default slide once per opened trip: active -> trip progress (2), else trip details (1). Background refreshes keep the swiped slide, except a trip that just became active. */
       if (STATE.slideAuto) { STATE.heroSlide = newStatus === 'active' ? 2 : 1; STATE.slideAuto = false; }
       else if (prevStatus && prevStatus !== 'active' && newStatus === 'active') STATE.heroSlide = 2;
+      if (wasLoading) STATE.fade = true;
     }
     render();
   }).catch(function (e) { if (STATE.selectedTripId === wanted) failLoad(e); });
@@ -759,12 +801,14 @@ function selectDate(key) {
   if (key === STATE.selectedDate || STATE.pendingKey) return;
   STATE.selectedDate = key; STATE.stripScroll = true;
   STATE.selectedTripId = null;
+  STATE.stale = STATE.payload || (STATE.loading && !STATE.skelShown ? STATE.stale : null);
   STATE.slideAuto = true; STATE.expanded = {}; STATE.payload = null; STATE.sheet = null;
   loadTrip(true);
 }
 function selectTrip(id) {
   if (id === STATE.selectedTripId || STATE.pendingKey) return;
   STATE.selectedTripId = id;
+  STATE.stale = STATE.payload || (STATE.loading && !STATE.skelShown ? STATE.stale : null);
   STATE.slideAuto = true; STATE.expanded = {}; STATE.payload = null; STATE.sheet = null;
   loadTrip(true);
 }
@@ -780,7 +824,7 @@ function doAction(action, bookingId, pendingKey) {
   apiAction(action, bookingId).then(function (data) {
     STATE.pendingKey = null;
     if (!data || data.error) { STATE.payload = snapshot; if (action === 'start') STATE.heroSlide = prevSlide; toast("Couldn't update — try again"); }
-    else { STATE.payload = data; }
+    else { STATE.payload = data; cacheTrip(data); }
     render();
   }).catch(function (e) {
     console.error('[manage] action failed', e);
@@ -1074,7 +1118,21 @@ function emptyDay() {
     '</div></div>';
 }
 function skeleton() {
-  return '<div class="skel"><div class="skel__block"></div><div class="skel__line"></div><div class="skel__line"></div><div class="skel__line"></div></div>';
+  var ln = function (w, h) { return '<span class="sk skel-line" style="width:' + w + 'px' + (h ? ';height:' + h + 'px' : '') + '"></span>'; };
+  var stop = '<div class="skel-stop"><span class="sk skel-stop__dot"></span><div class="skel-stop__lines">' + ln(130) + ln(56, 10) + '</div></div>';
+  var pax = '<div class="skel-pax"><span class="sk skel-avatar"></span><div class="skel-pax__lines">' + ln(140) + ln(90, 10) + '</div></div>';
+  return '<div class="skel" aria-busy="true" aria-label="Loading trip">' +
+    '<div class="hero-dots"><span class="hero-dot sk"></span><span class="hero-dot sk is-active"></span><span class="hero-dot sk"></span></div>' +
+    '<section class="hero-wrap"><div class="skel-hero"><span class="sk skel-pill"></span>' + stop + stop +
+      '<div class="skel-chips"><span class="sk skel-chip"></span><span class="sk skel-chip"></span><span class="sk skel-chip"></span></div>' +
+      '<div class="skel-panel">' + ln(110) + '<div class="sk skel-bar"></div></div></div></section>' +
+    '<div class="skel-maps"><span class="sk skel-maps__icon"></span><div class="skel-maps__text">' + ln(120) + ln(170, 10) + '</div><span class="sk skel-maps__btn"></span></div>' +
+    '<section class="section"><div class="sk skel-title"></div>' + pax + pax + '</section></div>';
+}
+function actionBarPlaceholder() {
+  return '<div class="action-bar action-bar--ph" aria-hidden="true"><div class="action-bar__row">' +
+    '<button type="button" class="btn btn-secondary" style="flex-grow:1.3" disabled tabindex="-1"></button>' +
+    '<button type="button" class="btn btn-cta" disabled tabindex="-1"></button></div></div>';
 }
 function errorPage() {
   return header() + '<div class="error-page">' +
@@ -1533,7 +1591,7 @@ function saveEdit() {
     closeSheet();
     toast('Trip updated');
     STATE.selectedDate = localDateKey(data.trip.depart_at); STATE.selectedTripId = data.trip.id; STATE.stripScroll = true;
-    STATE.payload = data;
+    STATE.payload = data; cacheTrip(data);
     load(false);
   }).catch(function (e) { console.error('[manage] update failed', e); EF.saving = false; efUpdateSave(); toast("Couldn't save — try again"); });
 }
@@ -1551,11 +1609,16 @@ function render() {
   var oldStrip = document.getElementById('dateStrip');
   var keepScroll = oldStrip ? oldStrip.scrollLeft : 0;
   var body = '', showBar = false, payload = STATE.payload;
-  if (STATE.loading) body = skeleton();
+  var stale = STATE.loading && !STATE.skelShown && !payload && STATE.stale; /* previous trip, dimmed, until the skeleton delay passes */
+  var showSkel = STATE.loading && !stale;
+  if (stale) payload = STATE.stale;
+  var fade = STATE.fade && !STATE.loading; STATE.fade = STATE.loading ? STATE.fade : false;
+  if (showSkel) { showBar = true; body = skeleton() + actionBarPlaceholder(); }
   else if (!payload) body = emptyDay();
   else {
-    showBar = payload.trip.status !== 'completed';
-    body = heroSection(payload) + passengersSection(payload) + '<div class="footer-space"></div>' + actionBar(payload);
+    showBar = stale ? true : payload.trip.status !== 'completed';
+    body = '<div class="main-body' + (stale ? ' is-stale' : (fade ? ' fade-in' : '')) + '">' + heroSection(payload) + passengersSection(payload) + '<div class="footer-space"></div></div>' +
+      (stale ? actionBarPlaceholder() : actionBar(payload));
   }
   if (payload) {
     STATE.trips.forEach(function (t) { if (t.id === payload.trip.id) t.status = payload.trip.status; });
@@ -1572,7 +1635,7 @@ function render() {
       strip.scrollLeft = sel.offsetLeft - (strip.clientWidth - sel.offsetWidth) / 2;
     } else { strip.scrollLeft = keepScroll; }
   }
-  if (STATE.loading || !payload) return;
+  if (showSkel || !payload) return;
 
   var car = document.querySelector('.ns-car');
   if (car) {
