@@ -6,6 +6,7 @@
   "rewrites": [
     { "source": "/r/:code", "destination": "/api/r?code=:code" },
     { "source": "/m/:token", "destination": "/manage" },
-    { "source": "/j/:code", "destination": "/join" }
+    { "source": "/j/:code", "destination": "/join" },
+    { "source": "/p/:token", "destination": "/passenger" }
   ]
 }

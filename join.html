@@ -137,11 +137,13 @@ try {
 var MAPBOX_TOKEN = 'pk.eyJ1IjoicGF0aHktY2EiLCJhIjoiY211aTZwMXRwMGQ4MjM0b2x4emxtMW9zOSJ9.w2VX7kd0rZniB4GnbLryGg';
 
 /* ---------- Passenger home hook ----------
-   TODO: the passenger home page is NOT designed yet. Once it exists, set
-   PASSENGER_HOME_URL to its address (e.g. '/p/') and goToPassengerHome()
-   will redirect there after a successful booking. Until then a temporary
-   "Seat confirmed" screen is shown. */
-var PASSENGER_HOME_URL = null;
+   After a successful booking trip_join returns a per-device passenger_token; the
+   passenger home lives at PASSENGER_HOME_URL + token (+ ?b=<booking id>). The token is
+   kept in localStorage and sent back on later joins from this device (the server only
+   reuses it when the number matches). Without a token (e.g. an old response) the
+   temporary "Seat confirmed" screen below is the fallback. */
+var PASSENGER_HOME_URL = '/p/';
+var TOKEN_KEY = 'pf_passenger_token';
 var BOOKING_KEY = 'pf_passenger_booking';
 var PROFILE_KEY = 'pf_passenger_profile';
 
@@ -397,10 +399,13 @@ function confirm() {
   else if (!validStep1()) return;
   var name = STATE.name, dial = dialDigits(STATE.dial), digits = phoneDigits();
   STATE.busy = true; setErr(''); syncBusy();
-  apiJoin({
+  var joinArgs = {
     p_code: STATE.code, p_pickup: STATE.pickup, p_dropoff: STATE.dropoff, p_seats: STATE.seats,
     p_name: name, p_whatsapp: dial + digits, p_note: STATE.note || null
-  }).then(function (res) {
+  };
+  var savedTok = lsGet(TOKEN_KEY);
+  if (typeof savedTok === 'string' && savedTok) joinArgs.p_passenger_token = savedTok;
+  apiJoin(joinArgs).then(function (res) {
     STATE.busy = false;
     if (res && res.error) { handleJoinError(res.error); return; }
     if (!res || !res.booking) { handleJoinError('unknown'); return; }
@@ -413,7 +418,7 @@ function confirm() {
       driver_first_name: t.driver_first_name, origin_label: t.origin_label, dest_label: t.dest_label,
       title: t.title || null, schedule_text: t.schedule_text || null, price_per_seat: t.price_per_seat,
       booked_at: new Date().toISOString()
-    });
+    }, res.passenger_token);
   }).catch(function () {
     STATE.busy = false;
     setErr('We couldn’t book your seat. Check your connection and try again.');
@@ -433,11 +438,14 @@ function handleJoinError(code) {
 }
 
 /* Single hook for what happens after a booking succeeds. */
-function goToPassengerHome(booking) {
-  lsSet(BOOKING_KEY, booking); /* summary (no phone number) for the future passenger home page */
-  if (PASSENGER_HOME_URL) { location.href = PASSENGER_HOME_URL; return; }
-  /* TODO: passenger home page not designed yet. When it exists, set PASSENGER_HOME_URL
-     above; this temporary "Seat confirmed" screen can then be deleted. */
+function goToPassengerHome(booking, token) {
+  lsSet(BOOKING_KEY, booking); /* summary (no phone number) for the passenger home page */
+  if (typeof token === 'string' && token) {
+    if (!STATE.isMock) lsSet(TOKEN_KEY, token);
+    location.href = PASSENGER_HOME_URL + encodeURIComponent(token) + (STATE.isMock ? '?mock=1' : '?b=' + encodeURIComponent(booking.id));
+    return;
+  }
+  /* No token came back: keep the temporary "Seat confirmed" screen as the fallback. */
   STATE.booking = booking; STATE.view = 'done'; render();
   window.scrollTo(0, 0);
 }

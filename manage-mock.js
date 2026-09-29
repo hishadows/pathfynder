@@ -118,7 +118,45 @@
     stats: { trips_completed: 42, member_since: '2026-09-01', passengers_drove: 118, total_earned: 1840 }
   };
 
+  /* Driver notifications (mock of driver_notifications_list / _mark_read). Text is free of phone numbers.
+     ?notifs=empty -> no notifications; ?notifs=fail -> list fails after the first (badge) call;
+     ?notifs=failonce -> only the second list call fails (so Retry succeeds). */
+  var NOTIFS = null, notifCalls = 0;
+  function notifMode() {
+    try { return new URLSearchParams(location.search).get('notifs'); } catch (e) { return null; }
+  }
+  function notifStore() {
+    if (NOTIFS) return NOTIFS;
+    if (notifMode() === 'empty') { NOTIFS = []; return NOTIFS; }
+    NOTIFS = [
+      { id: 1, kind: 'passenger_joined', title: 'New passenger: Sara', body: 'Windsor to Essex, 1 seat. Tap to see the trip.', url: '/m/mock?t=1', age: 30e3, read: false },
+      { id: 2, kind: 'passenger_joined', title: 'New passenger: Priya', body: 'Windsor to Essex, 2 seats. Tap to see the trip.', url: '/m/mock?t=1', age: 5 * 60e3, read: false },
+      { id: 3, kind: 'passenger_joined', title: 'New passenger: Amit', body: 'Windsor to Leamington, 1 seat.', url: '/m/mock?t=2', age: 2 * 3600e3, read: false },
+      { id: 4, kind: 'passenger_joined', title: 'New passenger: Jordan', body: 'Windsor to Leamington, 1 seat.', url: '/m/mock?t=2', age: 30 * 3600e3, read: true },
+      { id: 5, kind: 'passenger_joined', title: 'New passenger: Sahil', body: 'A very long notification body to check wrapping on a narrow phone screen without any overflow at all.', url: null, age: 6 * 24 * 3600e3, read: true }
+    ];
+    return NOTIFS;
+  }
+
   global.PF_MANAGE_MOCK = {
+    notifList: function () {
+      return new Promise(function (resolve, reject) {
+        setTimeout(function () {
+          var call = ++notifCalls, m = notifMode();
+          if (rawState() === 'invalid') { resolve({ error: 'invalid_token' }); return; }
+          if ((m === 'fail' && call > 1) || (m === 'failonce' && call === 2)) { reject(new Error('mock notifications failure')); return; }
+          var st = notifStore();
+          resolve({ notifications: st.map(function (n) {
+            return { id: n.id, kind: n.kind, title: n.title, body: n.body, url: n.url, created_at: isoOffset(-n.age), read: n.read };
+          }), unread_count: st.filter(function (n) { return !n.read; }).length });
+        }, 200);
+      });
+    },
+    notifMarkRead: function () {
+      return new Promise(function (resolve) {
+        setTimeout(function () { notifStore().forEach(function (n) { n.read = true; }); resolve({ ok: true }); }, 100);
+      });
+    },
     list: function () {
       return new Promise(function (resolve) {
         setTimeout(function () {
