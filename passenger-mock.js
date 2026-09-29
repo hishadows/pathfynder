@@ -48,7 +48,7 @@
         picked: st === 'picked_up' ? 2 : (st === 'completed' ? 4 : (st === 'active' ? 1 : 0)), pickup: 'Peter Street, Windsor, Ontario, Canada', dropoff: 'Essex, Ontario, Canada', note: 'Red door, second floor.', stops: [{ label: KINGSVILLE.label, lat: KINGSVILLE.lat, lng: KINGSVILLE.lng }] });
     }
     REQUESTS = [
-      { id: 'req-1', depart_at: dayAt(2, 10, 0), pickup_label: 'Windsor, Ontario, Canada', dropoff_label: 'Toronto, Ontario, Canada', seats: 2, status: 'pending', kind: 'request' }
+      { id: 'req-1', depart_at: dayAt(2, 10, 0), pickup_label: 'Windsor, Ontario, Canada', dropoff_label: 'Toronto, Ontario, Canada', pickup_lat: 42.3149, pickup_lng: -83.0364, dropoff_lat: 43.6532, dropoff_lng: -79.3832, seats: 2, status: 'pending', kind: 'request' }
     ];
     if (qp('empty') === '1') { RIDES = []; REQUESTS = []; }
   }
