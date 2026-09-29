@@ -1,0 +1,1432 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#1F5FBF">
+<link rel="icon" type="image/png" href="/logo.png">
+<title>My rides · Pathfynder</title>
+<script>try{var __t=localStorage.getItem("pf_theme");if(__t==="light"||__t==="dark")document.documentElement.setAttribute("data-theme",__t);}catch(e){}</script>
+<style>
+:root{
+  --header:#1F5FBF; --header-text:#FFFFFF; --header-sub:rgba(255,255,255,.84);
+  --primary:#1F5FBF; --cta:#2F80ED; --cta-text:#FFFFFF; --cta-hover:#2568C9;
+  --bg:#EEF3FA; --card:#FFFFFF; --muted-card:#F5F8FD;
+  --text:#0F1B2D; --text-2:#5B6B82; --divider:#DCE5F2;
+  --chip-soft:#DCE9FF; --chip-soft-text:#1F5FBF; --danger:#D93025;
+  --ok:#1E8E5A; --ok-soft:#DDF3E8; --warn:#B26A00; --warn-soft:#FFF0D6; --bad-soft:#FBE3E0;
+  --hero-bg:#163E80; --hero-text:#FFFFFF; --hero-chip:rgba(255,255,255,.14);
+  --overlay:rgba(15,27,45,.45); --shadow:0 -1px 4px rgba(15,27,45,.1);
+  --sel-bg:#DCE9FF; --sel-border:#1F5FBF;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --header:#16233A; --header-text:#E6EDF7; --header-sub:#8FA1BC;
+    --primary:#4F9BFF; --cta:#2F6FD1; --cta-text:#FFFFFF; --cta-hover:#2A62BA;
+    --bg:#0B1220; --card:#16233A; --muted-card:#101A2E;
+    --text:#E6EDF7; --text-2:#8FA1BC; --divider:#24344F;
+    --chip-soft:#1B3357; --chip-soft-text:#8DBEFF; --danger:#F26D7D;
+    --ok:#4CC38A; --ok-soft:#12382A; --warn:#F2B44D; --warn-soft:#3B2C0F; --bad-soft:#4A1D24;
+    --hero-bg:#1B3A6E; --hero-text:#FFFFFF; --hero-chip:rgba(255,255,255,.14);
+    --overlay:rgba(0,0,0,.62); --shadow:0 -1px 4px rgba(0,0,0,.4);
+    --sel-bg:#1B3357; --sel-border:#4F9BFF;
+  }
+}
+:root[data-theme="dark"]{
+  --header:#16233A; --header-text:#E6EDF7; --header-sub:#8FA1BC;
+  --primary:#4F9BFF; --cta:#2F6FD1; --cta-text:#FFFFFF; --cta-hover:#2A62BA;
+  --bg:#0B1220; --card:#16233A; --muted-card:#101A2E;
+  --text:#E6EDF7; --text-2:#8FA1BC; --divider:#24344F;
+  --chip-soft:#1B3357; --chip-soft-text:#8DBEFF; --danger:#F26D7D;
+  --ok:#4CC38A; --ok-soft:#12382A; --warn:#F2B44D; --warn-soft:#3B2C0F; --bad-soft:#4A1D24;
+  --hero-bg:#1B3A6E; --hero-text:#FFFFFF; --hero-chip:rgba(255,255,255,.14);
+  --overlay:rgba(0,0,0,.62); --shadow:0 -1px 4px rgba(0,0,0,.4);
+  --sel-bg:#1B3357; --sel-border:#4F9BFF;
+}
+*{box-sizing:border-box}
+html,body{margin:0;overflow-x:hidden}
+html{touch-action:manipulation;-webkit-text-size-adjust:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
+button{font:inherit}
+.app{min-height:100vh;max-width:100vw;overflow-x:clip;padding-bottom:24px}
+.app.has-bar{padding-bottom:96px}
+
+/* Header */
+.app-bar{position:sticky;top:0;z-index:3;background:var(--header);color:var(--header-text)}
+.app-bar__inner{display:flex;align-items:center;gap:12px;min-height:56px;padding:8px 16px}
+.brand{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;background:#FFFFFF;flex:none;overflow:hidden}
+.brand img{width:22px;height:22px;object-fit:contain}
+.app-bar__title{margin:0;font-size:18px;font-weight:600;line-height:1.2}
+.app-bar__sub{margin:0;font-size:12.5px;color:var(--header-sub)}
+.profile-btn{margin-left:auto;flex:none;width:40px;height:40px;border-radius:50%;border:0;padding:0;background:rgba(255,255,255,.16);color:var(--header-text);display:grid;place-items:center;cursor:pointer}
+.profile-btn svg{width:22px;height:22px}
+.add-btn{margin-left:auto;flex:none;width:40px;height:40px;border-radius:50%;border:0;padding:0;background:rgba(255,255,255,.16);color:var(--header-text);display:grid;place-items:center;cursor:pointer}
+.add-btn svg{width:22px;height:22px}
+.add-btn + .profile-btn{margin-left:0}
+.bell-btn{position:relative;flex:none;width:40px;height:40px;border-radius:50%;border:0;padding:0;margin-left:0;background:rgba(255,255,255,.16);color:var(--header-text);display:grid;place-items:center;cursor:pointer}
+.bell-btn svg{width:22px;height:22px}
+.bell-badge{position:absolute;top:-3px;right:-3px;min-width:20px;height:20px;padding:0 4px;border-radius:10px;border:2px solid var(--header);background:var(--danger);color:#FFFFFF;font-size:11px;font-weight:700;line-height:16px;text-align:center}
+.bell-badge[hidden]{display:none}
+
+/* Notifications screen */
+.nf-wrap{padding:16px;display:flex;flex-direction:column;gap:8px;max-width:560px;margin:0 auto}
+.nf-row{display:flex;align-items:flex-start;gap:10px;width:100%;min-height:56px;padding:12px 14px;border:1px solid var(--divider);border-radius:14px;background:var(--card);color:var(--text);font:inherit;text-align:left;cursor:pointer}
+.nf-row.is-unread{background:var(--sel-bg);border-color:var(--sel-border)}
+.nf-dot{flex:none;width:8px;height:8px;border-radius:50%;margin-top:6px;background:var(--primary)}
+.nf-dot.is-off{background:transparent}
+.nf-main{flex:1;min-width:0}
+.nf-t{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.nf-t b{min-width:0;font-size:15px;font-weight:700;overflow-wrap:anywhere}
+.nf-t time{flex:none;font-size:12px;color:var(--text-2)}
+.nf-b{margin:2px 0 0;font-size:13.5px;color:var(--text-2);overflow-wrap:anywhere}
+.nf-skel{height:72px;border-radius:14px;background:var(--card);border:1px solid var(--divider)}
+.nf-empty{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;padding:36px 16px}
+.nf-empty .nf-empty__ic{color:var(--text-2)}
+.nf-empty .nf-empty__ic svg{width:36px;height:36px}
+.nf-empty b{font-size:16px}
+.nf-empty span{font-size:13.5px;color:var(--text-2)}
+
+/* Profile screen */
+.pf-bar__inner{display:flex;align-items:center;gap:8px;min-height:56px;padding:8px 8px}
+.pf-back{flex:none;width:44px;height:44px;border-radius:50%;border:0;padding:0;background:transparent;color:var(--header-text);display:grid;place-items:center;cursor:pointer}
+.pf-back svg{width:24px;height:24px}
+.pf-wrap{padding:16px;display:flex;flex-direction:column;gap:14px;max-width:560px;margin:0 auto}
+.pf-card{background:var(--card);border:1px solid var(--divider);border-radius:14px;padding:14px 16px}
+.pf-h{margin:0 0 10px;font-size:12.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text-2)}
+.pf-head{display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center}
+.pf-avatar-wrap{position:relative;width:96px;height:96px}
+.pf-avatar{width:96px;height:96px;border-radius:50%;background:var(--cta);color:#FFFFFF;display:grid;place-items:center;font-size:34px;font-weight:600;overflow:hidden}
+.pf-avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.pf-cam{position:absolute;right:-2px;bottom:-2px;width:36px;height:36px;border-radius:50%;border:2px solid var(--card);background:var(--cta);color:var(--cta-text);display:grid;place-items:center;padding:0;cursor:pointer}
+.pf-cam svg,.pf-pencil svg,.pf-lock svg,.pf-row-ic svg{width:18px;height:18px}
+.pf-name{display:flex;align-items:center;gap:6px;justify-content:center;font-size:20px;font-weight:600;min-width:0}
+.pf-name span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:230px}
+.pf-pencil{width:36px;height:36px;border-radius:50%;border:0;background:transparent;color:var(--primary);display:grid;place-items:center;padding:0;cursor:pointer}
+.pf-edit{display:flex;flex-direction:column;gap:8px;width:100%}
+.pf-input{width:100%;min-height:44px;border:1px solid var(--divider);border-radius:10px;background:var(--muted-card);color:var(--text);font:inherit;font-size:16px;padding:0 12px}
+.pf-edit__btns{display:flex;gap:8px}
+.pf-edit__btns .btn{flex:1}
+.pf-err{margin:0;font-size:13px;color:var(--danger)}
+.pf-row{display:flex;align-items:center;gap:12px;min-height:48px;color:var(--text);text-decoration:none}
+.pf-row__t{flex:1;min-width:0}
+.pf-row__t b{display:block;font-size:15px;font-weight:600}
+.pf-row__t span{display:block;font-size:13px;color:var(--text-2);margin-top:2px}
+.pf-lock,.pf-row-ic{flex:none;color:var(--text-2);display:grid;place-items:center}
+.pf-row-ic{color:var(--primary)}
+.pf-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pf-stat{background:var(--muted-card);border:1px solid var(--divider);border-radius:12px;padding:12px}
+.pf-stat b{display:block;font-size:20px;font-weight:700;color:var(--text)}
+.pf-stat span{display:block;font-size:12.5px;color:var(--text-2);margin-top:2px}
+.pf-switch{flex:none;position:relative;width:52px;height:32px;border-radius:16px;border:0;padding:0;background:var(--divider);cursor:pointer;transition:background .15s}
+.pf-switch::after{content:"";position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:50%;background:#FFFFFF;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .15s}
+.pf-switch[aria-checked="true"]{background:var(--cta)}
+.pf-switch[aria-checked="true"]::after{transform:translateX(20px)}
+.pf-switch:disabled{opacity:.5;cursor:default}
+.pf-seg{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:var(--muted-card);border:1px solid var(--divider);border-radius:12px;padding:4px}
+.pf-seg button{min-height:40px;border:0;border-radius:9px;background:transparent;color:var(--text);font-size:14.5px;font-weight:600;cursor:pointer}
+.pf-seg button[aria-pressed="true"]{background:var(--cta);color:var(--cta-text)}
+.pf-skel{height:120px;border-radius:14px;background:var(--card);border:1px solid var(--divider)}
+
+/* Request a ride */
+.pt-wrap{padding:16px;display:flex;flex-direction:column;gap:14px;max-width:560px;margin:0 auto}
+.pt-prog{display:flex;gap:6px}
+.pt-prog span{flex:1;height:5px;border-radius:3px;background:var(--divider)}
+.pt-prog span.is-on{background:var(--primary)}
+.pt-card{background:var(--card);border:1px solid var(--divider);border-radius:16px;padding:16px}
+.pt-h{margin:0 0 12px;font-size:15px;font-weight:700}
+.pt-label{display:block;font-size:12.5px;font-weight:600;color:var(--text-2);margin:0 0 6px}
+.pt-field{margin-bottom:14px;min-width:0}
+.pt-field:last-child{margin-bottom:0}
+.pt-input{display:block;width:100%;min-height:48px;padding:0 14px;border:1px solid var(--divider);border-radius:16px;background:var(--muted-card);color:var(--text);font:inherit;font-size:16px;color-scheme:light dark}
+.pt-input:focus{outline:2px solid var(--primary);outline-offset:-1px}
+textarea.pt-input{padding:12px 14px;min-height:88px;resize:vertical}
+.pt-field .ef-sug{border-radius:14px}
+.pt-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.pt-stepper{display:flex;align-items:center;border:1px solid var(--divider);border-radius:16px;overflow:hidden;background:var(--muted-card)}
+.pt-stepper button{width:48px;height:48px;border:0;background:transparent;color:var(--primary);font-size:22px;font-weight:600;cursor:pointer}
+.pt-stepper button:disabled{opacity:.35;cursor:default}
+.pt-stepper b{min-width:36px;text-align:center;font-size:17px}
+.pt-dates{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 6px;margin:0 -2px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.pt-dates::-webkit-scrollbar{display:none}
+.pt-date{flex:none;width:64px;padding:10px 0;border-radius:16px;border:1.5px solid var(--divider);background:var(--card);color:var(--text);display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;font:inherit}
+.pt-date small{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--text-2)}
+.pt-date b{font-size:21px;line-height:1.2}
+.pt-date.is-selected{background:var(--sel-bg);border-color:var(--sel-border)}
+.pt-hint{margin:6px 0 0;font-size:12.5px;color:var(--text-2)}
+.pt-toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:48px;margin-top:6px;font-size:14.5px;font-weight:600}
+.pt-trow{display:grid;grid-template-columns:minmax(0,1fr) 140px;align-items:center;gap:10px;margin-top:8px;font-size:14px;min-width:0}
+.pt-trow>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pt-time{position:relative;display:block;box-sizing:border-box;width:100%;min-width:0;max-width:100%;height:48px;overflow:hidden;border:1px solid var(--divider);border-radius:16px;background:var(--muted-card)}
+.pt-trow .pt-time{width:140px}
+.pt-time::after{content:'';position:absolute;right:14px;top:50%;width:18px;height:18px;margin-top:-9px;pointer-events:none;background:var(--text-2);-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7v5l3 2'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7v5l3 2'/%3E%3C/svg%3E") center/contain no-repeat}
+.pt-time input{appearance:none;-webkit-appearance:none;display:block;box-sizing:border-box;width:100%;min-width:0;max-width:100%;height:100%;margin:0;padding:0 40px 0 14px;border:0;border-radius:0;background:transparent;color:var(--text);font:inherit;font-size:16px;text-align:left;color-scheme:light dark}
+.pt-time input:focus{outline:2px solid var(--primary);outline-offset:-2px}
+.pt-time input::-webkit-date-and-time-value{text-align:left;min-height:1.2em}
+.pt-time input::-webkit-calendar-picker-indicator{position:absolute;inset:0;width:100%;height:100%;margin:0;padding:0;opacity:0;cursor:pointer}
+.pt-rec{display:block;width:100%;text-align:left;padding:10px 14px;margin-bottom:8px;border:0;border-radius:14px;background:var(--muted-card);color:var(--text);font:inherit;cursor:pointer;min-width:0}
+.pt-rec:last-child{margin-bottom:0}
+.pt-rec:active{background:var(--divider)}
+.pt-rec b{display:block;font-size:13.5px;font-weight:500;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pt-sep{border:0;border-top:1px solid var(--divider);margin:14px 0}
+.pt-err{margin:0;font-size:13px;color:var(--danger)}
+.pt-count{margin-top:4px;text-align:right;font-size:12px;color:var(--text-2)}
+.pt-sum{display:flex;align-items:center;gap:10px;padding:12px 16px}
+.pt-sum__t{flex:1;min-width:0;font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pt-sum__edit{flex:none;border:0;background:transparent;color:var(--primary);font:inherit;font-size:14px;font-weight:600;min-height:36px;padding:0 4px;cursor:pointer}
+.pt-rv{display:flex;gap:12px;padding:9px 0;border-top:1px solid var(--divider);font-size:14.5px}
+.pt-rv:first-of-type{border-top:0;padding-top:0}
+.pt-rv dt{flex:0 0 68px;color:var(--text-2);font-size:13px;padding-top:1px}
+.pt-rv dd{margin:0;flex:1;min-width:0;overflow-wrap:anywhere}
+
+/* Date strip */
+.date-strip{padding:12px 0 4px}
+.date-strip__label{margin:0 16px 8px;font-size:12.5px;font-weight:600;color:var(--text-2)}
+.date-strip__row{display:flex;gap:8px;overflow-x:auto;padding:2px 16px 6px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.date-strip__row::-webkit-scrollbar{display:none}
+.date-pill{flex:none;min-width:84px;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 14px;border-radius:14px;border:1.5px solid var(--divider);background:var(--card);color:var(--text);cursor:pointer;font:inherit}
+.date-pill__top{font-size:15px;font-weight:700;line-height:1.25}
+.date-pill__sub{font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2);line-height:1.3}
+.date-pill__sub--date{text-transform:none;letter-spacing:0;font-size:12px}
+.trip-chips{display:flex;gap:8px;overflow-x:auto;padding:4px 16px 6px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.trip-chips::-webkit-scrollbar{display:none}
+.trip-chip{flex:none;padding:8px 14px;border-radius:999px;border:1.5px solid var(--divider);background:var(--card);color:var(--text);font:inherit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+.trip-chip.is-selected{background:var(--sel-bg);border-color:var(--sel-border)}
+.date-pill.is-selected{background:var(--sel-bg);border-color:var(--sel-border)}
+
+/* Empty state */
+.empty-day{display:flex;flex-direction:column;align-items:center;text-align:center;padding:40px 24px}
+.empty-day h2{margin:0 0 8px;font-size:19px}
+.empty-day p{margin:0 0 20px;color:var(--text-2);font-size:14.5px;max-width:320px}
+.empty-day__btns{display:flex;flex-direction:column;gap:10px;width:100%;max-width:320px}
+
+/* Skeleton */
+.sk{background:linear-gradient(90deg,var(--divider) 0%,var(--muted-card) 50%,var(--divider) 100%);background-size:200% 100%;animation:shimmer 1.4s linear infinite}
+@keyframes shimmer{from{background-position:200% 0}to{background-position:-200% 0}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.fade-in{animation:fadeIn .2s ease-out}
+.skel-hero{box-sizing:border-box;min-height:250px;padding:14px;border-radius:16px;background:var(--card);border:1px solid var(--divider)}
+.skel-pill{width:92px;height:22px;border-radius:999px;margin-bottom:14px}
+.skel-stop{display:flex;align-items:center;gap:12px;min-height:30px;margin-bottom:6px}
+.skel-stop__dot{width:9px;height:9px;border-radius:50%;flex:none}
+.skel-stop__lines{display:flex;flex-direction:column;gap:6px}
+.skel-line{height:13px;border-radius:7px}
+.skel-chips{display:flex;gap:8px;margin:14px 0 12px}
+.skel-chip{width:76px;height:26px;border-radius:999px}
+.skel-card{display:flex;align-items:center;gap:12px;margin:12px 12px 0;padding:14px 16px;border-radius:16px;background:var(--card);border:1px solid var(--divider);min-height:72px}
+.skel-avatar{width:40px;height:40px;border-radius:50%;flex:none}
+.skel-lines{flex:1;display:flex;flex-direction:column;gap:7px}
+@media (prefers-reduced-motion:reduce){.sk{animation:none;background:var(--divider)}.fade-in{animation:none}}
+.action-bar--ph .btn{background:var(--divider);border:0;color:transparent}
+
+/* Error page */
+.error-page{display:flex;flex-direction:column;align-items:center;text-align:center;padding:60px 24px}
+.error-page h2{margin:0 0 8px;font-size:19px}
+.error-page p{margin:0 0 20px;color:var(--text-2);font-size:14.5px;max-width:320px}
+
+/* Buttons */
+.btn{border:0;border-radius:12px;font-size:14.5px;font-weight:600;cursor:pointer;min-height:44px;padding:0 12px;white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none}
+.btn:disabled{opacity:.5;cursor:default}
+.btn-cta{background:var(--cta);color:var(--cta-text);min-height:48px}
+.btn-cta:hover:not(:disabled){background:var(--cta-hover)}
+.btn .i{width:17px;height:17px;flex:none}
+.btn-secondary{background:var(--muted-card);color:var(--text);border:1px solid var(--divider)}
+.btn-danger{background:var(--danger);color:#FFFFFF}
+.btn-secondary.btn-danger-text{color:var(--danger)}
+.btn-full{width:100%}
+
+/* Hero */
+.hero-wrap{padding:12px 12px 0}
+.hero{background:var(--hero-bg);color:var(--hero-text);padding:14px;border-radius:16px}
+.hero-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
+.hero-pill{font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;background:var(--hero-chip)}
+.hero-pill--active{background:#F2B44D;color:#3B2600}
+.hero-pill--picked{background:#2FB574;color:#04241A}
+.hero-pill--done{background:rgba(255,255,255,.9);color:#163E80}
+.hero-pill--cancelled{background:#E5484D;color:#FFFFFF}
+.hero-route{position:relative;padding-left:20px;margin-bottom:14px}
+.hero-route::before{content:"";position:absolute;left:4px;top:8px;bottom:8px;border-left:2px dotted rgba(255,255,255,.5)}
+.hero-route__stop{position:relative;display:flex;align-items:center;gap:10px;min-height:34px;padding:2px 0}
+.hero-route__dot{position:absolute;left:-20px;width:9px;height:9px;border:2px solid #FFFFFF;background:transparent;border-radius:50%}
+.hero-route__dot--to{background:#FFFFFF;border-radius:2px;transform:rotate(45deg);width:8px;height:8px}
+.hero-route__dot--you{background:#FFFFFF}
+.hero-route__text{min-width:0;flex:1}
+.hero-route__city{display:block;font-size:15.5px;font-weight:600;overflow-wrap:anywhere}
+.hero-route__sub{display:block;font-size:12px;color:rgba(255,255,255,.78)}
+.hero-route__stop.is-you .hero-route__city{font-weight:700}
+.hero-tag{flex:none;font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:999px;background:#FFFFFF;color:#163E80}
+.hero-chips{display:flex;gap:8px;flex-wrap:wrap}
+.hero-chip{font-size:12.5px;font-weight:600;padding:5px 10px;border-radius:999px;background:var(--hero-chip)}
+
+/* Cards */
+.section{padding:12px 12px 0}
+.card{background:var(--card);border:1px solid var(--divider);border-radius:16px;padding:14px 16px}
+.card__title{margin:0 0 10px;font-size:12.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text-2)}
+.drv{display:flex;align-items:center;gap:12px}
+.drv__avatar{width:44px;height:44px;border-radius:50%;background:var(--chip-soft);color:var(--chip-soft-text);display:grid;place-items:center;font-weight:700;font-size:17px;overflow:hidden;flex:none}
+.drv__avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.drv__id{flex:1;min-width:0}
+.drv__name{display:block;font-size:16px;font-weight:700;overflow-wrap:anywhere}
+.drv__role{display:block;font-size:12.5px;color:var(--text-2)}
+.ic-btn{width:44px;height:44px;border-radius:50%;border:1px solid var(--divider);background:transparent;color:var(--primary);display:grid;place-items:center;flex:none;text-decoration:none}
+.ic-btn svg{width:20px;height:20px}
+.prog__text{font-size:14px;font-weight:600;margin-bottom:8px}
+.prog__segs{display:flex;gap:3px}
+.prog__seg{flex:1;height:6px;border-radius:3px;background:var(--divider)}
+.prog__seg.is-picked{background:var(--ok)}
+.kv{display:flex;gap:12px;padding:9px 0;border-top:1px solid var(--divider);font-size:14.5px}
+.kv:first-of-type{border-top:0;padding-top:0}
+.kv dt{flex:0 0 78px;color:var(--text-2);font-size:13px;padding-top:1px}
+.kv dd{margin:0;flex:1;min-width:0;overflow-wrap:anywhere}
+.kv dd.ok{color:var(--ok);font-weight:600}
+.note-hint{margin:12px 0 0;padding:10px 12px;border-radius:12px;background:var(--warn-soft);color:var(--warn);font-size:13px}
+.req-badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;background:var(--warn-soft);color:var(--warn)}
+
+/* Sticky action bar */
+.action-bar{position:fixed;left:0;right:0;bottom:0;z-index:4;background:var(--card);border-top:1px solid var(--divider);box-shadow:var(--shadow);padding:10px 12px calc(10px + env(safe-area-inset-bottom))}
+.action-bar__row{display:flex;gap:10px}
+.action-bar__row .btn{flex:1 1 0;min-width:0;padding:0 12px;white-space:nowrap}
+
+/* Sheet */
+.sheet-layer{position:fixed;inset:0;z-index:10;display:none}
+.sheet-layer.is-open{display:block}
+.sheet-backdrop{position:absolute;inset:0;background:var(--overlay)}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--card);border-radius:16px 16px 0 0;padding:20px 16px calc(20px + env(safe-area-inset-bottom))}
+.sheet h3{margin:0 0 8px;font-size:16.5px}
+.sheet p{margin:0 0 18px;color:var(--text-2);font-size:14px}
+.sheet__actions{display:flex;flex-direction:column;gap:8px}
+.sheet__actions .btn{width:100%}
+.ef-sug{display:none;margin-top:4px;border:1px solid var(--divider);border-radius:10px;overflow:hidden;background:var(--card)}
+.ef-sug.is-open{display:block}
+.ef-sug__item{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid var(--divider);background:transparent;color:var(--text);font:inherit;font-size:14px;padding:9px 12px;cursor:pointer}
+.ef-sug__item:last-child{border-bottom:0}
+.ef-sug__item small{display:block;color:var(--text-2);font-size:12px}
+
+/* Toast */
+.toast{position:fixed;left:16px;right:16px;bottom:90px;z-index:20;background:#0F1B2D;color:#FFFFFF;font-size:13.5px;text-align:center;padding:11px 16px;border-radius:10px;opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.is-visible{opacity:1}
+.toast--top{bottom:auto;top:calc(12px + env(safe-area-inset-top))}
+.footer-space{height:8px}
+</style>
+</head>
+<body>
+
+<div class="app" id="app"></div>
+<div class="sheet-layer" id="sheetLayer"><div class="sheet-backdrop" data-action="close-sheet"></div><div class="sheet" id="sheetBody"></div></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  var qs = new URLSearchParams(location.search);
+  if (qs.get('mock') === '1') { document.write('<script src="/passenger-mock.js"><\/script>'); }
+})();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="/js/pf-notify-v5.js" defer></script>
+<script src="/js/pf-install-sheet-v2.js" defer></script>
+<script>
+(function () {
+'use strict';
+
+/* ---------- Supabase (public anon key: RPCs only) ---------- */
+var SUPABASE_URL = 'https://omussxfyrztjahbdrrpi.supabase.co';
+var SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9tdXNzeGZ5cnp0amFoYmRycnBpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MjI1NjAsImV4cCI6MjA5NTk5ODU2MH0.ySigym7uOaFIQm01nErPfn4kE6j4MOVKoNntt_Mosak';
+var noopStorage = { getItem: function () { return null; }, setItem: function () {}, removeItem: function () {} };
+var db;
+try {
+  db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
+    auth: { storage: noopStorage, persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+  });
+} catch (e) { console.warn('Supabase failed to init:', e); }
+
+var MAPBOX_TOKEN = 'pk.eyJ1IjoicGF0aHktY2EiLCJhIjoiY211aTZwMXRwMGQ4MjM0b2x4emxtMW9zOSJ9.w2VX7kd0rZniB4GnbLryGg';
+
+/* ---------- Helpers ---------- */
+var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]; }); };
+function clone(o) { return o == null ? o : JSON.parse(JSON.stringify(o)); }
+function initial(name) { var m = (String(name || '')).match(/\p{L}/u); return m ? m[0].toUpperCase() : '?'; }
+function firstName(name) { return String(name || '').split(' ')[0]; }
+var PROV_MAP = { Ontario:'ON', Quebec:'QC', 'British Columbia':'BC', Alberta:'AB', Manitoba:'MB', Saskatchewan:'SK', 'Nova Scotia':'NS', 'New Brunswick':'NB', 'Newfoundland and Labrador':'NL', 'Prince Edward Island':'PE', 'Northwest Territories':'NT', Yukon:'YT', Nunavut:'NU' };
+function shortLabel(label) {
+  var parts = String(label || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+  if (!parts.length) return label || '';
+  var city = parts[0], prov = null;
+  for (var i = 1; i < parts.length; i++) {
+    if (PROV_MAP[parts[i]]) { prov = PROV_MAP[parts[i]]; break; }
+    if (/^[A-Z]{2}$/.test(parts[i])) { prov = parts[i]; break; }
+  }
+  return prov ? city + ', ' + prov : city;
+}
+function fmtDateShort(iso) { var d = new Date(iso); return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); }
+function fmtTime12(iso) { return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }); }
+function fmtSeatPrice(n) { var v = Number(n); return Number.isInteger(v) ? '$' + v : '$' + v.toFixed(2); }
+function seatsWord(n) { return n + ' seat' + (n === 1 ? '' : 's'); }
+function haversineKm(lat1, lng1, lat2, lng2) {
+  if ([lat1, lng1, lat2, lng2].some(function (v) { return v == null || isNaN(v); })) return null;
+  var R = 6371, toRad = function (d) { return d * Math.PI / 180; };
+  var dLat = toRad(lat2 - lat1), dLng = toRad(lng2 - lng1);
+  var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+function isNear(a, b) { var d = haversineKm(a.lat, a.lng, b.lat, b.lng); return d != null && d <= 0.15; }
+function localDateKey(iso) {
+  var d = new Date(iso);
+  var m = d.getMonth() + 1, day = d.getDate();
+  return d.getFullYear() + '-' + (m < 10 ? '0' : '') + m + '-' + (day < 10 ? '0' : '') + day;
+}
+function todayKey() { return localDateKey(new Date().toISOString()); }
+function hideToast() { clearTimeout(toastTimer); document.getElementById('toast').classList.remove('is-visible'); }
+
+/* ---------- State ---------- */
+var STATE = {
+  token: null, isMock: false, rides: [], requests: [], selectedDate: null, selectedId: null, wantB: null, stripScroll: false,
+  payload: null, tripCache: {}, loading: true, errorType: null, fade: false, pendingKey: null, sheet: null,
+  view: 'home', profile: null, profileLoading: false, profileError: null, editingName: false, nameDraft: '', nameError: null, notifBusy: false,
+  notifs: null, notifsLoading: false, notifsError: false, notifUnread: 0, notifSeq: 0
+};
+var toastTimer = null;
+
+function getToken() {
+  var m = location.pathname.match(/\/p\/([^/]+)/);
+  if (m) return decodeURIComponent(m[1]);
+  var t = new URLSearchParams(location.search).get('t');
+  if (t) return t;
+  return STATE.isMock ? 'mock' : null;
+}
+
+/* ---------- API ---------- */
+function rpc(name, args) {
+  if (!db) return Promise.reject(new Error('no_client'));
+  return db.rpc(name, args).then(function (res) { if (res.error) throw res.error; return res.data; });
+}
+function M() { return window.PF_PASSENGER_MOCK; }
+function apiList() { return STATE.isMock ? M().list(STATE.token) : rpc('passenger_home_list', { p_token: STATE.token }); }
+function apiGet(id) { return STATE.isMock ? M().get(STATE.token, id) : rpc('passenger_trip_get', { p_token: STATE.token, p_booking_id: id }); }
+function apiCancel(id) { return STATE.isMock ? M().cancel(STATE.token, id) : rpc('passenger_cancel', { p_token: STATE.token, p_booking_id: id }); }
+function apiRequestPost(f) {
+  if (STATE.isMock) return M().post(STATE.token, f);
+  return rpc('passenger_request_post', { p_token: STATE.token,
+    p_origin_label: f.origin_label, p_origin_lat: f.origin_lat, p_origin_lng: f.origin_lng,
+    p_dest_label: f.dest_label, p_dest_lat: f.dest_lat, p_dest_lng: f.dest_lng,
+    p_seats: f.seats, p_note: f.note, p_departures: f.departures, p_returns: f.returns });
+}
+function apiRecent() { return STATE.isMock ? M().recent(STATE.token) : rpc('passenger_request_recent', { p_token: STATE.token }); }
+function apiProfileGet() { return STATE.isMock ? M().profile(STATE.token) : rpc('passenger_profile_get', { p_token: STATE.token }); }
+function apiProfileUpdate(patch) {
+  return STATE.isMock ? M().updateProfile(STATE.token, patch)
+    : rpc('passenger_profile_update', { p_token: STATE.token, p_name: patch.name == null ? null : patch.name, p_photo: patch.photo == null ? null : patch.photo });
+}
+function apiNotifList() { return STATE.isMock ? M().notifList(STATE.token) : rpc('passenger_notifications_list', { p_token: STATE.token }); }
+function apiNotifMarkRead() { return STATE.isMock ? M().notifMarkRead(STATE.token) : rpc('passenger_notifications_mark_read', { p_token: STATE.token }); }
+
+/* ---------- Items (rides + open requests) ---------- */
+function allItems() {
+  var out = STATE.rides.map(function (r) {
+    return { id: r.booking_id, kind: 'booking', depart_at: r.depart_at, status: r.status, origin_label: r.origin_label, dest_label: r.dest_label };
+  }).concat(STATE.requests.map(function (q) {
+    return { id: q.id, kind: 'request', depart_at: q.depart_at, status: 'request', origin_label: q.pickup_label, dest_label: q.dropoff_label, seats: q.seats };
+  }));
+  return out.sort(function (a, b) { return new Date(a.depart_at) - new Date(b.depart_at); });
+}
+function itemsForDate(key) { return allItems().filter(function (t) { return localDateKey(t.depart_at) === key; }); }
+function itemById(id) { var l = allItems(); for (var i = 0; i < l.length; i++) if (l[i].id === id) return l[i]; return null; }
+/* Keeps the selected item if it is on this date; else the live one, else the earliest. */
+function itemForDate(key) {
+  var list = itemsForDate(key);
+  if (!list.length) return null;
+  for (var i = 0; i < list.length; i++) if (list[i].id === STATE.selectedId) return list[i];
+  for (var j = 0; j < list.length; j++) if (list[j].status === 'active' || list[j].status === 'picked_up') return list[j];
+  return list[0];
+}
+
+/* ---------- Loading ---------- */
+function failLoad(e) {
+  console.error('[passenger] load failed', e);
+  STATE.loading = false; STATE.errorType = 'rpc_error'; STATE.payload = null;
+  render();
+}
+function load(showSkeleton) {
+  if (showSkeleton) { STATE.loading = true; render(); }
+  apiList().then(function (list) {
+    if (!list || list.error === 'invalid_token') { STATE.loading = false; STATE.errorType = 'invalid_token'; STATE.payload = null; render(); return; }
+    if (!list.rides || !list.requests) { STATE.loading = false; STATE.errorType = 'rpc_error'; STATE.payload = null; render(); return; }
+    STATE.rides = list.rides; STATE.requests = list.requests; STATE.errorType = null;
+    if (STATE.wantB) {
+      var w = itemById(STATE.wantB); STATE.wantB = null;
+      if (w) { STATE.selectedDate = localDateKey(w.depart_at); STATE.selectedId = w.id; STATE.stripScroll = true; }
+    }
+    if (!STATE.selectedDate) { STATE.selectedDate = todayKey(); STATE.stripScroll = true; }
+    loadItem(false);
+  }).catch(failLoad);
+}
+function endLoading() { STATE.loading = false; }
+function cachePayload(data) { if (data && data.booking) STATE.tripCache[data.booking.id] = clone(data); }
+/* Loads the selected item on STATE.selectedDate (or shows the empty state). Cached: shown at once, revalidated silently. */
+function loadItem(showSkeleton) {
+  var it = itemForDate(STATE.selectedDate);
+  STATE.selectedId = it ? it.id : null;
+  if (!it) { endLoading(); STATE.payload = null; render(); return; }
+  if (it.kind === 'request') { endLoading(); STATE.payload = { request: it }; render(); return; }
+  var wanted = it.id, revalidate = false;
+  if (showSkeleton) {
+    var hit = STATE.tripCache[wanted];
+    if (hit) { revalidate = true; endLoading(); STATE.payload = clone(hit); STATE.fade = true; render(); }
+    else { STATE.loading = true; STATE.payload = null; render(); }
+  }
+  apiGet(wanted).then(function (data) {
+    if (STATE.selectedId !== wanted) return; /* user switched meanwhile */
+    var wasLoading = STATE.loading;
+    endLoading();
+    if (!data || data.error === 'invalid_token') { STATE.errorType = 'invalid_token'; STATE.payload = null; }
+    else if (data.error === 'not_found') { STATE.errorType = null; STATE.payload = null; }
+    else if (!data.trip || !data.booking) { STATE.errorType = 'rpc_error'; STATE.payload = null; }
+    else {
+      if (revalidate && (STATE.pendingKey || (STATE.payload && JSON.stringify(STATE.payload) === JSON.stringify(data)))) { cachePayload(data); return; }
+      cachePayload(data);
+      STATE.errorType = null; STATE.payload = data;
+      if (wasLoading) STATE.fade = true;
+    }
+    render();
+  }).catch(function (e) { if (STATE.selectedId === wanted) failLoad(e); });
+}
+function selectDate(key) {
+  if (key === STATE.selectedDate || STATE.pendingKey) return;
+  STATE.selectedDate = key; STATE.stripScroll = true; STATE.selectedId = null; STATE.payload = null; STATE.sheet = null;
+  loadItem(true);
+}
+function selectItem(id) {
+  if (id === STATE.selectedId || STATE.pendingKey) return;
+  STATE.selectedId = id; STATE.payload = null; STATE.sheet = null;
+  loadItem(true);
+}
+
+function toast(msg) {
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.toggle('toast--top', document.getElementById('sheetLayer').classList.contains('is-open'));
+  el.classList.add('is-visible');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function () { el.classList.remove('is-visible'); }, 3000);
+}
+
+/* ---------- Cancel + invite ---------- */
+function cancelWhy(payload) {
+  if (!payload || !payload.booking) return null;
+  var s = payload.booking.status;
+  if (s === 'picked_up') return "You've been picked up, so this seat can't be cancelled.";
+  if (s === 'active') return "Your driver has started this ride, so you can't cancel here. Message your driver if your plans changed.";
+  if (s === 'upcoming') return null;
+  return "This ride can't be cancelled.";
+}
+function doCancel(id, isRequest) {
+  if (STATE.pendingKey) return;
+  STATE.pendingKey = 'cancel';
+  render();
+  apiCancel(id).then(function (data) {
+    STATE.pendingKey = null;
+    if (data && data.error === 'not_allowed') toast("It's too late to cancel. Message your driver instead.");
+    else if (!data || data.error) toast("Couldn't cancel. Please try again.");
+    else toast(isRequest ? 'Request cancelled' : 'Seat cancelled');
+    delete STATE.tripCache[id];
+    STATE.payload = null;
+    load(false);
+  }).catch(function (e) {
+    console.error('[passenger] cancel failed', e);
+    STATE.pendingKey = null; toast("Couldn't cancel. Please try again."); render();
+  });
+}
+function shareText(payload) {
+  var trip = payload.trip;
+  return 'Join me on this ride ' + shortLabel(trip.origin_label) + ' → ' + shortLabel(trip.dest_label) + ', ' + fmtDateShort(trip.depart_at) + (trip.join_url ? ': ' + trip.join_url : '');
+}
+function doShare() {
+  var p = STATE.payload;
+  if (!p || !p.trip) return;
+  if (!p.trip.join_url) { toast('Invite link not ready'); return; }
+  var text = shareText(p);
+  if (navigator.share) {
+    navigator.share({ text: text }).catch(function (e) { if (e && e.name === 'AbortError') return; copyToClipboard(text); });
+  } else { copyToClipboard(text); }
+}
+function copyToClipboard(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function () { toast('Link copied'); }, function () { toast('Link copied'); });
+  } else {
+    try {
+      var ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.focus(); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+    } catch (e) {}
+    toast('Link copied');
+  }
+}
+
+/* ---------- Icons ---------- */
+var PATHS = {
+  userPlus: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M19 8v6M16 11h6"/>',
+  x: '<path d="M18 6 6 18M6 6l12 12"/>',
+  arrowLeft: '<path d="M19 12H5"/><path d="m12 19-7-7 7-7"/>',
+  camera: '<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"/><circle cx="12" cy="13" r="3.5"/>',
+  pencil: '<path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/>',
+  lock: '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+  bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+  mail: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/>',
+  search: '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
+  plusCircle: '<circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/>'
+};
+function ico(name) {
+  return '<svg class="i" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + PATHS[name] + '</svg>';
+}
+var ICON_PHONE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.8a16 16 0 0 0 6 6l1.2-1.2a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg>';
+var WA_PATH = 'M12.04 2a9.9 9.9 0 0 0-8.5 14.98L2 22l5.17-1.5A9.9 9.9 0 1 0 12.04 2zm0 18.1a8.2 8.2 0 0 1-4.18-1.15l-.3-.18-3.07.89.9-2.99-.2-.31a8.2 8.2 0 1 1 6.85 3.74zm4.5-6.14c-.25-.12-1.46-.72-1.69-.8-.23-.09-.39-.13-.56.12-.16.25-.64.8-.78.97-.15.16-.29.18-.54.06a6.7 6.7 0 0 1-3.34-2.92c-.25-.43.25-.4.72-1.34.08-.16.04-.3-.02-.43l-.76-1.83c-.2-.48-.4-.41-.56-.42h-.47a.9.9 0 0 0-.65.3 2.7 2.7 0 0 0-.85 2.02c0 1.19.87 2.34.99 2.5.12.16 1.71 2.61 4.14 3.66 1.54.66 2.14.72 2.91.6.47-.07 1.46-.6 1.66-1.17.2-.58.2-1.07.14-1.17-.06-.1-.22-.16-.47-.28z';
+var ICON_WA = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" stroke="none" d="' + WA_PATH + '"/></svg>';
+var ICON_WA_LG = '<svg class="i" viewBox="0 0 24 24" width="19" height="19" aria-hidden="true"><path fill="currentColor" stroke="none" d="' + WA_PATH + '"/></svg>';
+
+/* ---------- Render: shell ---------- */
+function header() {
+  return '<header class="app-bar"><div class="app-bar__inner">' +
+    '<span class="brand"><img src="/logo.png" alt=""></span>' +
+    '<div><h1 class="app-bar__title">Pathfynder</h1><p class="app-bar__sub">Passenger home</p></div>' +
+    '<button type="button" class="add-btn" data-action="post" aria-label="Request a ride">' + ico('plusCircle') + '</button>' +
+    '<button type="button" class="bell-btn" data-action="notifs" aria-label="Notifications">' + ico('bell') + '<span class="bell-badge" id="bellBadge"' + (STATE.notifUnread > 0 ? '' : ' hidden') + '>' + (STATE.notifUnread > 9 ? '9+' : STATE.notifUnread) + '</span></button>' +
+    '<button type="button" class="profile-btn" data-action="profile" aria-label="Profile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></button>' +
+    '</div></header>';
+}
+function pillSub(k, today, list) {
+  var it = list[0];
+  if (list.length > 1) return list.length + ' rides';
+  if (k < today) return it.status === 'cancelled' ? 'Cancelled' : 'Done';
+  return { upcoming: 'Upcoming', active: 'Live', picked_up: 'On board', completed: 'Done', cancelled: 'Cancelled', request: 'Requested' }[it.status] || 'Upcoming';
+}
+function dateStrip() {
+  var today = todayKey();
+  var byDate = {}, keys = [today];
+  allItems().forEach(function (t) {
+    var k = localDateKey(t.depart_at);
+    (byDate[k] = byDate[k] || []).push(t);
+    if (keys.indexOf(k) < 0) keys.push(k);
+  });
+  keys.sort();
+  var pills = keys.map(function (k) {
+    var list = byDate[k] || [];
+    var dstr = fmtDateShort(list.length ? list[0].depart_at : new Date().toISOString());
+    var top, sub;
+    if (k === today) { top = 'Today'; sub = dstr; }
+    else { top = dstr; sub = pillSub(k, today, list); }
+    return '<button type="button" class="date-pill' + (k === STATE.selectedDate ? ' is-selected' : '') + '" data-action="pick-date" data-date="' + k + '"' + (k === STATE.selectedDate ? ' aria-current="date"' : '') + '>' +
+      '<span class="date-pill__top">' + esc(top) + '</span><span class="date-pill__sub' + (k === today ? ' date-pill__sub--date' : '') + '">' + esc(sub) + '</span></button>';
+  }).join('');
+  return '<section class="date-strip"><p class="date-strip__label">Your rides</p><div class="date-strip__row" id="dateStrip">' + pills + '</div>' + itemChips() + '</section>';
+}
+/* One chip per ride/request when the selected date has 2+. */
+function itemChips() {
+  var list = itemsForDate(STATE.selectedDate);
+  if (list.length < 2) return '';
+  var chips = list.map(function (t) {
+    var sel = t.id === STATE.selectedId;
+    var label = (t.kind === 'request' ? 'Request · ' : '') + fmtTime12(t.depart_at) + ' · ' + shortLabel(t.origin_label) + ' → ' + shortLabel(t.dest_label);
+    return '<button type="button" class="trip-chip' + (sel ? ' is-selected' : '') + '" data-action="pick-item" data-id="' + esc(t.id) + '"' + (sel ? ' aria-current="true"' : '') + '>' + esc(label) + '</button>';
+  }).join('');
+  return '<div class="trip-chips" id="tripChips">' + chips + '</div>';
+}
+function emptyDay() {
+  var none = allItems().length === 0;
+  return '<div class="empty-day"><h2>' + (none ? 'No rides yet' : 'No ride on this day') + '</h2>' +
+    '<p>Request a ride and let drivers know where you are headed, or browse rides that are already posted.</p>' +
+    '<div class="empty-day__btns">' +
+    '<button type="button" class="btn btn-cta" data-action="post">Request a ride</button>' +
+    '<a class="btn btn-secondary" href="/explore">Explore rides</a>' +
+    '</div></div>';
+}
+function skeleton() {
+  var ln = function (w, h) { return '<span class="sk skel-line" style="width:' + w + 'px' + (h ? ';height:' + h + 'px' : '') + '"></span>'; };
+  var stop = '<div class="skel-stop"><span class="sk skel-stop__dot"></span><div class="skel-stop__lines">' + ln(130) + ln(56, 10) + '</div></div>';
+  var row = '<div class="skel-card"><span class="sk skel-avatar"></span><div class="skel-lines">' + ln(140) + ln(90, 10) + '</div></div>';
+  return '<div class="skel" aria-busy="true" aria-label="Loading ride">' +
+    '<section class="hero-wrap"><div class="skel-hero"><span class="sk skel-pill"></span>' + stop + stop +
+      '<div class="skel-chips"><span class="sk skel-chip"></span><span class="sk skel-chip"></span><span class="sk skel-chip"></span></div></div></section>' +
+    row + row + '</div>';
+}
+function actionBarPlaceholder() {
+  return '<div class="action-bar action-bar--ph" aria-hidden="true"><div class="action-bar__row">' +
+    '<button type="button" class="btn btn-secondary" disabled tabindex="-1"></button>' +
+    '<button type="button" class="btn btn-secondary" disabled tabindex="-1"></button></div></div>';
+}
+function errorPage() {
+  if (STATE.errorType === 'rpc_error') {
+    return header() + '<div class="error-page"><h2>Something went wrong</h2>' +
+      '<p>We couldn’t load your rides. Check your connection and try again.</p>' +
+      '<button type="button" class="btn btn-cta" data-action="retry">Try again</button></div>';
+  }
+  return header() + '<div class="error-page">' +
+    '<h2>This link doesn’t work</h2>' +
+    '<p>We couldn’t find your rides. The link may be old or mistyped. Message us on WhatsApp and we’ll help you out.</p>' +
+    '<a class="btn btn-cta" href="https://wa.me/916356600421?text=Hi" target="_blank" rel="noopener">' + ICON_WA_LG + 'Message us on WhatsApp</a>' +
+    '</div>';
+}
+
+/* ---------- Render: ride ---------- */
+var STATUS_LABEL = { upcoming: 'Upcoming', active: 'Driver started', picked_up: 'Picked up', completed: 'Completed', cancelled: 'Cancelled' };
+var STATUS_CLASS = { upcoming: '', active: ' hero-pill--active', picked_up: ' hero-pill--picked', completed: ' hero-pill--done', cancelled: ' hero-pill--cancelled' };
+
+/* Route rows: trip origin, stops, destination, with the passenger's own pickup / drop-off highlighted. */
+function routeRows(trip, b) {
+  var pts = [{ label: trip.origin_label, lat: trip.origin_lat, lng: trip.origin_lng, sub: 'Start' }];
+  (Array.isArray(trip.stops) ? trip.stops : []).forEach(function (s) { pts.push({ label: s.label, lat: s.lat, lng: s.lng, sub: 'Stop' }); });
+  pts.push({ label: trip.dest_label, lat: trip.dest_lat, lng: trip.dest_lng, sub: 'Destination' });
+  var pk = { label: b.pickup_label, lat: b.pickup_lat, lng: b.pickup_lng }, dp = { label: b.dropoff_label, lat: b.dropoff_lat, lng: b.dropoff_lng };
+  var pi = -1, di = -1, i;
+  for (i = 0; i < pts.length; i++) { if (pi < 0 && isNear(pts[i], pk)) pi = i; }
+  for (i = pts.length - 1; i >= 0; i--) { if (di < 0 && isNear(pts[i], dp)) di = i; }
+  if (pi >= 0) pts[pi].tag = 'Your pickup'; else { pts.splice(1, 0, { label: b.pickup_label, lat: pk.lat, lng: pk.lng, sub: 'Pickup point', tag: 'Your pickup', you: true }); if (di >= 1) di++; }
+  if (di >= 0) pts[di].tag = pts[di].tag ? pts[di].tag + ' + drop-off' : 'Your drop-off';
+  else pts.splice(pts.length - 1, 0, { label: b.dropoff_label, lat: dp.lat, lng: dp.lng, sub: 'Drop-off point', tag: 'Your drop-off', you: true });
+  return pts;
+}
+function heroCard(p) {
+  var trip = p.trip, b = p.booking, st = b.status;
+  var rows = routeRows(trip, b).map(function (pt, n, arr) {
+    var last = n === arr.length - 1;
+    return '<div class="hero-route__stop' + (pt.tag ? ' is-you' : '') + '"><span class="hero-route__dot' + (last ? ' hero-route__dot--to' : (pt.you ? ' hero-route__dot--you' : '')) + '"></span>' +
+      '<div class="hero-route__text"><span class="hero-route__city">' + esc(shortLabel(pt.label)) + '</span><span class="hero-route__sub">' + esc(pt.sub) + '</span></div>' +
+      (pt.tag ? '<span class="hero-tag">' + esc(pt.tag) + '</span>' : '') + '</div>';
+  }).join('');
+  var priceChip = trip.price_per_seat != null ? fmtSeatPrice(trip.price_per_seat) + '/seat · ' + seatsWord(b.seats) + ' booked' : seatsWord(b.seats) + ' booked';
+  return '<section class="hero-wrap"><div class="hero">' +
+    '<div class="hero-top"><span class="hero-pill' + (STATUS_CLASS[st] || '') + '">' + esc(STATUS_LABEL[st] || 'Upcoming') + '</span></div>' +
+    '<div class="hero-route">' + rows + '</div>' +
+    '<div class="hero-chips"><span class="hero-chip">' + esc(fmtDateShort(trip.depart_at)) + '</span><span class="hero-chip">' + esc(fmtTime12(trip.depart_at)) + '</span><span class="hero-chip">' + esc(priceChip) + '</span></div>' +
+    '</div></section>';
+}
+function driverCard(p) {
+  var d = p.trip.driver || {};
+  var digits = String(d.phone || '').replace(/\D/g, '');
+  var fn = firstName(d.name) || 'driver';
+  var avatar = d.photo ? '<img src="' + esc(d.photo) + '" alt="">' : esc(initial(d.name));
+  var contacts = digits
+    ? '<a class="ic-btn" href="tel:+' + digits + '" aria-label="Call ' + esc(fn) + '">' + ICON_PHONE + '</a>' +
+      '<a class="ic-btn" href="https://wa.me/' + digits + '" target="_blank" rel="noopener" aria-label="Message ' + esc(fn) + ' on WhatsApp">' + ICON_WA + '</a>'
+    : '';
+  return '<section class="section"><div class="card"><h2 class="card__title">Your driver</h2><div class="drv">' +
+    '<span class="drv__avatar">' + avatar + '</span>' +
+    '<div class="drv__id"><span class="drv__name">' + esc(d.name || 'Your driver') + '</span><span class="drv__role">Driver</span></div>' + contacts + '</div></div></section>';
+}
+function progressCard(p) {
+  var c = p.counts || { passengers: 0, picked_up: 0 };
+  var n = Math.max(0, Number(c.passengers) || 0), m = Math.max(0, Math.min(n, Number(c.picked_up) || 0));
+  var segs = '';
+  for (var i = 0; i < n; i++) segs += '<span class="prog__seg' + (i < m ? ' is-picked' : '') + '"></span>';
+  return '<section class="section"><div class="card"><h2 class="card__title">Ride progress</h2>' +
+    '<div class="prog__text">' + n + ' passenger' + (n === 1 ? '' : 's') + ' · ' + m + ' picked up</div>' +
+    '<div class="prog__segs">' + segs + '</div></div></section>';
+}
+function bookingCard(p) {
+  var b = p.booking, why = cancelWhy(p);
+  var pickedLine = b.picked_up_at ? '<div class="kv"><dt>Status</dt><dd class="ok">Picked up at ' + esc(fmtTime12(b.picked_up_at)) + '</dd></div>' : '';
+  return '<section class="section"><div class="card"><h2 class="card__title">Your booking</h2><dl style="margin:0">' +
+    '<div class="kv"><dt>Seats</dt><dd>' + esc(seatsWord(b.seats)) + '</dd></div>' +
+    '<div class="kv"><dt>Pickup</dt><dd>' + esc(b.pickup_label) + '</dd></div>' +
+    '<div class="kv"><dt>Drop-off</dt><dd>' + esc(b.dropoff_label) + '</dd></div>' +
+    (b.note ? '<div class="kv"><dt>Note</dt><dd>' + esc(b.note) + '</dd></div>' : '') + pickedLine + '</dl>' +
+    (why && (b.status === 'active' || b.status === 'picked_up') ? '<p class="note-hint" id="cancelWhy">' + esc(why) + '</p>' : '') +
+    '</div></section>';
+}
+function rideBar(p) {
+  var s = p.booking.status;
+  if (s === 'completed' || s === 'cancelled') return '';
+  var off = !!cancelWhy(p) || STATE.pendingKey === 'cancel';
+  return '<div class="action-bar"><div class="action-bar__row">' +
+    '<button type="button" class="btn btn-secondary" data-action="share">' + ico('userPlus') + 'Invite a friend</button>' +
+    '<button type="button" class="btn btn-secondary btn-danger-text" data-action="open-cancel-sheet"' + (off ? ' disabled' : '') + '>' + ico('x') + 'Cancel my seat</button>' +
+    '</div></div>';
+}
+function requestView(it) {
+  return '<div class="main-body"><section class="hero-wrap"><div class="hero">' +
+    '<div class="hero-top"><span class="hero-pill hero-pill--active">Looking for a driver</span></div>' +
+    '<div class="hero-route">' +
+      '<div class="hero-route__stop"><span class="hero-route__dot"></span><div class="hero-route__text"><span class="hero-route__city">' + esc(shortLabel(it.origin_label)) + '</span><span class="hero-route__sub">Pickup</span></div></div>' +
+      '<div class="hero-route__stop"><span class="hero-route__dot hero-route__dot--to"></span><div class="hero-route__text"><span class="hero-route__city">' + esc(shortLabel(it.dest_label)) + '</span><span class="hero-route__sub">Drop-off</span></div></div>' +
+    '</div>' +
+    '<div class="hero-chips"><span class="hero-chip">' + esc(fmtDateShort(it.depart_at)) + '</span><span class="hero-chip">' + esc(fmtTime12(it.depart_at)) + '</span><span class="hero-chip">' + esc(seatsWord(Number(it.seats) || 1)) + '</span></div>' +
+    '</div></section>' +
+    '<section class="section"><div class="card"><h2 class="card__title">Your request</h2>' +
+    '<p style="margin:0;font-size:14.5px">No driver has taken this request yet. You can also browse rides that are already posted.</p>' +
+    '<a class="btn btn-secondary btn-full" style="margin-top:12px" href="/explore">' + ico('search') + 'Explore rides</a></div></section>' +
+    '<div class="footer-space"></div></div>';
+}
+function requestBar() {
+  return '<div class="action-bar"><div class="action-bar__row">' +
+    '<button type="button" class="btn btn-secondary btn-danger-text" data-action="open-cancel-req-sheet"' + (STATE.pendingKey === 'cancel' ? ' disabled' : '') + '>' + ico('x') + 'Cancel request</button></div></div>';
+}
+
+/* ---------- Sheet ---------- */
+function sheetHtml() {
+  var s = STATE.sheet;
+  var layer = document.getElementById('sheetLayer');
+  var sb = document.getElementById('sheetBody');
+  if (!s) { layer.classList.remove('is-open'); sb.innerHTML = ''; return; }
+  layer.classList.add('is-open');
+  sb.innerHTML =
+    '<h3>' + esc(s.title) + '</h3><p>' + esc(s.message) + '</p>' +
+    '<div class="sheet__actions">' +
+      '<button type="button" class="btn btn-danger" data-action="sheet-confirm">' + esc(s.confirmLabel) + '</button>' +
+      '<button type="button" class="btn btn-secondary" data-action="sheet-cancel">' + esc(s.keepLabel || 'Keep it') + '</button>' +
+    '</div>';
+}
+function openSheet(opts) { hideToast(); STATE.sheet = opts; sheetHtml(); }
+function closeSheet() { STATE.sheet = null; sheetHtml(); }
+
+/* ---------- Full render ---------- */
+function render() {
+  var app = document.getElementById('app');
+  if (STATE.view === 'post') return; /* the request flow draws itself (renderPost) so background refreshes never wipe typed input */
+  if (STATE.view === 'profile') { app.classList.remove('has-bar'); renderProfile(app); sheetHtml(); return; }
+  if (STATE.view === 'notifs') { app.classList.remove('has-bar'); renderNotifs(app); sheetHtml(); return; }
+  if (STATE.errorType) { app.classList.remove('has-bar'); app.innerHTML = errorPage(); sheetHtml(); return; }
+  var oldStrip = document.getElementById('dateStrip');
+  var keepScroll = oldStrip ? oldStrip.scrollLeft : 0;
+  var body = '', showBar = false, p = STATE.payload;
+  var fade = STATE.fade && !STATE.loading; STATE.fade = STATE.loading ? STATE.fade : false;
+  if (STATE.loading) { showBar = true; body = skeleton() + actionBarPlaceholder(); }
+  else if (!p) body = emptyDay();
+  else if (p.request) { showBar = true; body = '<div class="' + (fade ? 'fade-in' : '') + '">' + requestView(p.request) + '</div>' + requestBar(); }
+  else {
+    var bar = rideBar(p);
+    showBar = !!bar;
+    body = '<div class="main-body' + (fade ? ' fade-in' : '') + '">' + heroCard(p) + driverCard(p) + progressCard(p) + bookingCard(p) + '<div class="footer-space"></div></div>' + bar;
+  }
+  if (p && p.booking) {
+    /* keep the strip in step with the freshest status */
+    STATE.rides.forEach(function (r) { if (r.booking_id === p.booking.id) r.status = p.booking.status; });
+  }
+  app.classList.toggle('has-bar', showBar);
+  app.innerHTML = header() + dateStrip() + body;
+  sheetHtml();
+  var strip = document.getElementById('dateStrip');
+  if (strip) {
+    var sel = strip.querySelector('.is-selected');
+    if (STATE.stripScroll && sel) {
+      STATE.stripScroll = false;
+      strip.scrollLeft = sel.offsetLeft - (strip.clientWidth - sel.offsetWidth) / 2;
+    } else { strip.scrollLeft = keepScroll; }
+  }
+}
+
+/* ---------- Profile screen ---------- */
+var THEME_KEY = 'pf_theme';
+function getTheme() { try { var v = localStorage.getItem(THEME_KEY); return (v === 'light' || v === 'dark') ? v : 'system'; } catch (e) { return 'system'; } }
+function setTheme(v) {
+  try { if (v === 'light' || v === 'dark') { document.documentElement.setAttribute('data-theme', v); localStorage.setItem(THEME_KEY, v); } else { document.documentElement.removeAttribute('data-theme'); localStorage.removeItem(THEME_KEY); } } catch (e) {}
+}
+function initials(name) {
+  var p = String(name || '').trim().split(/\s+/).filter(Boolean);
+  if (!p.length) return '?';
+  return (p[0].charAt(0) + (p.length > 1 ? p[p.length - 1].charAt(0) : '')).toUpperCase();
+}
+function fmtMemberSince(iso) {
+  var d = new Date(iso);
+  return isNaN(d.getTime()) ? '-' : d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+}
+function fmtCAD(n) { var v = Number(n) || 0; return '$' + v.toLocaleString('en-CA', { minimumFractionDigits: v % 1 ? 2 : 0, maximumFractionDigits: 2 }); }
+/* Notification switch state: { on, disabled, hint } */
+function notifView() {
+  var p = STATE.profile || {};
+  var st = (window.PFNotify && window.PFNotify.state) ? window.PFNotify.state() : 'unsupported';
+  var on = !!p.notifications_enabled && (STATE.isMock || st === 'granted');
+  if (STATE.isMock && (st === 'unsupported' || st === 'in-app-browser')) return { on: on, disabled: STATE.notifBusy, hint: '' };
+  if (st === 'denied') return { on: false, disabled: true, hint: 'Notifications are blocked in your browser settings. Allow them for pathfynder.ca to turn this on.' };
+  if (st === 'ios-needs-install') return { on: false, disabled: false, hint: 'On iPhone, add Pathfynder to your Home Screen first. Tap to see how.' };
+  if (st === 'ios-too-old') return { on: false, disabled: true, hint: 'Alerts need iOS 16.4 or newer.' };
+  if (st === 'unsupported' || st === 'in-app-browser') return { on: false, disabled: true, hint: 'This browser cannot receive alerts. Open Pathfynder in Safari or Chrome.' };
+  return { on: on, disabled: STATE.notifBusy, hint: '' };
+}
+function profileHeader() {
+  return '<header class="app-bar"><div class="pf-bar__inner"><button type="button" class="pf-back" data-action="pf-back" aria-label="Back">' + ico('arrowLeft') + '</button><div><h1 class="app-bar__title">Profile</h1></div></div></header>';
+}
+function profileBody(p) {
+  var avatar = p.photo_url ? '<img src="' + esc(p.photo_url) + '" alt="">' : esc(initials(p.name));
+  var nameBlock = STATE.editingName
+    ? '<div class="pf-edit"><input class="pf-input" id="pfNameInput" type="text" maxlength="60" autocomplete="name" aria-label="Your name" value="' + esc(STATE.nameDraft) + '">' +
+      (STATE.nameError ? '<p class="pf-err">' + esc(STATE.nameError) + '</p>' : '') +
+      '<div class="pf-edit__btns"><button type="button" class="btn btn-secondary" data-action="pf-name-cancel">Cancel</button><button type="button" class="btn btn-cta" data-action="pf-name-save">Save</button></div></div>'
+    : '<div class="pf-name"><span>' + esc(p.name || 'Passenger') + '</span><button type="button" class="pf-pencil" data-action="pf-name-edit" aria-label="Edit name">' + ico('pencil') + '</button></div>';
+  var s = p.stats || {};
+  var nv = notifView();
+  var th = getTheme();
+  function seg(v, label) { return '<button type="button" data-action="pf-theme" data-id="' + v + '" aria-pressed="' + (th === v) + '">' + label + '</button>'; }
+  return '<div class="pf-wrap">' +
+    '<section class="pf-card pf-head"><div class="pf-avatar-wrap"><div class="pf-avatar">' + avatar + '</div><button type="button" class="pf-cam" data-action="pf-photo" aria-label="Change photo">' + ico('camera') + '</button></div>' +
+      '<input type="file" id="pfPhotoInput" accept="image/*" hidden>' + nameBlock + '</section>' +
+    '<section class="pf-card"><h2 class="pf-h">WhatsApp number</h2><div class="pf-row"><span class="pf-lock">' + ico('lock') + '</span><div class="pf-row__t"><b>' + esc(p.whatsapp_masked || '') + '</b><span>The number you booked with. Can\'t be changed here.</span></div></div></section>' +
+    '<section class="pf-card"><h2 class="pf-h">Rides summary</h2><div class="pf-stats">' +
+      '<div class="pf-stat"><b>' + esc(Number(s.rides_completed) || 0) + '</b><span>Rides completed</span></div>' +
+      '<div class="pf-stat"><b>' + esc(fmtMemberSince(s.member_since)) + '</b><span>Member since</span></div>' +
+      '<div class="pf-stat"><b>' + esc(Number(s.rides_upcoming) || 0) + '</b><span>Upcoming rides</span></div>' +
+      '<div class="pf-stat"><b>' + esc(fmtCAD(s.total_spent)) + '</b><span>Total spent (CAD)</span></div></div></section>' +
+    '<section class="pf-card"><h2 class="pf-h">Notification alerts</h2><div class="pf-row"><span class="pf-row-ic">' + ico('bell') + '</span><div class="pf-row__t"><b>Ride alerts</b><span id="pfNotifSub">' + esc(nv.hint || (nv.on ? 'On for this device' : 'Off')) + '</span></div>' +
+      '<button type="button" class="pf-switch" id="pfNotifSwitch" role="switch" data-action="pf-notif" aria-checked="' + nv.on + '" aria-label="Notification alerts"' + (nv.disabled ? ' disabled' : '') + '></button></div></section>' +
+    '<section class="pf-card"><h2 class="pf-h">Appearance</h2><div class="pf-seg" role="group" aria-label="Theme">' + seg('light', 'Light') + seg('dark', 'Dark') + seg('system', 'System') + '</div></section>' +
+    '<section class="pf-card"><h2 class="pf-h">Contact support</h2><a class="pf-row" id="pfSupport" href="mailto:pathfynder.ca@gmail.com?subject=Pathfynder%20passenger%20support"><span class="pf-row-ic">' + ico('mail') + '</span><div class="pf-row__t"><b>Email support</b><span>We usually reply within a day.</span></div></a></section>' +
+    '</div>';
+}
+function renderProfile(app) {
+  var body;
+  if (STATE.profileLoading && !STATE.profile) body = '<div class="pf-wrap"><div class="pf-skel"></div><div class="pf-skel"></div><div class="pf-skel"></div></div>';
+  else if (!STATE.profile) body = '<div class="pf-wrap"><div class="pf-card"><p class="pf-err">' + esc(STATE.profileError || "We couldn't load your profile. Please try again.") + '</p><button type="button" class="btn btn-secondary btn-full" data-action="pf-retry">Try again</button></div></div>';
+  else body = profileBody(STATE.profile);
+  var y = window.pageYOffset || 0;
+  app.innerHTML = profileHeader() + body;
+  var inp = document.getElementById('pfNameInput');
+  if (inp) { inp.focus({ preventScroll: true }); inp.setSelectionRange(inp.value.length, inp.value.length); }
+  var f = document.getElementById('pfPhotoInput');
+  if (f) f.onchange = function () { if (f.files && f.files[0]) handlePhoto(f.files[0]); f.value = ''; };
+  window.scrollTo(0, y);
+}
+function loadProfile() {
+  STATE.profileLoading = true; STATE.profileError = null; render();
+  apiProfileGet().then(function (data) {
+    if (!data || data.error) throw new Error((data && data.error) || 'empty');
+    STATE.profile = data; STATE.profileLoading = false; render();
+  }).catch(function (e) {
+    console.error('[passenger] profile load failed', e);
+    STATE.profileLoading = false; STATE.profile = null;
+    STATE.profileError = "We couldn't load your profile right now. Please try again in a moment.";
+    render();
+  });
+}
+function saveProfile(patch, okMsg) {
+  return apiProfileUpdate(patch).then(function (data) {
+    if (!data || data.error) throw new Error((data && data.error) || 'empty');
+    if (patch.name != null) STATE.profile.name = data.name || patch.name;
+    if (patch.photo != null) STATE.profile.photo_url = data.photo_url || patch.photo;
+    if (okMsg) toast(okMsg);
+    return true;
+  }).catch(function (e) {
+    console.error('[passenger] profile save failed', e);
+    toast("Couldn't save that. Please try again.");
+    return false;
+  });
+}
+/* Crops to a centred square and resizes to 256px, returns a JPEG data URL. */
+function resizeImage(file) {
+  return new Promise(function (resolve, reject) {
+    var url = URL.createObjectURL(file);
+    var img = new Image();
+    img.onload = function () {
+      try {
+        var side = Math.min(img.naturalWidth, img.naturalHeight);
+        var c = document.createElement('canvas'); c.width = 256; c.height = 256;
+        c.getContext('2d').drawImage(img, (img.naturalWidth - side) / 2, (img.naturalHeight - side) / 2, side, side, 0, 0, 256, 256);
+        URL.revokeObjectURL(url);
+        resolve(c.toDataURL('image/jpeg', 0.85));
+      } catch (e) { URL.revokeObjectURL(url); reject(e); }
+    };
+    img.onerror = function () { URL.revokeObjectURL(url); reject(new Error('bad_image')); };
+    img.src = url;
+  });
+}
+function handlePhoto(file) {
+  if (!/^image\//.test(file.type)) { toast('Please choose an image.'); return; }
+  resizeImage(file).then(function (dataUrl) {
+    return saveProfile({ photo: dataUrl }, 'Photo updated');
+  }).then(function () { render(); }).catch(function () { toast("Couldn't use that image. Try another."); });
+}
+/* Links this browser's push subscription to the passenger via passenger_notify_set (passenger TOKEN, not a notify_requests uuid).
+   PFNotify.enable(null) reuses the shared permission/VAPID/subscribe code; the server adopts that unlinked row. Resolves to the new on/off state. */
+function passengerNotifySet(turnOn) {
+  function currentSub() {
+    return navigator.serviceWorker.ready.then(function (reg) { return reg.pushManager.getSubscription(); });
+  }
+  function call(sub, on) {
+    var j = sub.toJSON();
+    return db.rpc('passenger_notify_set', { p_token: STATE.token, p_endpoint: j.endpoint, p_p256dh: (j.keys || {}).p256dh || null, p_auth: (j.keys || {}).auth || null, p_on: on }).then(function (res) {
+      if (res.error) throw res.error;
+      if (!res.data || res.data.error) throw new Error((res.data && res.data.error) || 'notify_failed');
+      return on;
+    });
+  }
+  if (turnOn) {
+    return window.PFNotify.enable(null).then(function (st) {
+      if (st !== 'granted') return false;
+      return currentSub().then(function (sub) { if (!sub) throw new Error('no_subscription'); return call(sub, true); });
+    });
+  }
+  return currentSub().then(function (sub) { return sub ? call(sub, false) : false; });
+}
+function toggleNotif() {
+  var nv = notifView();
+  if (nv.disabled || STATE.notifBusy) return;
+  if (window.PFInstall && window.PFInstall.needed()) { window.PFInstall.open(); return; }
+  var turnOn = !nv.on;
+  if (STATE.isMock) { STATE.profile.notifications_enabled = turnOn; render(); return; } /* mock: don't hit the real notify RPCs */
+  STATE.notifBusy = true; render();
+  passengerNotifySet(turnOn).then(function (on) {
+    STATE.profile.notifications_enabled = on;
+  }).catch(function (e) {
+    console.error('[passenger] notif toggle failed', e);
+    toast("Couldn't change alerts. Please try again.");
+  }).then(function () { STATE.notifBusy = false; render(); });
+}
+
+/* ---------- Notifications (bell) ---------- */
+function paintBadge() {
+  var b = document.getElementById('bellBadge');
+  if (!b) return;
+  b.textContent = STATE.notifUnread > 9 ? '9+' : String(STATE.notifUnread);
+  b.hidden = !(STATE.notifUnread > 0);
+}
+/* Silent: any failure leaves the badge as it was. */
+function refreshUnread() {
+  if (STATE.errorType) return;
+  var seq = ++STATE.notifSeq;
+  apiNotifList().then(function (d) {
+    if (seq !== STATE.notifSeq || STATE.view === 'notifs' || !d || d.error) return;
+    STATE.notifUnread = Number(d.unread_count) || 0; paintBadge();
+  }).catch(function () {});
+}
+function fmtNotifTime(iso) {
+  var d = new Date(iso);
+  if (isNaN(d.getTime())) return '';
+  var diff = Date.now() - d.getTime();
+  if (diff < 60e3) return 'Just now';
+  if (diff < 3600e3) return Math.floor(diff / 60e3) + ' min ago';
+  var now = new Date();
+  var startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  if (d.getTime() >= startToday) return Math.floor(diff / 3600e3) + ' h ago';
+  if (d.getTime() >= startToday - 86400e3) return 'Yesterday';
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+function notifsHeader() {
+  return '<header class="app-bar"><div class="pf-bar__inner"><button type="button" class="pf-back" data-action="nf-back" aria-label="Back">' + ico('arrowLeft') + '</button><div><h1 class="app-bar__title">Notifications</h1></div></div></header>';
+}
+function renderNotifs(app) {
+  var body;
+  if (STATE.notifsLoading && !STATE.notifs) body = '<div class="nf-wrap" aria-busy="true"><div class="nf-skel"></div><div class="nf-skel"></div><div class="nf-skel"></div></div>';
+  else if (STATE.notifsError || !STATE.notifs) body = '<div class="nf-wrap"><div class="pf-card"><p class="pf-err">We couldn\'t load your notifications. Please try again.</p><button type="button" class="btn btn-secondary btn-full" data-action="nf-retry">Try again</button></div></div>';
+  else if (!STATE.notifs.length) body = '<div class="nf-wrap"><div class="pf-card nf-empty"><span class="nf-empty__ic">' + ico('bell') + '</span><b>No notifications yet</b><span>You\'ll see updates about your rides here.</span></div></div>';
+  else body = '<div class="nf-wrap">' + STATE.notifs.map(function (n) {
+    return '<button type="button" class="nf-row' + (n.read ? '' : ' is-unread') + '" data-action="nf-open" data-id="' + esc(n.id) + '"><span class="nf-dot' + (n.read ? ' is-off' : '') + '"></span>' +
+      '<span class="nf-main"><span class="nf-t"><b>' + esc(n.title || 'Notification') + '</b><time>' + esc(fmtNotifTime(n.created_at)) + '</time></span>' +
+      (n.body ? '<p class="nf-b">' + esc(n.body) + '</p>' : '') + '</span></button>';
+  }).join('') + '</div>';
+  var y = window.pageYOffset || 0;
+  app.innerHTML = notifsHeader() + body;
+  window.scrollTo(0, y);
+}
+function loadNotifs() {
+  var seq = ++STATE.notifSeq;
+  STATE.notifsLoading = true; STATE.notifsError = false; render();
+  apiNotifList().then(function (d) {
+    if (seq !== STATE.notifSeq) return;
+    if (!d || d.error || !Array.isArray(d.notifications)) throw new Error((d && d.error) || 'empty');
+    STATE.notifs = d.notifications; STATE.notifsLoading = false;
+    var hadUnread = (Number(d.unread_count) || 0) > 0;
+    STATE.notifUnread = 0; /* optimistic: clear the badge, keep the row highlights for this view */
+    render();
+    if (hadUnread) apiNotifMarkRead().catch(function (e) { console.error('[passenger] mark read failed', e); });
+  }).catch(function (e) {
+    if (seq !== STATE.notifSeq) return;
+    console.error('[passenger] notifications load failed', e);
+    STATE.notifsLoading = false; STATE.notifs = null; STATE.notifsError = true; render();
+  });
+}
+function notifAction(action, t) {
+  if (action === 'notifs') { STATE.view = 'notifs'; STATE.notifs = null; window.scrollTo(0, 0); loadNotifs(); return true; }
+  if (action === 'nf-back') { STATE.view = 'home'; STATE.notifSeq++; render(); refreshUnread(); return true; }
+  if (action === 'nf-retry') { loadNotifs(); return true; }
+  if (action === 'nf-open') {
+    var id = t.getAttribute('data-id');
+    var n = (STATE.notifs || []).find(function (x) { return String(x.id) === id; });
+    var u = n && typeof n.url === 'string' ? n.url : '';
+    if (u.charAt(0) === '/' && u.charAt(1) !== '/' && u.indexOf('\\') < 0) location.href = u;
+    return true;
+  }
+  return false;
+}
+/* Returns true when handled. */
+function profileAction(action, t) {
+  if (action === 'profile') { STATE.view = 'profile'; STATE.editingName = false; window.scrollTo(0, 0); if (STATE.profile) render(); if (!STATE.profile || !STATE.profileLoading) loadProfile(); return true; }
+  if (action === 'pf-back') { STATE.view = 'home'; STATE.editingName = false; render(); return true; }
+  if (action === 'pf-retry') { loadProfile(); return true; }
+  if (action === 'pf-photo') { var f = document.getElementById('pfPhotoInput'); if (f) f.click(); return true; }
+  if (action === 'pf-name-edit') { STATE.editingName = true; STATE.nameDraft = STATE.profile.name || ''; STATE.nameError = null; render(); return true; }
+  if (action === 'pf-name-cancel') { STATE.editingName = false; STATE.nameError = null; render(); return true; }
+  if (action === 'pf-name-save') {
+    var inp = document.getElementById('pfNameInput');
+    var v = inp ? inp.value.trim() : '';
+    if (!v) { STATE.nameDraft = ''; STATE.nameError = 'Please enter your name.'; render(); return true; }
+    saveProfile({ name: v }, 'Name updated').then(function (ok) {
+      if (ok) { STATE.editingName = false; STATE.nameError = null; } else { STATE.nameDraft = v; }
+      render();
+    });
+    return true;
+  }
+  if (action === 'pf-theme') { setTheme(t.getAttribute('data-id')); render(); return true; }
+  if (action === 'pf-notif') { toggleNotif(); return true; }
+  return false;
+}
+
+/* ---------- Place search (places table + Mapbox, as on the manage page) ---------- */
+var EF = { timers: {}, seq: {}, session: {}, rows: {}, pts: {}, txt: {} };
+function efToken() { return (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : (Date.now() + '-' + Math.random().toString(16).slice(2)); }
+function efNorm(x) { return String(x || '').toLowerCase().replace(/\./g, '').replace(/\s+/g, ' ').trim(); }
+function mapboxSuggest(query, sessionToken) {
+  var params = new URLSearchParams();
+  params.set('q', query); params.set('access_token', MAPBOX_TOKEN); params.set('session_token', sessionToken);
+  params.set('country', 'ca'); params.set('language', 'en'); params.set('limit', '6');
+  params.set('types', 'poi,address,place,locality,neighborhood,street'); params.set('proximity', 'ip');
+  return fetch('https://api.mapbox.com/search/searchbox/v1/suggest?' + params.toString())
+    .then(function (res) { return res.ok ? res.json() : { suggestions: [] }; })
+    .then(function (json) {
+      return (json.suggestions || []).map(function (x) {
+        var sub = x.full_address || x.place_formatted;
+        return { name: x.name, sub: sub, label: sub ? (x.name + ', ' + sub) : x.name, mapbox_id: x.mapbox_id };
+      }).filter(function (r) { return r.name && r.mapbox_id; });
+    }).catch(function () { return []; });
+}
+function mapboxRetrieve(mapboxId, sessionToken) {
+  var params = new URLSearchParams();
+  params.set('access_token', MAPBOX_TOKEN); params.set('session_token', sessionToken);
+  return fetch('https://api.mapbox.com/search/searchbox/v1/retrieve/' + encodeURIComponent(mapboxId) + '?' + params.toString())
+    .then(function (res) { return res.ok ? res.json() : null; })
+    .then(function (json) {
+      var f = json && json.features && json.features[0]; if (!f) return null;
+      var props = f.properties || {}, c = (f.geometry && f.geometry.coordinates) || [];
+      if (c[0] == null || c[1] == null) return null;
+      var pt = props.place_formatted || props.full_address;
+      return { label: pt ? (props.name + ', ' + pt) : props.name, lng: c[0], lat: c[1] };
+    }).catch(function () { return null; });
+}
+function efPlaces(q) {
+  if (!db) return Promise.resolve([]);
+  return Promise.resolve(db.from('places').select('name,province,lat,lng').like('norm_key', efNorm(q) + '%').gte('popularity', 20).order('popularity', { ascending: false }).limit(4))
+    .then(function (res) {
+      return (res.data || []).map(function (p) { return { name: p.name, sub: p.province, label: p.name + ', ' + p.province + ', Canada', lat: p.lat, lng: p.lng }; });
+    }).catch(function () { return []; });
+}
+function efSearch(key, q) {
+  var seq = (EF.seq[key] = (EF.seq[key] || 0) + 1);
+  var tok = EF.session[key] || (EF.session[key] = efToken());
+  var src = STATE.isMock && M().places ? [M().places(q), Promise.resolve([])] : [efPlaces(q), mapboxSuggest(q, tok)];
+  Promise.all(src).then(function (r) {
+    if (seq !== EF.seq[key] || !document.getElementById('efSug-' + key)) return; /* input gone: step changed */
+    var seen = {}, rows = [];
+    r[0].concat(r[1]).forEach(function (x) { var k = efNorm(x.name); if (seen[k] || rows.length >= 7) return; seen[k] = true; rows.push(x); });
+    EF.rows[key] = rows;
+    var list = document.getElementById('efSug-' + key); if (!list) return;
+    list.innerHTML = rows.map(function (x, i) { return '<button type="button" class="ef-sug__item" data-i="' + i + '">' + esc(x.name) + (x.sub ? '<small>' + esc(x.sub) + '</small>' : '') + '</button>'; }).join('');
+    list.classList.toggle('is-open', rows.length > 0);
+  });
+}
+function efChanged() { postRefreshNav(); }
+function efPick(key, x) {
+  var input = document.getElementById('ef-' + key), list = document.getElementById('efSug-' + key);
+  list.classList.remove('is-open'); list.innerHTML = '';
+  var done = function (pt) {
+    if (!pt) { toast("Couldn't load that place. Try another."); return; }
+    EF.pts[key] = pt; input.value = pt.label; EF.txt[key] = pt.label; efChanged();
+  };
+  if (x.mapbox_id) {
+    input.value = x.label; EF.txt[key] = x.label;
+    var tok = EF.session[key]; EF.session[key] = null;
+    mapboxRetrieve(x.mapbox_id, tok).then(done);
+  } else done({ label: x.label, lat: x.lat, lng: x.lng });
+}
+/* Wires the autocomplete for input #ef-<key> with list #efSug-<key>. */
+function efWire(key) {
+  var input = document.getElementById('ef-' + key), list = document.getElementById('efSug-' + key);
+  if (!input || !list) return;
+  input.addEventListener('input', function () {
+    EF.txt[key] = input.value;
+    if (EF.pts[key] && input.value !== EF.pts[key].label) { EF.pts[key] = null; efChanged(); }
+    clearTimeout(EF.timers[key]);
+    var q = input.value.trim();
+    if (q.length < 3) { EF.seq[key] = (EF.seq[key] || 0) + 1; list.classList.remove('is-open'); list.innerHTML = ''; return; }
+    EF.timers[key] = setTimeout(function () { efSearch(key, q); }, 300);
+  });
+  /* pointerdown so one tap selects before the input blur dismisses the keyboard */
+  list.addEventListener('pointerdown', function (e) {
+    var b = e.target.closest('.ef-sug__item'); if (!b) return;
+    e.preventDefault();
+    var x = (EF.rows[key] || [])[Number(b.getAttribute('data-i'))]; if (x) efPick(key, x);
+  });
+}
+
+/* ---------- Request a ride ---------- */
+var POST = null;
+function pad2(n) { return (n < 10 ? '0' : '') + n; }
+function postShiftTime(t, hrs) { return pad2(Math.min(23, Number(t.slice(0, 2)) + hrs)) + ':' + (Number(t.slice(0, 2)) + hrs > 23 ? '00' : t.slice(3)); }
+function postInit() {
+  EF.pts = {}; EF.txt = {}; EF.rows = {}; EF.session = {}; EF.timers = {};
+  var d = new Date(); d.setHours(d.getHours() + 1, 0, 0, 0);
+  var t = pad2(d.getHours()) + ':00';
+  POST = { step: 1, seats: 1, dates: [], allTime: t, diffOn: false, times: {},
+    retOn: false, retAll: postShiftTime(t, 3), retDiffOn: false, retTimes: {}, note: '', busy: false, recent: [] };
+}
+function postDays() {
+  var out = [];
+  for (var i = 0; i < 30; i++) {
+    var d = new Date(); d.setHours(12, 0, 0, 0); d.setDate(d.getDate() + i);
+    out.push({ key: localDateKey(d.toISOString()), wd: d.toLocaleDateString('en-US', { weekday: 'short' }), day: d.getDate(), mon: d.toLocaleDateString('en-US', { month: 'short' }) });
+  }
+  return out;
+}
+function postAt(key, time) { return new Date(key + 'T' + time); }
+function postDateLabel(key) { return postAt(key, '12:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }); }
+function postFmtTime(t) { return postAt('2000-01-01', t).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }); }
+function postDepFor(k) { return POST.diffOn ? POST.times[k] : POST.allTime; }
+function postRetFor(k) { return POST.retDiffOn ? POST.retTimes[k] : POST.retAll; }
+function postRouteOk() { return !!(EF.pts.po && EF.pts.pd); }
+/* Returns { ok, msg }: msg is an inline error to show (null when the only issue is "no date yet"). */
+function postStep2Check() {
+  if (!POST.dates.length) return { ok: false, msg: null };
+  var now = Date.now(), lists = [['Departure', postDepFor]].concat(POST.retOn ? [['Return', postRetFor]] : []);
+  for (var j = 0; j < lists.length; j++) {
+    for (var i = 0; i < POST.dates.length; i++) {
+      var k = POST.dates[i], t = lists[j][1](k), at = t ? postAt(k, t) : null;
+      if (!at || isNaN(at.getTime())) return { ok: false, msg: 'Enter a ' + lists[j][0].toLowerCase() + ' time.' };
+      if (at.getTime() < now) return { ok: false, msg: lists[j][0] + ' time on ' + postDateLabel(k) + ' has already passed. Pick a later time.' };
+    }
+  }
+  return { ok: true, msg: null };
+}
+function postHeader() {
+  return '<header class="app-bar"><div class="pf-bar__inner"><button type="button" class="pf-back" data-action="post-exit" aria-label="Back">' + ico('arrowLeft') + '</button><div><h1 class="app-bar__title">Request a ride</h1></div></div></header>';
+}
+function postField(key, label, ph) {
+  return '<div class="pt-field"><label class="pt-label" for="ef-' + key + '">' + esc(label) + '</label>' +
+    '<input class="pt-input" id="ef-' + key + '" type="text" autocomplete="off" placeholder="' + esc(ph) + '" value="' + esc(EF.txt[key] || '') + '"><div class="ef-sug" id="efSug-' + key + '"></div></div>';
+}
+function postToggle(action, on, label) {
+  return '<div class="pt-toggle"><span>' + esc(label) + '</span><button type="button" class="pf-switch" role="switch" data-action="' + action + '" aria-checked="' + on + '" aria-label="' + esc(label) + '"></button></div>';
+}
+function postTimeInput(id, dataPt, date, value, aria) {
+  return '<span class="pt-time"><input type="time"' + (id ? ' id="' + id + '"' : '') + ' data-pt="' + dataPt + '"' + (date ? ' data-date="' + date + '"' : '') + ' value="' + esc(value) + '"' + (aria ? ' aria-label="' + esc(aria) + '"' : '') + '></span>';
+}
+function postTimeList(map, dataPt) {
+  return POST.dates.slice().sort().map(function (k) {
+    return '<div class="pt-trow"><span>' + esc(postDateLabel(k)) + '</span>' + postTimeInput('', dataPt, k, map[k] || '', 'Time on ' + postDateLabel(k)) + '</div>';
+  }).join('');
+}
+function postSum1Text() {
+  return shortLabel(EF.pts.po.label) + ' → ' + shortLabel(EF.pts.pd.label) + ' · ' + seatsWord(POST.seats);
+}
+function postRecentHtml() {
+  var r = POST.recent || [];
+  if (!r.length) return '';
+  return '<section class="pt-card"><p class="date-strip__label" style="margin:0 0 8px">Recent</p>' + r.map(function (x, i) {
+    return '<button type="button" class="pt-rec" data-action="post-recent" data-id="' + i + '"><b>' + esc(shortLabel(x.origin_label) + ' → ' + shortLabel(x.dest_label) + ' · ' + seatsWord(Number(x.seats) || 1)) + '</b></button>';
+  }).join('') + '</section>';
+}
+function postSummary(text, editAction) {
+  return '<section class="pt-card pt-sum"><span class="pt-sum__t">' + esc(text) + '</span><button type="button" class="pt-sum__edit" data-action="' + editAction + '">Edit</button></section>';
+}
+function postStep1() {
+  return '<div id="ptRecent">' + postRecentHtml() + '</div><section class="pt-card"><h2 class="pt-h">Route</h2>' +
+    postField('po', 'From', 'Where should we pick you up?') + postField('pd', 'To', 'Where are you going?') + '</section>' +
+    '<section class="pt-card pt-row"><div><h2 class="pt-h" style="margin:0">Seats</h2><p class="pt-hint" style="margin:2px 0 0">How many seats do you need?</p></div>' +
+    '<div class="pt-stepper"><button type="button" data-action="post-seats" data-id="-1" aria-label="Fewer seats"' + (POST.seats <= 1 ? ' disabled' : '') + '>−</button><b>' + POST.seats + '</b>' +
+    '<button type="button" data-action="post-seats" data-id="1" aria-label="More seats"' + (POST.seats >= 8 ? ' disabled' : '') + '>+</button></div></section>';
+}
+function postStep2() {
+  var tiles = postDays().map(function (d) {
+    var on = POST.dates.indexOf(d.key) >= 0;
+    return '<button type="button" class="pt-date' + (on ? ' is-selected' : '') + '" data-action="post-date" data-date="' + d.key + '" aria-pressed="' + on + '" aria-label="' + esc(postDateLabel(d.key)) + '"><small>' + d.wd + '</small><b>' + d.day + '</b><small>' + d.mon + '</small></button>';
+  }).join('');
+  var dep = '<label class="pt-label" for="ptAll">Departure time · all days</label>' + postTimeInput('ptAll', 'all', '', POST.allTime, '') +
+    postToggle('post-diff', POST.diffOn, 'Different time on some days') + (POST.diffOn ? postTimeList(POST.times, 'time') : '');
+  var ret = postToggle('post-ret', POST.retOn, 'Return ride');
+  if (POST.retOn) ret += '<label class="pt-label" for="ptRAll" style="margin-top:8px">Return time · all days</label>' + postTimeInput('ptRAll', 'rall', '', POST.retAll, '') +
+    postToggle('post-rdiff', POST.retDiffOn, 'Different time on some days') + (POST.retDiffOn ? postTimeList(POST.retTimes, 'rtime') : '');
+  return postSummary(postSum1Text(), 'post-edit1') +
+    '<section class="pt-card"><h2 class="pt-h">Dates</h2><div class="pt-dates" id="ptDates">' + tiles + '</div><p class="pt-hint" id="ptDateCount"></p></section>' +
+    '<section class="pt-card">' + dep + '<hr class="pt-sep">' + ret + '<p class="pt-err" id="ptErr" role="alert" style="margin-top:10px"></p></section>';
+}
+function postReviewHtml() {
+  var rows = [];
+  function row(k, v) { rows.push('<div class="pt-rv"><dt>' + k + '</dt><dd>' + v + '</dd></div>'); }
+  var ds = POST.dates.slice().sort();
+  row('Route', 'From ' + esc(EF.pts.po.label) + '<br>To ' + esc(EF.pts.pd.label));
+  row('Seats', String(POST.seats));
+  row('Dates', ds.map(function (k) { return esc(postDateLabel(k) + ' · ' + postFmtTime(postDepFor(k) || POST.allTime)); }).join('<br>'));
+  if (POST.retOn) row('Return', ds.map(function (k) { return esc(postDateLabel(k) + ' · ' + postFmtTime(postRetFor(k) || POST.retAll)); }).join('<br>'));
+  if (POST.note.trim()) row('Note', esc(POST.note.trim()));
+  return '<dl style="margin:0">' + rows.join('') + '</dl>';
+}
+function postStep3() {
+  var ds = POST.dates.slice().sort();
+  var when = ds.length + ' date' + (ds.length === 1 ? '' : 's') + ' · ' + ds.map(function (k) { return postDateLabel(k).replace(/^\w+, /, ''); }).join(', ') + (POST.retOn ? ' · return' : '');
+  return postSummary(postSum1Text(), 'post-edit1') +
+    postSummary(when, 'post-edit2') +
+    '<section class="pt-card"><h2 class="pt-h">Note <span style="font-weight:500;color:var(--text-2)">(optional)</span></h2>' +
+    '<textarea class="pt-input" id="ptNote" data-pt="note" maxlength="300" placeholder="Pickup details, luggage, etc." aria-label="Note">' + esc(POST.note) + '</textarea><div class="pt-count" id="ptCount"></div></section>' +
+    '<section class="pt-card"><h2 class="pt-h">Review</h2><div id="ptReview"></div></section>';
+}
+function postNavHtml() {
+  var s = POST.step;
+  return '<div class="action-bar"><div class="action-bar__row">' +
+    (s > 1 ? '<button type="button" class="btn btn-secondary" data-action="post-back">Back</button>' : '') +
+    '<button type="button" class="btn btn-cta" id="ptNext" data-action="' + (s === 3 ? 'post-submit' : 'post-next') + '">' + (s === 3 ? 'Request ride' : 'Continue') + '</button></div></div>';
+}
+function renderPost() {
+  var app = document.getElementById('app');
+  var oldDates = document.getElementById('ptDates'), keep = oldDates ? oldDates.scrollLeft : 0, y = window.pageYOffset || 0;
+  app.classList.add('has-bar');
+  var prog = '<div class="pt-prog" aria-hidden="true">' + [1, 2, 3].map(function (n) { return '<span' + (n <= POST.step ? ' class="is-on"' : '') + '></span>'; }).join('') + '</div>';
+  app.innerHTML = postHeader() + '<div class="pt-wrap">' + prog + (POST.step === 1 ? postStep1() : (POST.step === 2 ? postStep2() : postStep3())) + '</div>' + postNavHtml();
+  if (POST.step === 1) { ['po', 'pd'].forEach(efWire); }
+  var nd = document.getElementById('ptDates'); if (nd) nd.scrollLeft = keep;
+  window.scrollTo(0, y);
+  postRefreshNav();
+}
+/* Updates the nav button, inline errors, counters and review without re-rendering (so typing keeps focus). */
+function postRefreshNav() {
+  if (STATE.view !== 'post' || !POST) return;
+  var next = document.getElementById('ptNext'); if (!next) return;
+  var ok;
+  if (POST.step === 1) ok = postRouteOk();
+  else if (POST.step === 2) {
+    var c = postStep2Check(); ok = c.ok;
+    var e = document.getElementById('ptErr'); if (e) e.textContent = c.msg || '';
+    var n = document.getElementById('ptDateCount'); if (n) n.textContent = POST.dates.length + ' selected';
+  } else {
+    ok = true;
+    var cnt = document.getElementById('ptCount'); if (cnt) cnt.textContent = POST.note.length + '/300';
+    var rv = document.getElementById('ptReview'); if (rv) rv.innerHTML = postReviewHtml();
+  }
+  next.disabled = !ok || POST.busy;
+}
+function postSubmit() {
+  var P = POST; if (!P || P.busy) return;
+  if (!postRouteOk()) { P.step = 1; renderPost(); return; }
+  if (!postStep2Check().ok) { P.step = 2; renderPost(); return; }
+  var ds = P.dates.slice().sort();
+  var deps = ds.map(function (k) { return postAt(k, postDepFor(k)).toISOString(); });
+  var f = { origin_label: EF.pts.po.label, origin_lat: EF.pts.po.lat, origin_lng: EF.pts.po.lng,
+    dest_label: EF.pts.pd.label, dest_lat: EF.pts.pd.lat, dest_lng: EF.pts.pd.lng,
+    seats: P.seats, note: P.note.trim() || null,
+    departures: deps, returns: P.retOn ? ds.map(function (k) { return postAt(k, postRetFor(k)).toISOString(); }) : [] };
+  var msgs = { invalid_input: 'Please check the details and try again.', past_time: 'That time has already passed. Pick a later time.', invalid_token: 'This link is no longer valid.', too_many: 'You have too many open requests. Cancel one first.' };
+  P.busy = true; postRefreshNav();
+  apiRequestPost(f).then(function (data) {
+    P.busy = false;
+    if (!data || data.error || !data.ids || !data.ids.length) { postRefreshNav(); toast(msgs[data && data.error] || "Couldn't send your request. Try again."); return; }
+    var n = data.ids.length;
+    toast(n === 1 ? 'Ride requested' : n + ' rides requested');
+    POST = null; STATE.view = 'home';
+    STATE.selectedDate = localDateKey(deps[0]); STATE.selectedId = data.ids[0]; STATE.stripScroll = true;
+    STATE.payload = null; STATE.sheet = null;
+    window.scrollTo(0, 0);
+    load(true);
+  }).catch(function (e) { console.error('[passenger] request failed', e); P.busy = false; postRefreshNav(); toast("Couldn't send your request. Try again."); });
+}
+/* Recent routes: fetched when the form opens; failures are ignored silently. */
+function postLoadRecent() {
+  var P = POST; if (!P) return;
+  Promise.resolve(apiRecent()).then(function (data) {
+    if (POST !== P || !data || data.error || !Array.isArray(data.trips)) return;
+    P.recent = data.trips.slice(0, 3);
+    var box = document.getElementById('ptRecent'); if (box && STATE.view === 'post' && P.step === 1) box.innerHTML = postRecentHtml();
+  }).catch(function () {});
+}
+/* Returns true when handled. */
+function postAction(action, t) {
+  if (action === 'post') { hideToast(); STATE.sheet = null; sheetHtml(); postInit(); STATE.view = 'post'; window.scrollTo(0, 0); renderPost(); postLoadRecent(); return true; }
+  if (!POST) return true;
+  var id = t.getAttribute('data-id');
+  function go(step) { POST.step = step; window.scrollTo(0, 0); renderPost(); }
+  if (action === 'post-exit') { POST = null; STATE.view = 'home'; render(); return true; }
+  if (action === 'post-next') { if (POST.step === 1 && postRouteOk()) go(2); else if (POST.step === 2 && postStep2Check().ok) go(3); return true; }
+  if (action === 'post-back') { if (POST.step > 1) go(POST.step - 1); return true; }
+  if (action === 'post-edit1') { go(1); return true; }
+  if (action === 'post-edit2') { go(2); return true; }
+  if (action === 'post-submit') { postSubmit(); return true; }
+  if (action === 'post-seats') { POST.seats = Math.max(1, Math.min(8, POST.seats + Number(id))); renderPost(); return true; }
+  if (action === 'post-recent') {
+    var r = (POST.recent || [])[Number(id)]; if (!r) return true;
+    EF.pts.po = { label: r.origin_label, lat: r.origin_lat, lng: r.origin_lng }; EF.txt.po = r.origin_label;
+    EF.pts.pd = { label: r.dest_label, lat: r.dest_lat, lng: r.dest_lng }; EF.txt.pd = r.dest_label;
+    POST.seats = Math.max(1, Math.min(8, Number(r.seats) || POST.seats));
+    POST.note = r.note || '';
+    renderPost(); toast('Filled from a recent ride'); return true;
+  }
+  if (action === 'post-date') {
+    var key = t.getAttribute('data-date'), i = POST.dates.indexOf(key);
+    if (i >= 0) POST.dates.splice(i, 1);
+    else if (POST.dates.length >= 30) { toast('That is the maximum number of dates'); return true; }
+    else { POST.dates.push(key); if (POST.diffOn) POST.times[key] = POST.allTime; if (POST.retDiffOn) POST.retTimes[key] = POST.retAll; }
+    renderPost(); return true;
+  }
+  if (action === 'post-diff') { POST.diffOn = !POST.diffOn; if (POST.diffOn) POST.dates.forEach(function (k) { POST.times[k] = POST.allTime; }); renderPost(); return true; }
+  if (action === 'post-ret') { POST.retOn = !POST.retOn; renderPost(); return true; }
+  if (action === 'post-rdiff') { POST.retDiffOn = !POST.retDiffOn; if (POST.retDiffOn) POST.dates.forEach(function (k) { POST.retTimes[k] = POST.retAll; }); renderPost(); return true; }
+  return true;
+}
+document.body.addEventListener('input', function (e) {
+  var el = e.target, pt = el.getAttribute && el.getAttribute('data-pt');
+  if (!pt || !POST || STATE.view !== 'post') return;
+  var d = el.getAttribute('data-date');
+  if (pt === 'all') POST.allTime = el.value;
+  else if (pt === 'rall') POST.retAll = el.value;
+  else if (pt === 'time') POST.times[d] = el.value;
+  else if (pt === 'rtime') POST.retTimes[d] = el.value;
+  else if (pt === 'note') POST.note = el.value;
+  postRefreshNav();
+});
+
+/* ---------- Events ---------- */
+document.body.addEventListener('click', function (e) {
+  var t = e.target.closest('[data-action]');
+  if (!t) return;
+  var action = t.getAttribute('data-action');
+
+  if (action === 'notifs' || action.indexOf('nf-') === 0) { if (notifAction(action, t)) return; }
+  if (action.indexOf('pf-') === 0 || action === 'profile') { if (profileAction(action, t)) return; }
+  if (action === 'post' || action.indexOf('post-') === 0) { if (postAction(action, t)) return; }
+  if (action === 'retry') { STATE.errorType = null; load(true); return; }
+  if (action === 'pick-item') { selectItem(t.getAttribute('data-id')); return; }
+  if (action === 'pick-date') { selectDate(t.getAttribute('data-date')); return; }
+  if (action === 'share') { doShare(); return; }
+  if (action === 'open-cancel-sheet') {
+    if (!STATE.payload || !STATE.payload.booking || cancelWhy(STATE.payload)) return;
+    openSheet({ title: 'Cancel your seat?', message: 'Your driver will be told and the seat goes back to other riders.', confirmLabel: 'Cancel my seat', keepLabel: 'Keep my seat', kind: 'booking', id: STATE.payload.booking.id });
+    return;
+  }
+  if (action === 'open-cancel-req-sheet') {
+    if (!STATE.payload || !STATE.payload.request) return;
+    openSheet({ title: 'Cancel this request?', message: 'Drivers will no longer see your request.', confirmLabel: 'Cancel request', keepLabel: 'Keep request', kind: 'request', id: STATE.payload.request.id });
+    return;
+  }
+  if (action === 'sheet-cancel' || action === 'close-sheet') { closeSheet(); return; }
+  if (action === 'sheet-confirm') {
+    var s = STATE.sheet;
+    closeSheet();
+    if (s) doCancel(s.id, s.kind === 'request');
+    return;
+  }
+});
+
+/* ---------- Init ---------- */
+function boot() {
+  var q = new URLSearchParams(location.search);
+  STATE.isMock = q.get('mock') === '1';
+  STATE.token = getToken();
+  STATE.wantB = q.get('b');
+  if (!STATE.isMock && !STATE.token) { STATE.loading = false; STATE.errorType = 'invalid_token'; render(); return; }
+  load(true);
+  refreshUnread();
+}
+document.addEventListener('visibilitychange', function () {
+  if (document.visibilityState === 'visible' && !STATE.pendingKey && !STATE.errorType && !STATE.loading && STATE.view === 'home') load(false);
+  if (document.visibilityState === 'visible' && STATE.view === 'home') refreshUnread();
+});
+setInterval(function () {
+  if (document.visibilityState === 'visible' && !STATE.pendingKey && !STATE.errorType && !STATE.loading && STATE.view === 'home') load(false);
+}, 30000);
+
+boot();
+
+})();
+</script>
+</body>
+</html>

@@ -6,6 +6,7 @@
      returning=1   pretend name + WhatsApp are saved on this device
      fail=1        trip_join rejects (RPC error path)
      race=1        trip_join answers "full" (seat taken while booking)
+     notoken=1     trip_join returns no passenger_token (temporary "Seat confirmed" fallback)
    TODO: delete this file once trip_join_get / trip_join ship.
    --------------------------------------------------------------------- */
 (function (global) {
@@ -51,7 +52,7 @@
           if (t.error) { resolve(t); return; }
           if (qp('race') === '1' || t.trip.seats_left < a.p_seats) { resolve({ error: 'full' }); return; }
           t.trip.seats_left -= a.p_seats; t.trip.joined_count += 1;
-          resolve({ booking: { id: 'bk-mock', seats: a.p_seats, status: 'confirmed', pickup_label: a.p_pickup.label, dropoff_label: a.p_dropoff.label }, trip: t.trip });
+          resolve({ booking: { id: 'bk-mock', seats: a.p_seats, status: 'confirmed', pickup_label: a.p_pickup.label, dropoff_label: a.p_dropoff.label }, trip: t.trip, passenger_token: qp('notoken') === '1' ? null : 'mock' });
         }, 350);
       });
     }
