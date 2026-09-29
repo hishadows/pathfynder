@@ -1,3 +1,4 @@
+-- SUPERSEDED by design/trip-join-rpcs-live.sql (this file is the old proposal; do not run).
 -- PROPOSAL ONLY - not applied. Contract for the passenger join page (/j/<code>, join.html).
 -- Built on existing tables: driver_routines = trips, passenger_requests (ride_id) = bookings.
 -- Both RPCs are callable by anon; access is only via the trip join code. Never return phone numbers.
