@@ -83,7 +83,19 @@ textarea.input{padding:12px 14px;min-height:88px;resize:vertical}
 .stepper button{width:48px;height:48px;border:0;background:transparent;color:var(--primary);font-size:22px;font-weight:600;cursor:pointer}
 .stepper button:disabled{opacity:.35;cursor:default}
 .stepper b{min-width:36px;text-align:center;font-size:17px}
-.phone{display:grid;grid-template-columns:110px minmax(0,1fr);gap:8px}
+/* Verify screen */
+.vcode{margin:14px 0 4px;padding:16px 8px 16px calc(8px + .28em);text-align:center;border-radius:14px;background:var(--chip);color:var(--chip-text);font:700 34px/1.1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.28em;user-select:all;-webkit-user-select:all;overflow-wrap:anywhere}
+.vstack{display:flex;flex-direction:column;gap:10px;margin-top:16px}
+.vstack .btn{flex:none;width:100%;text-decoration:none}
+.btn.btn--line{background:transparent;color:var(--text);border:1px solid var(--divider)}
+.btn.btn--line:hover{background:var(--muted)}
+.btn.btn--link{background:transparent;color:var(--primary);min-height:44px;font-size:15px;text-decoration:underline!important}
+.btn.btn--link:hover{background:transparent;color:var(--text)}
+.wait{display:flex;align-items:center;justify-content:center;gap:10px;margin:14px 0 0;font-size:14px;color:var(--text-2);line-height:1.4}
+.spin{flex:none;width:16px;height:16px;border-radius:50%;border:2px solid var(--divider);border-top-color:var(--primary);animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion: reduce){.spin{animation:none}}
+.vsteps{margin:12px 0 0;padding-left:20px;text-align:left;font-size:14.5px;line-height:1.5;color:var(--text-2)}
 .hint{margin:8px 0 0;font-size:13px;color:var(--text-2);line-height:1.4}
 .err{margin:10px 0 0;font-size:13.5px;color:var(--danger);line-height:1.4}
 .btns{display:flex;gap:10px;margin-top:16px}
@@ -137,28 +149,26 @@ try {
 var MAPBOX_TOKEN = 'pk.eyJ1IjoicGF0aHktY2EiLCJhIjoiY211aTZwMXRwMGQ4MjM0b2x4emxtMW9zOSJ9.w2VX7kd0rZniB4GnbLryGg';
 
 /* ---------- Passenger home hook ----------
-   After a successful booking trip_join returns a per-device passenger_token; the
-   passenger home lives at PASSENGER_HOME_URL + token (+ ?b=<booking id>). The token is
-   kept in localStorage and sent back on later joins from this device (the server only
-   reuses it when the number matches). Without a token (e.g. an old response) the
+   First-time passengers do not type a name or number: trip_join_start makes a claim with a
+   6-char code, the passenger sends "BOOK <CODE>" to our WhatsApp bot (n8n calls the
+   service-role trip_join_verify), and trip_join_claim_status hands back the per-device
+   passenger_token once verified. The passenger home lives at PASSENGER_HOME_URL + token
+   (+ ?b=<booking id>). The token is kept in localStorage; a device that has one books
+   directly through trip_join (the server rejects it with verification_required if the token
+   is stale, and we fall back to the first-time flow). Without a token in the response the
    temporary "Seat confirmed" screen below is the fallback. */
 var PASSENGER_HOME_URL = '/p/';
 var TOKEN_KEY = 'pf_passenger_token';
 var BOOKING_KEY = 'pf_passenger_booking';
-var PROFILE_KEY = 'pf_passenger_profile';
+var BOT_WA = '916356600421'; /* bot number: only ever used inside the wa.me link, never rendered */
+var POLL_MS = 2500;
 
 var STATE = {
-  isMock: qs('mock') === '1', code: null, trip: null, step: 1, busy: false, error: '', view: 'loading',
-  pickup: null, dropoff: null, pickupTxt: '', dropoffTxt: '', seats: 1,
-  name: '', dial: '1', phone: '', note: '', profile: null
+  isMock: qs('mock') === '1', code: null, trip: null, busy: false, error: '', view: 'loading',
+  pickup: null, dropoff: null, pickupTxt: '', dropoffTxt: '', seats: 1, note: '',
+  returning: false, claim: null, copied: false
 };
 function qs(k) { try { return new URLSearchParams(location.search).get(k); } catch (e) { return null; } }
-
-var DIALS = [
-  ['1', 'CA +1'], ['1US', 'US +1'], ['91', 'IN +91'], ['44', 'UK +44'], ['61', 'AU +61'], ['92', 'PK +92'],
-  ['63', 'PH +63'], ['86', 'CN +86'], ['234', 'NG +234'], ['52', 'MX +52'], ['971', 'AE +971'], ['880', 'BD +880']
-];
-function dialDigits(v) { return String(v).replace('US', ''); }
 
 var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]; }); };
 var root = document.getElementById('root');
@@ -166,10 +176,11 @@ var root = document.getElementById('root');
 /* ---------- Storage (always guarded) ---------- */
 function lsGet(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }
 function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
-function loadProfile() {
-  if (STATE.isMock && qs('returning') === '1') return { name: 'Sam', dial: '1', phone: '5195550111' };
-  var p = lsGet(PROFILE_KEY);
-  return (p && p.name && p.phone) ? p : null;
+function lsDel(k) { try { localStorage.removeItem(k); } catch (e) {} }
+function savedToken() {
+  if (STATE.isMock) return qs('returning') === '1' ? 'mock' : null;
+  var t = lsGet(TOKEN_KEY);
+  return (typeof t === 'string' && t) ? t : null;
 }
 
 /* ---------- API ---------- */
@@ -187,6 +198,14 @@ function apiGet(code) {
 function apiJoin(a) {
   if (STATE.isMock) return window.PF_JOIN_MOCK.join(a);
   return db.rpc('trip_join', a).then(function (res) { if (res.error) throw res.error; return res.data; });
+}
+function apiStart(a) {
+  if (STATE.isMock) return window.PF_JOIN_MOCK.start(a);
+  return db.rpc('trip_join_start', a).then(function (res) { if (res.error) throw res.error; return res.data; });
+}
+function apiClaimStatus(id) {
+  if (STATE.isMock) return window.PF_JOIN_MOCK.claimStatus(id);
+  return db.rpc('trip_join_claim_status', { p_claim_id: id }).then(function (res) { if (res.error) throw res.error; return res.data; });
 }
 
 /* ---------- Places autocomplete (places table + Mapbox, as on the manage page) ---------- */
@@ -318,29 +337,31 @@ function stepper() {
     '<p class="hint">' + max + (max === 1 ? ' seat' : ' seats') + ' left on this trip.</p>';
 }
 function stepHtml() {
-  var returning = !!STATE.profile;
-  var last = returning ? '<button type="button" class="btn" data-a="confirm" id="mainBtn">Confirm my seat</button>'
-                       : '<button type="button" class="btn" data-a="next" id="mainBtn">Continue</button>';
-  if (STATE.step === 1) {
-    return '<div class="prog"><span class="is-on"></span><span></span></div>' +
-      '<div class="card"><h3 class="h">Where</h3>' +
-      '<div class="field"><label class="label" for="in-pickup">Pickup</label><input class="input" id="in-pickup" type="text" autocomplete="off" placeholder="Where should the driver pick you up?" value="' + esc(STATE.pickupTxt) + '"><div class="sug" id="sug-pickup"></div></div>' +
-      '<div class="field"><label class="label" for="in-dropoff">Dropoff</label><input class="input" id="in-dropoff" type="text" autocomplete="off" placeholder="Where are you getting off?" value="' + esc(STATE.dropoffTxt) + '"><div class="sug" id="sug-dropoff"></div></div>' +
-      '<div class="field">' + stepper() + '</div>' +
-      '<p class="err" id="err" role="alert"' + (STATE.error ? '' : ' hidden') + '>' + esc(STATE.error) + '</p>' +
-      '<div class="btns">' + last + '</div></div>';
-  }
-  var opts = DIALS.map(function (d) { return '<option value="' + d[0] + '"' + (d[0] === STATE.dial ? ' selected' : '') + '>' + d[1] + '</option>'; }).join('');
-  return '<div class="prog"><span class="is-on"></span><span class="is-on"></span></div>' +
-    '<div class="card"><h3 class="h">You</h3>' +
-    '<div class="field"><label class="label" for="in-name">Name</label><input class="input" id="in-name" type="text" autocomplete="name" maxlength="60" placeholder="Your first name" value="' + esc(STATE.name) + '"></div>' +
-    '<div class="field"><label class="label" for="in-phone">WhatsApp number</label><div class="phone"><select class="input" id="in-dial" aria-label="Country code">' + opts + '</select>' +
-    '<input class="input" id="in-phone" type="tel" inputmode="tel" autocomplete="tel-national" placeholder="647 555 0123" value="' + esc(STATE.phone) + '"></div>' +
-    '<p class="hint">We’ll message you on WhatsApp as soon as your driver is assigned. Your number is only shared with your driver.</p></div>' +
+  var last = '<button type="button" class="btn" data-a="confirm" id="mainBtn">' + (STATE.returning ? 'Confirm my seat' : 'Continue') + '</button>';
+  return '<div class="card"><h3 class="h">Where</h3>' +
+    '<div class="field"><label class="label" for="in-pickup">Pickup</label><input class="input" id="in-pickup" type="text" autocomplete="off" placeholder="Where should the driver pick you up?" value="' + esc(STATE.pickupTxt) + '"><div class="sug" id="sug-pickup"></div></div>' +
+    '<div class="field"><label class="label" for="in-dropoff">Dropoff</label><input class="input" id="in-dropoff" type="text" autocomplete="off" placeholder="Where are you getting off?" value="' + esc(STATE.dropoffTxt) + '"><div class="sug" id="sug-dropoff"></div></div>' +
+    '<div class="field">' + stepper() + '</div>' +
     '<div class="field"><label class="label" for="in-note">Note for the driver (optional)</label><textarea class="input" id="in-note" maxlength="300" placeholder="Landmark, luggage, anything helpful">' + esc(STATE.note) + '</textarea></div>' +
+    (STATE.returning ? '' : '<p class="hint">Next you’ll confirm on WhatsApp. No typing your name or number.</p>') +
     '<p class="err" id="err" role="alert"' + (STATE.error ? '' : ' hidden') + '>' + esc(STATE.error) + '</p>' +
-    '<div class="btns"><button type="button" class="btn btn--ghost" data-a="back">Back</button>' +
-    '<button type="button" class="btn" data-a="confirm" id="mainBtn">Confirm my seat</button></div></div>';
+    '<div class="btns">' + last + '</div></div>';
+}
+function waUrl(code) { return 'https://wa.me/' + BOT_WA + '?text=' + encodeURIComponent('BOOK ' + code); }
+function verifyHtml() {
+  var c = STATE.claim || {};
+  return '<div class="card state"><h2>Confirm on WhatsApp</h2>' +
+    '<p>Send this code to our WhatsApp to lock in your seat. Just tap the button and hit send.</p>' +
+    '<div class="vcode" id="vcode">' + esc(c.code) + '</div>' +
+    '<div class="vstack">' +
+    '<a class="btn" id="waBtn" href="' + esc(waUrl(c.code)) + '" target="_blank" rel="noopener">Send code on WhatsApp</a>' +
+    '<button type="button" class="btn btn--line" data-a="copy" id="copyBtn">' + (STATE.copied ? 'Code copied' : 'Copy code') + '</button></div>' +
+    '<p class="wait" role="status"><span class="spin" aria-hidden="true"></span><span>Waiting for WhatsApp… code expires in <b id="cd">' + fmtLeft() + '</b></span></p>' +
+    '<div class="vstack" style="margin-top:6px"><button type="button" class="btn btn--link" data-a="startover">Start over</button></div></div>';
+}
+function fmtLeft() {
+  var s = Math.max(0, Math.round(((STATE.claim ? STATE.claim.expires : 0) - Date.now()) / 1000));
+  return Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2);
 }
 function render() {
   var v = STATE.view;
@@ -353,6 +374,19 @@ function render() {
     return;
   }
   if (v === 'done') { root.innerHTML = tripCard(STATE.trip) + confirmedHtml(); return; }
+  if (v === 'verify') { root.innerHTML = tripCard(STATE.trip) + verifyHtml(); return; }
+  if (v === 'claimfull') {
+    root.innerHTML = tripCard(STATE.trip) + stateScreen(IC_WARN, 'This ride filled up', 'Someone took the last seat before your code came through. Other rides may still have room.');
+    return;
+  }
+  if (v === 'claimexpired') {
+    root.innerHTML = tripCard(STATE.trip) + '<div class="card state"><div class="state__ic">' + IC_WARN + '</div><h2>Code expired</h2>' +
+      '<p>No worries, that code timed out. Grab a new one and send it on WhatsApp.</p>' +
+      '<p class="err" id="err" role="alert" hidden></p>' +
+      '<div class="vstack"><button type="button" class="btn" data-a="newcode" id="mainBtn">Get a new code</button>' +
+      '<button type="button" class="btn btn--link" data-a="startover">Start over</button></div></div>';
+    return;
+  }
   if (isFull()) {
     root.innerHTML = tripCard(STATE.trip) +
       '<div class="notice" role="status">This trip is full. All seats have been taken.</div>' +
@@ -360,13 +394,13 @@ function render() {
     return;
   }
   root.innerHTML = tripCard(STATE.trip) + stepHtml();
-  if (STATE.step === 1) { acWire('pickup'); acWire('dropoff'); }
+  acWire('pickup'); acWire('dropoff');
   syncBusy();
 }
 function syncBusy() {
   var b = document.getElementById('mainBtn'); if (!b) return;
   b.disabled = STATE.busy;
-  b.textContent = STATE.busy ? 'Booking…' : ((STATE.step === 1 && !STATE.profile) ? 'Continue' : 'Confirm my seat');
+  b.textContent = STATE.busy ? (STATE.returning ? 'Booking…' : 'One moment…') : (STATE.view === 'claimexpired' ? 'Get a new code' : (STATE.returning ? 'Confirm my seat' : 'Continue'));
 }
 function confirmedHtml() {
   var b = STATE.booking || {};
@@ -377,53 +411,121 @@ function confirmedHtml() {
 }
 
 /* ---------- Actions ---------- */
-function readStep2() {
-  var g = function (id) { var e = document.getElementById(id); return e ? e.value : ''; };
-  STATE.name = g('in-name').trim(); STATE.dial = g('in-dial') || STATE.dial; STATE.phone = g('in-phone').trim(); STATE.note = g('in-note').trim();
+function readNote() {
+  var e = document.getElementById('in-note'); if (e) STATE.note = e.value.trim();
 }
 function validStep1() {
   if (!STATE.pickup) { setErr('Pick your pickup place from the suggestions.'); return false; }
   if (!STATE.dropoff) { setErr('Pick your dropoff place from the suggestions.'); return false; }
   setErr(''); return true;
 }
-function phoneDigits() { return String(STATE.phone).replace(/\D/g, '').replace(/^0+/, ''); }
-function validStep2() {
-  if (STATE.name.length < 2) { setErr('Please enter your name.'); return false; }
-  var d = phoneDigits();
-  if (d.length < 7 || d.length > 12) { setErr('Enter a valid WhatsApp number.'); return false; }
-  setErr(''); return true;
+function tripArgs() {
+  return { p_code: STATE.code, p_pickup: STATE.pickup, p_dropoff: STATE.dropoff, p_seats: STATE.seats, p_note: STATE.note || null };
+}
+function finishBooking(b, token) {
+  var t = STATE.trip || {};
+  goToPassengerHome({
+    id: b.id, code: STATE.code, seats: b.seats, status: b.status || 'confirmed',
+    pickup_label: b.pickup_label || STATE.pickup.label, dropoff_label: b.dropoff_label || STATE.dropoff.label,
+    driver_first_name: t.driver_first_name, origin_label: t.origin_label, dest_label: t.dest_label,
+    title: t.title || null, schedule_text: t.schedule_text || null, price_per_seat: t.price_per_seat,
+    booked_at: new Date().toISOString()
+  }, token);
 }
 function confirm() {
   if (STATE.busy) return;
-  if (STATE.step === 2) { readStep2(); if (!validStep2()) return; }
-  else if (!validStep1()) return;
-  var name = STATE.name, dial = dialDigits(STATE.dial), digits = phoneDigits();
+  readNote();
+  if (!validStep1()) return;
+  if (!STATE.returning) { startClaim(); return; }
   STATE.busy = true; setErr(''); syncBusy();
-  var joinArgs = {
-    p_code: STATE.code, p_pickup: STATE.pickup, p_dropoff: STATE.dropoff, p_seats: STATE.seats,
-    p_name: name, p_whatsapp: dial + digits, p_note: STATE.note || null
-  };
-  var savedTok = lsGet(TOKEN_KEY);
-  if (typeof savedTok === 'string' && savedTok) joinArgs.p_passenger_token = savedTok;
+  /* returning device: name + number come from the saved passenger on the server */
+  var joinArgs = tripArgs();
+  joinArgs.p_name = null; joinArgs.p_whatsapp = null; joinArgs.p_passenger_token = savedToken();
   apiJoin(joinArgs).then(function (res) {
     STATE.busy = false;
+    if (res && res.error === 'verification_required') {
+      /* saved token is stale/unknown: forget it and drop to the first-time flow */
+      lsDel(TOKEN_KEY); STATE.returning = false; render(); startClaim(); return;
+    }
     if (res && res.error) { handleJoinError(res.error); return; }
     if (!res || !res.booking) { handleJoinError('unknown'); return; }
-    if (!STATE.isMock) lsSet(PROFILE_KEY, { name: name, dial: STATE.dial, phone: digits });
     if (res.trip) STATE.trip = res.trip;
-    var b = res.booking, t = STATE.trip;
-    goToPassengerHome({
-      id: b.id, code: STATE.code, seats: b.seats, status: b.status || 'confirmed',
-      pickup_label: b.pickup_label || STATE.pickup.label, dropoff_label: b.dropoff_label || STATE.dropoff.label,
-      driver_first_name: t.driver_first_name, origin_label: t.origin_label, dest_label: t.dest_label,
-      title: t.title || null, schedule_text: t.schedule_text || null, price_per_seat: t.price_per_seat,
-      booked_at: new Date().toISOString()
-    }, res.passenger_token);
+    finishBooking(res.booking, res.passenger_token);
   }).catch(function () {
     STATE.busy = false;
     setErr('We couldn’t book your seat. Check your connection and try again.');
     syncBusy();
   });
+}
+
+/* ---------- First-time flow: claim -> WhatsApp code -> poll ---------- */
+var POLL = { timer: null, tick: null, on: false, inflight: false };
+function stopVerify() { POLL.on = false; POLL.inflight = false; clearTimeout(POLL.timer); clearInterval(POLL.tick); }
+function schedulePoll(ms) { clearTimeout(POLL.timer); if (POLL.on) POLL.timer = setTimeout(pollOnce, ms); }
+function startVerify() {
+  stopVerify(); POLL.on = true;
+  POLL.tick = setInterval(function () { var el = document.getElementById('cd'); if (el) el.textContent = fmtLeft(); }, 1000);
+  schedulePoll(POLL_MS);
+}
+/* Paused while the tab is hidden; visibilitychange resumes it. */
+function pollOnce() {
+  if (!POLL.on || POLL.inflight || !STATE.claim) return;
+  if (document.hidden) return;
+  var id = STATE.claim.id;
+  POLL.inflight = true;
+  apiClaimStatus(id).then(function (res) {
+    POLL.inflight = false;
+    if (!POLL.on || !STATE.claim || STATE.claim.id !== id) return;
+    handleClaimStatus(res);
+  }).catch(function () { POLL.inflight = false; schedulePoll(POLL_MS); });
+}
+document.addEventListener('visibilitychange', function () { if (POLL.on && !document.hidden) pollOnce(); });
+function handleClaimStatus(res) {
+  var st = res && res.status;
+  if (st === 'verified') {
+    stopVerify();
+    if (res.trip) STATE.trip = res.trip;
+    finishBooking({ id: res.booking_id, seats: STATE.seats }, res.passenger_token);
+    return;
+  }
+  if (st === 'full') { stopVerify(); if (res.trip) STATE.trip = res.trip; STATE.view = 'claimfull'; render(); window.scrollTo(0, 0); return; }
+  if (st === 'expired' || (st === 'pending' && Date.now() > STATE.claim.expires + 3000)) {
+    stopVerify(); STATE.view = 'claimexpired'; render(); window.scrollTo(0, 0); return;
+  }
+  if (st === 'failed') { stopVerify(); STATE.view = 'trip'; render(); setErr('We lost track of that code. Please try again.'); return; }
+  schedulePoll(POLL_MS);
+}
+function startClaim() {
+  STATE.busy = true; setErr(''); syncBusy();
+  apiStart(tripArgs()).then(function (res) {
+    STATE.busy = false;
+    if (res && res.error) { if (STATE.view === 'claimexpired') { STATE.view = 'trip'; render(); } handleJoinError(res.error); return; }
+    if (!res || !res.claim_id || !res.verify_code) { handleJoinError('unknown'); return; }
+    if (res.trip) STATE.trip = res.trip;
+    STATE.claim = { id: res.claim_id, code: res.verify_code, expires: Date.parse(res.expires_at) || (Date.now() + 30 * 60000) };
+    STATE.copied = false; STATE.view = 'verify'; render(); window.scrollTo(0, 0); startVerify();
+  }).catch(function () {
+    STATE.busy = false;
+    setErr('We couldn’t get your code. Check your connection and try again.');
+    syncBusy();
+  });
+}
+function copyCode() {
+  var c = STATE.claim && STATE.claim.code; if (!c) return;
+  var done = function () {
+    STATE.copied = true;
+    var b = document.getElementById('copyBtn'); if (b) b.textContent = 'Code copied';
+    setTimeout(function () { STATE.copied = false; var b2 = document.getElementById('copyBtn'); if (b2) b2.textContent = 'Copy code'; }, 2000);
+  };
+  var fallback = function () {
+    try {
+      var el = document.getElementById('vcode'), r = document.createRange(), sel = window.getSelection();
+      r.selectNodeContents(el); sel.removeAllRanges(); sel.addRange(r);
+      if (document.execCommand('copy')) done();
+    } catch (e) {}
+  };
+  try { if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(c).then(done, fallback); return; } } catch (e) {}
+  fallback();
 }
 function handleJoinError(code) {
   if (code === 'full') {
@@ -434,6 +536,7 @@ function handleJoinError(code) {
   if (code === 'invalid_code') { STATE.view = 'invalid'; render(); return; }
   if (code === 'expired') { STATE.view = 'expired'; render(); return; }
   if (code === 'invalid_input') { setErr('Please check your details and try again.'); syncBusy(); return; }
+  if (code === 'busy') { setErr('We’re a bit busy right now. Please try again in a minute.'); syncBusy(); return; }
   setErr('We couldn’t book your seat. Please try again.'); syncBusy();
 }
 
@@ -453,11 +556,12 @@ function goToPassengerHome(booking, token) {
 root.addEventListener('click', function (e) {
   var el = e.target.closest('[data-a]'); if (!el) return;
   var a = el.getAttribute('data-a');
-  if (a === 'inc' && STATE.seats < seatsLeft()) { STATE.seats++; render(); }
-  else if (a === 'dec' && STATE.seats > 1) { STATE.seats--; render(); }
-  else if (a === 'next') { if (validStep1()) { STATE.step = 2; render(); window.scrollTo(0, 0); } }
-  else if (a === 'back') { readStep2(); STATE.step = 1; setErr(''); render(); }
+  if (a === 'inc' && STATE.seats < seatsLeft()) { readNote(); STATE.seats++; render(); }
+  else if (a === 'dec' && STATE.seats > 1) { readNote(); STATE.seats--; render(); }
   else if (a === 'confirm') confirm();
+  else if (a === 'copy') copyCode();
+  else if (a === 'newcode') { if (!STATE.busy) startClaim(); }
+  else if (a === 'startover') { stopVerify(); STATE.claim = null; STATE.busy = false; STATE.view = 'trip'; setErr(''); render(); window.scrollTo(0, 0); }
   else if (a === 'retry') load();
 });
 
@@ -469,14 +573,13 @@ function load() {
     if (!res || res.error === 'invalid_code') { STATE.view = 'invalid'; render(); return; }
     if (res.error === 'expired') { STATE.view = 'expired'; render(); return; }
     if (res.error || !res.trip) { STATE.view = 'error'; render(); return; }
-    STATE.trip = res.trip; STATE.view = 'trip'; STATE.step = 1;
+    STATE.trip = res.trip; STATE.view = 'trip';
     STATE.seats = Math.min(Math.max(1, STATE.seats), Math.max(1, seatsLeft()));
     render();
   }).catch(function () { STATE.view = 'error'; render(); });
 }
 
-STATE.profile = loadProfile();
-if (STATE.profile) { STATE.name = STATE.profile.name; STATE.dial = STATE.profile.dial || '1'; STATE.phone = STATE.profile.phone; }
+STATE.returning = !!savedToken();
 load();
 })();
 </script>
