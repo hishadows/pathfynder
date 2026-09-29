@@ -238,36 +238,45 @@ textarea.pt-input{padding:12px 14px;min-height:88px;resize:vertical}
 /* Hero */
 .hero-wrap{padding:12px 12px 0}
 .hero{background:var(--hero-bg);color:var(--hero-text);padding:14px;border-radius:16px}
-.hero-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
+.hero-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
 .hero-pill{font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;background:var(--hero-chip)}
 .hero-pill--active{background:#F2B44D;color:#3B2600}
 .hero-pill--picked{background:#2FB574;color:#04241A}
 .hero-pill--done{background:rgba(255,255,255,.9);color:#0B5559}
 .hero-pill--cancelled{background:#E5484D;color:#FFFFFF}
-.hero-route{position:relative;padding-left:20px;margin-bottom:14px}
+.hero-route{position:relative;padding-left:20px;margin-bottom:12px}
 .hero-route::before{content:"";position:absolute;left:4px;top:8px;bottom:8px;border-left:2px dotted rgba(255,255,255,.5)}
-.hero-route__stop{position:relative;display:flex;align-items:center;gap:10px;min-height:34px;padding:2px 0}
+.hero-route__stop{position:relative;display:flex;align-items:center;gap:10px;min-height:32px;padding:1px 0}
 .hero-route__dot{position:absolute;left:-20px;width:9px;height:9px;border:2px solid #FFFFFF;background:transparent;border-radius:50%}
 .hero-route__dot--to{background:#FFFFFF;border-radius:2px;transform:rotate(45deg);width:8px;height:8px}
 .hero-route__dot--you{background:#FFFFFF}
 .hero-route__text{min-width:0;flex:1}
 .hero-route__city{display:block;font-size:15.5px;font-weight:600;overflow-wrap:anywhere}
 .hero-route__sub{display:block;font-size:12px;color:rgba(255,255,255,.78)}
-.hero-route__stop.is-you .hero-route__city{font-weight:700}
-.hero-tag{flex:none;font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:999px;background:#FFFFFF;color:#0B5559}
 .hero-chips{display:flex;gap:8px;flex-wrap:wrap}
 .hero-chip{font-size:12.5px;font-weight:600;padding:5px 10px;border-radius:999px;background:var(--hero-chip)}
 
 /* Cards */
 .section{padding:12px 12px 0}
-.card{background:var(--card);border:1px solid var(--divider);border-radius:16px;padding:14px 16px}
-.card__title{margin:0 0 10px;font-size:12.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text-2)}
+.card{background:var(--card);border:1px solid var(--divider);border-radius:16px;padding:12px 14px}
+.card__title{margin:0 0 6px;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text-2)}
 .drv{display:flex;align-items:center;gap:12px}
 .drv__avatar{width:44px;height:44px;border-radius:50%;background:var(--chip-soft);color:var(--chip-soft-text);display:grid;place-items:center;font-weight:700;font-size:17px;overflow:hidden;flex:none}
 .drv__avatar img{width:100%;height:100%;object-fit:cover;display:block}
 .drv__id{flex:1;min-width:0}
 .drv__name{display:block;font-size:16px;font-weight:700;overflow-wrap:anywhere}
 .drv__role{display:block;font-size:12.5px;color:var(--text-2)}
+.drv--in{background:var(--muted-card);border-radius:12px;padding:4px 6px 4px 10px;margin-top:8px;gap:10px}
+.drv--in .drv__avatar{width:40px;height:40px;font-size:16px}
+.drv--in .drv__name{font-size:15px}
+.trip-route{position:relative;padding-left:16px}
+.trip-route::before{content:"";position:absolute;left:3px;top:11px;bottom:11px;border-left:2px dotted var(--divider)}
+.trip-route__stop{position:relative;display:flex;align-items:baseline;gap:8px;padding:3px 0}
+.trip-route__dot{position:absolute;left:-16px;top:9px;width:8px;height:8px;border:2px solid var(--primary);border-radius:50%;box-sizing:content-box;margin:0 0 0 0;background:var(--card)}
+.trip-route__stop:last-child .trip-route__dot{background:var(--primary);border-radius:2px;transform:rotate(45deg)}
+.trip-route__city{flex:1;min-width:0;font-size:14.5px;font-weight:600;overflow-wrap:anywhere}
+.trip-route__sub{flex:none;font-size:12px;color:var(--text-2)}
+.card--trip .kv,.card--trip .kv:first-of-type{border-top:1px solid var(--divider);padding:6px 0;font-size:14px}
 .ic-btn{width:44px;height:44px;border-radius:50%;border:1px solid var(--divider);background:transparent;color:var(--primary);display:grid;place-items:center;flex:none;text-decoration:none}
 .ic-btn svg{width:20px;height:20px}
 .prog__text{font-size:14px;font-weight:600;margin-bottom:8px}
@@ -677,27 +686,19 @@ function errorPage() {
 var STATUS_LABEL = { upcoming: 'Upcoming', active: 'Driver started', picked_up: 'Picked up', completed: 'Completed', cancelled: 'Cancelled' };
 var STATUS_CLASS = { upcoming: '', active: ' hero-pill--active', picked_up: ' hero-pill--picked', completed: ' hero-pill--done', cancelled: ' hero-pill--cancelled' };
 
-/* Route rows: trip origin, stops, destination, with the passenger's own pickup / drop-off highlighted. */
-function routeRows(trip, b) {
-  var pts = [{ label: trip.origin_label, lat: trip.origin_lat, lng: trip.origin_lng, sub: 'Start' }];
-  (Array.isArray(trip.stops) ? trip.stops : []).forEach(function (s) { pts.push({ label: s.label, lat: s.lat, lng: s.lng, sub: 'Stop' }); });
-  pts.push({ label: trip.dest_label, lat: trip.dest_lat, lng: trip.dest_lng, sub: 'Destination' });
-  var pk = { label: b.pickup_label, lat: b.pickup_lat, lng: b.pickup_lng }, dp = { label: b.dropoff_label, lat: b.dropoff_lat, lng: b.dropoff_lng };
-  var pi = -1, di = -1, i;
-  for (i = 0; i < pts.length; i++) { if (pi < 0 && isNear(pts[i], pk)) pi = i; }
-  for (i = pts.length - 1; i >= 0; i--) { if (di < 0 && isNear(pts[i], dp)) di = i; }
-  if (pi >= 0) pts[pi].tag = 'Your pickup'; else { pts.splice(1, 0, { label: b.pickup_label, lat: pk.lat, lng: pk.lng, sub: 'Pickup point', tag: 'Your pickup', you: true }); if (di >= 1) di++; }
-  if (di >= 0) pts[di].tag = pts[di].tag ? pts[di].tag + ' + drop-off' : 'Your drop-off';
-  else pts.splice(pts.length - 1, 0, { label: b.dropoff_label, lat: dp.lat, lng: dp.lng, sub: 'Drop-off point', tag: 'Your drop-off', you: true });
+/* Route rows: the driver's route - trip origin, stops, destination. */
+function routeRows(trip) {
+  var pts = [{ label: trip.origin_label, sub: 'Start' }];
+  (Array.isArray(trip.stops) ? trip.stops : []).forEach(function (s) { pts.push({ label: s.label, sub: 'Stop' }); });
+  pts.push({ label: trip.dest_label, sub: 'Destination' });
   return pts;
 }
 function heroCard(p) {
   var trip = p.trip, b = p.booking, st = b.status;
-  var rows = routeRows(trip, b).map(function (pt, n, arr) {
+  var rows = [{ label: b.pickup_label, sub: 'Pickup' }, { label: b.dropoff_label, sub: 'Drop-off' }].map(function (pt, n, arr) {
     var last = n === arr.length - 1;
-    return '<div class="hero-route__stop' + (pt.tag ? ' is-you' : '') + '"><span class="hero-route__dot' + (last ? ' hero-route__dot--to' : (pt.you ? ' hero-route__dot--you' : '')) + '"></span>' +
-      '<div class="hero-route__text"><span class="hero-route__city">' + esc(shortLabel(pt.label)) + '</span><span class="hero-route__sub">' + esc(pt.sub) + '</span></div>' +
-      (pt.tag ? '<span class="hero-tag">' + esc(pt.tag) + '</span>' : '') + '</div>';
+    return '<div class="hero-route__stop"><span class="hero-route__dot' + (last ? ' hero-route__dot--to' : '') + '"></span>' +
+      '<div class="hero-route__text"><span class="hero-route__city">' + esc(shortLabel(pt.label)) + '</span><span class="hero-route__sub">' + esc(pt.sub) + '</span></div></div>';
   }).join('');
   var priceChip = trip.price_per_seat != null ? fmtSeatPrice(trip.price_per_seat) + '/seat · ' + seatsWord(b.seats) + ' booked' : seatsWord(b.seats) + ' booked';
   return '<section class="hero-wrap"><div class="hero">' +
@@ -706,7 +707,7 @@ function heroCard(p) {
     '<div class="hero-chips"><span class="hero-chip">' + esc(fmtDateShort(trip.depart_at)) + '</span><span class="hero-chip">' + esc(fmtTime12(trip.depart_at)) + '</span><span class="hero-chip">' + esc(priceChip) + '</span></div>' +
     '</div></section>';
 }
-function driverCard(p) {
+function driverRow(p) {
   var d = p.trip.driver || {};
   var digits = String(d.phone || '').replace(/\D/g, '');
   var fn = firstName(d.name) || 'driver';
@@ -715,9 +716,9 @@ function driverCard(p) {
     ? '<a class="ic-btn" href="tel:+' + digits + '" aria-label="Call ' + esc(fn) + '">' + ICON_PHONE + '</a>' +
       '<a class="ic-btn" href="https://wa.me/' + digits + '" target="_blank" rel="noopener" aria-label="Message ' + esc(fn) + ' on WhatsApp">' + ICON_WA + '</a>'
     : '';
-  return '<section class="section"><div class="card"><h2 class="card__title">Your driver</h2><div class="drv">' +
+  return '<div class="drv drv--in">' +
     '<span class="drv__avatar">' + avatar + '</span>' +
-    '<div class="drv__id"><span class="drv__name">' + esc(d.name || 'Your driver') + '</span><span class="drv__role">Driver</span></div>' + contacts + '</div></div></section>';
+    '<div class="drv__id"><span class="drv__name">' + esc(d.name || 'Your driver') + '</span><span class="drv__role">Driver</span></div>' + contacts + '</div>';
 }
 function progressCard(p) {
   var c = p.counts || { passengers: 0, picked_up: 0 };
@@ -730,12 +731,15 @@ function progressCard(p) {
 }
 function bookingCard(p) {
   var b = p.booking, why = cancelWhy(p);
-  var pickedLine = b.picked_up_at ? '<div class="kv"><dt>Status</dt><dd class="ok">Picked up at ' + esc(fmtTime12(b.picked_up_at)) + '</dd></div>' : '';
-  return '<section class="section"><div class="card"><h2 class="card__title">Your booking</h2><dl style="margin:0">' +
-    '<div class="kv"><dt>Seats</dt><dd>' + esc(seatsWord(b.seats)) + '</dd></div>' +
-    '<div class="kv"><dt>Pickup</dt><dd>' + esc(b.pickup_label) + '</dd></div>' +
-    '<div class="kv"><dt>Drop-off</dt><dd>' + esc(b.dropoff_label) + '</dd></div>' +
-    (b.note ? '<div class="kv"><dt>Note</dt><dd>' + esc(b.note) + '</dd></div>' : '') + pickedLine + '</dl>' +
+  var route = routeRows(p.trip).map(function (pt) {
+    return '<div class="trip-route__stop"><span class="trip-route__dot"></span><span class="trip-route__city">' + esc(shortLabel(pt.label)) + '</span><span class="trip-route__sub">' + esc(pt.sub) + '</span></div>';
+  }).join('');
+  var rows = (b.note ? '<div class="kv"><dt>Note</dt><dd>' + esc(b.note) + '</dd></div>' : '') +
+    (b.picked_up_at ? '<div class="kv"><dt>Status</dt><dd class="ok">Picked up at ' + esc(fmtTime12(b.picked_up_at)) + '</dd></div>' : '');
+  return '<section class="section"><div class="card card--trip"><h2 class="card__title">Trip details</h2>' +
+    '<div class="trip-route">' + route + '</div>' +
+    (rows ? '<dl style="margin:6px 0 0">' + rows + '</dl>' : '') +
+    driverRow(p) +
     (why && (b.status === 'active' || b.status === 'picked_up') ? '<p class="note-hint" id="cancelWhy">' + esc(why) + '</p>' : '') +
     '</div></section>';
 }
@@ -801,7 +805,7 @@ function render() {
   else {
     var bar = rideBar(p);
     showBar = !!bar;
-    body = '<div class="main-body' + (fade ? ' fade-in' : '') + '">' + heroCard(p) + driverCard(p) + progressCard(p) + bookingCard(p) + '<div class="footer-space"></div></div>' + bar;
+    body = '<div class="main-body' + (fade ? ' fade-in' : '') + '">' + heroCard(p) + progressCard(p) + bookingCard(p) + '<div class="footer-space"></div></div>' + bar;
   }
   if (p && p.booking) {
     /* keep the strip in step with the freshest status */
