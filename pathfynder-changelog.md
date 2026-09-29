@@ -223,3 +223,5 @@
 - 2026-09-29 — `passenger_home_list` request rows now include pickup_lat, pickup_lng, dropoff_lat, dropoff_lng (Supabase migration `passenger_home_list_request_coords`), so the Explore link on a request gets o=/d=. Files: design/passenger-home-rpcs.sql, passenger-mock.js.
 
 - 2026-09-29 — Passenger booked-ride view: hero now shows only the passenger own pickup and drop-off (tags removed); "Your booking" is now "Trip details" (driver route, note, picked-up time) with the driver row merged in as a muted block; separate "Your driver" card removed; tighter card spacing (combined block about 185px shorter). Files: passenger.html.
+
+- 2026-09-29 — passenger.html: removed unused isNear. Files: passenger.html.

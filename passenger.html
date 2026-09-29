@@ -377,7 +377,6 @@ function haversineKm(lat1, lng1, lat2, lng2) {
   var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
-function isNear(a, b) { var d = haversineKm(a.lat, a.lng, b.lat, b.lng); return d != null && d <= 0.15; }
 function localDateKey(iso) {
   var d = new Date(iso);
   var m = d.getMonth() + 1, day = d.getDate();
