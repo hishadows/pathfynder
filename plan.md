@@ -32,7 +32,7 @@ One task per session. Status: todo / done / parked.
 7. **Passenger join page `/j/<code>`** — pickup, drop-off, time, "for work" toggle + shift start, note, "Confirm on WhatsApp".
    - Done when: `/j/<code>` shows the trip and "Confirm on WhatsApp" opens WhatsApp with the filled-in details.
    - Note (2026-09-28): no driver approval step — joining books the seat immediately (confirmed); the join must refuse when seats are full. Page not designed yet; the manage page's Share link already points to it (`trip.join_url`).
-   - Status: todo (needs task 5)
+   - Status: done against mock (2026-09-29) — new design (no time/work toggle, no WhatsApp hand-off): trip card + Where/You steps, books directly. RPCs `trip_join_get` / `trip_join` applied by Pranay in the SQL editor (2026-09-29); not yet tested live — see Session notes.
 
 8. **PWA** — manifest, service worker, install prompt, Web Push opt-in. Plan first.
    - Done when: the app installs on Android + iOS, an install prompt shows where supported, and push opt-in works from Explore.
@@ -88,3 +88,5 @@ One task per session. Status: todo / done / parked.
 - 2026-09-28 — Post a trip v2: stops on demand, price on step 1, 30 dates, iPhone time-field fix, recent trips (`trip_post_recent`). Open: real iOS Safari check of time fields; recent list shows return legs as separate routes.
 - 2026-09-29 — Manage loading: trip cache, shaped shimmer skeleton (150ms delay), fade-in, placeholder action bar. Open: skeleton low-contrast in dark mode; very tall heroes still shift a little.
 - 2026-09-29 — Post a trip: muted Recent trips cards.
+- 2026-09-29 — Task 7: new `join.html` + `join-mock.js` (`?mock=1&state=open|full|invalid|expired`, `&returning=1`, `&fail=1`, `&race=1`), `/j/:code` rewrite, build.sh copy. Open: RPCs `trip_join_get`/`trip_join` not created (Supabase MCP was down; proposal in `design/trip-join-rpcs.sql`); passenger home page not designed, so `PASSENGER_HOME_URL` is null and a temporary "Seat confirmed" screen shows; `trip.join_url` on manage page still needs the RPC to return it.
+- 2026-09-29 — Task 7 RPCs: Pranay applied `design/trip-join-rpcs.sql` manually (Supabase MCP down, so schema/RPC not verified from here). Next: open `/j/<code>` with a real code, test book + full + invalid; confirm `join_url` is returned to manage page.

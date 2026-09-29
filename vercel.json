@@ -5,6 +5,7 @@
   "cleanUrls": true,
   "rewrites": [
     { "source": "/r/:code", "destination": "/api/r?code=:code" },
-    { "source": "/m/:token", "destination": "/manage" }
+    { "source": "/m/:token", "destination": "/manage" },
+    { "source": "/j/:code", "destination": "/join" }
   ]
 }
