@@ -4,45 +4,45 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
-<meta name="theme-color" content="#1F5FBF">
+<meta name="theme-color" content="#0E6F73">
 <link rel="icon" type="image/png" href="/logo.png">
 <title>My rides · Pathfynder</title>
 <script>try{var __t=localStorage.getItem("pf_theme");if(__t==="light"||__t==="dark")document.documentElement.setAttribute("data-theme",__t);}catch(e){}</script>
 <style>
 :root{
-  --header:#1F5FBF; --header-text:#FFFFFF; --header-sub:rgba(255,255,255,.84);
-  --primary:#1F5FBF; --cta:#2F80ED; --cta-text:#FFFFFF; --cta-hover:#2568C9;
-  --bg:#EEF3FA; --card:#FFFFFF; --muted-card:#F5F8FD;
-  --text:#0F1B2D; --text-2:#5B6B82; --divider:#DCE5F2;
-  --chip-soft:#DCE9FF; --chip-soft-text:#1F5FBF; --danger:#D93025;
+  --header:#0E6F73; --header-text:#FFFFFF; --header-sub:rgba(255,255,255,.84);
+  --primary:#0E6F73; --cta:#0E8085; --cta-text:#FFFFFF; --cta-hover:#0B6E72;
+  --bg:#EDF6F6; --card:#FFFFFF; --muted-card:#F3FAFA;
+  --text:#0F2A2B; --text-2:#5A7476; --divider:#D5E6E6;
+  --chip-soft:#D4EEEF; --chip-soft-text:#0E6F73; --danger:#D93025;
   --ok:#1E8E5A; --ok-soft:#DDF3E8; --warn:#B26A00; --warn-soft:#FFF0D6; --bad-soft:#FBE3E0;
-  --hero-bg:#163E80; --hero-text:#FFFFFF; --hero-chip:rgba(255,255,255,.14);
-  --overlay:rgba(15,27,45,.45); --shadow:0 -1px 4px rgba(15,27,45,.1);
-  --sel-bg:#DCE9FF; --sel-border:#1F5FBF;
+  --hero-bg:#0B5559; --hero-text:#FFFFFF; --hero-chip:rgba(255,255,255,.14);
+  --overlay:rgba(15,42,43,.45); --shadow:0 -1px 4px rgba(15,42,43,.1);
+  --sel-bg:#D4EEEF; --sel-border:#0E6F73;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --header:#16233A; --header-text:#E6EDF7; --header-sub:#8FA1BC;
-    --primary:#4F9BFF; --cta:#2F6FD1; --cta-text:#FFFFFF; --cta-hover:#2A62BA;
-    --bg:#0B1220; --card:#16233A; --muted-card:#101A2E;
-    --text:#E6EDF7; --text-2:#8FA1BC; --divider:#24344F;
-    --chip-soft:#1B3357; --chip-soft-text:#8DBEFF; --danger:#F26D7D;
+    --header:#132A2C; --header-text:#E6F2F2; --header-sub:#8AA8AA;
+    --primary:#3CC4C9; --cta:#0E8085; --cta-text:#FFFFFF; --cta-hover:#0B6E72;
+    --bg:#0A1516; --card:#132A2C; --muted-card:#0E2022;
+    --text:#E6F2F2; --text-2:#8AA8AA; --divider:#1F3B3D;
+    --chip-soft:#16393B; --chip-soft-text:#7FDDE0; --danger:#F26D7D;
     --ok:#4CC38A; --ok-soft:#12382A; --warn:#F2B44D; --warn-soft:#3B2C0F; --bad-soft:#4A1D24;
-    --hero-bg:#1B3A6E; --hero-text:#FFFFFF; --hero-chip:rgba(255,255,255,.14);
+    --hero-bg:#124A4D; --hero-text:#FFFFFF; --hero-chip:rgba(255,255,255,.14);
     --overlay:rgba(0,0,0,.62); --shadow:0 -1px 4px rgba(0,0,0,.4);
-    --sel-bg:#1B3357; --sel-border:#4F9BFF;
+    --sel-bg:#16393B; --sel-border:#3CC4C9;
   }
 }
 :root[data-theme="dark"]{
-  --header:#16233A; --header-text:#E6EDF7; --header-sub:#8FA1BC;
-  --primary:#4F9BFF; --cta:#2F6FD1; --cta-text:#FFFFFF; --cta-hover:#2A62BA;
-  --bg:#0B1220; --card:#16233A; --muted-card:#101A2E;
-  --text:#E6EDF7; --text-2:#8FA1BC; --divider:#24344F;
-  --chip-soft:#1B3357; --chip-soft-text:#8DBEFF; --danger:#F26D7D;
+  --header:#132A2C; --header-text:#E6F2F2; --header-sub:#8AA8AA;
+  --primary:#3CC4C9; --cta:#0E8085; --cta-text:#FFFFFF; --cta-hover:#0B6E72;
+  --bg:#0A1516; --card:#132A2C; --muted-card:#0E2022;
+  --text:#E6F2F2; --text-2:#8AA8AA; --divider:#1F3B3D;
+  --chip-soft:#16393B; --chip-soft-text:#7FDDE0; --danger:#F26D7D;
   --ok:#4CC38A; --ok-soft:#12382A; --warn:#F2B44D; --warn-soft:#3B2C0F; --bad-soft:#4A1D24;
-  --hero-bg:#1B3A6E; --hero-text:#FFFFFF; --hero-chip:rgba(255,255,255,.14);
+  --hero-bg:#124A4D; --hero-text:#FFFFFF; --hero-chip:rgba(255,255,255,.14);
   --overlay:rgba(0,0,0,.62); --shadow:0 -1px 4px rgba(0,0,0,.4);
-  --sel-bg:#1B3357; --sel-border:#4F9BFF;
+  --sel-bg:#16393B; --sel-border:#3CC4C9;
 }
 *{box-sizing:border-box}
 html,body{margin:0;overflow-x:hidden}
@@ -242,7 +242,7 @@ textarea.pt-input{padding:12px 14px;min-height:88px;resize:vertical}
 .hero-pill{font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;background:var(--hero-chip)}
 .hero-pill--active{background:#F2B44D;color:#3B2600}
 .hero-pill--picked{background:#2FB574;color:#04241A}
-.hero-pill--done{background:rgba(255,255,255,.9);color:#163E80}
+.hero-pill--done{background:rgba(255,255,255,.9);color:#0B5559}
 .hero-pill--cancelled{background:#E5484D;color:#FFFFFF}
 .hero-route{position:relative;padding-left:20px;margin-bottom:14px}
 .hero-route::before{content:"";position:absolute;left:4px;top:8px;bottom:8px;border-left:2px dotted rgba(255,255,255,.5)}
@@ -254,7 +254,7 @@ textarea.pt-input{padding:12px 14px;min-height:88px;resize:vertical}
 .hero-route__city{display:block;font-size:15.5px;font-weight:600;overflow-wrap:anywhere}
 .hero-route__sub{display:block;font-size:12px;color:rgba(255,255,255,.78)}
 .hero-route__stop.is-you .hero-route__city{font-weight:700}
-.hero-tag{flex:none;font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:999px;background:#FFFFFF;color:#163E80}
+.hero-tag{flex:none;font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:999px;background:#FFFFFF;color:#0B5559}
 .hero-chips{display:flex;gap:8px;flex-wrap:wrap}
 .hero-chip{font-size:12.5px;font-weight:600;padding:5px 10px;border-radius:999px;background:var(--hero-chip)}
 
@@ -303,7 +303,7 @@ textarea.pt-input{padding:12px 14px;min-height:88px;resize:vertical}
 .ef-sug__item small{display:block;color:var(--text-2);font-size:12px}
 
 /* Toast */
-.toast{position:fixed;left:16px;right:16px;bottom:90px;z-index:20;background:#0F1B2D;color:#FFFFFF;font-size:13.5px;text-align:center;padding:11px 16px;border-radius:10px;opacity:0;pointer-events:none;transition:opacity .2s}
+.toast{position:fixed;left:16px;right:16px;bottom:90px;z-index:20;background:#0F2A2B;color:#FFFFFF;font-size:13.5px;text-align:center;padding:11px 16px;border-radius:10px;opacity:0;pointer-events:none;transition:opacity .2s}
 .toast.is-visible{opacity:1}
 .toast--top{bottom:auto;top:calc(12px + env(safe-area-inset-top))}
 .footer-space{height:8px}
