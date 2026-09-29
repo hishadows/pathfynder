@@ -1,5 +1,5 @@
 -- Join page: trip_join_get / _trip_join_trip_json return trip.message_url
--- Migration: trip_join_get_message_url (applied 2026-09-29)
+-- Migrations: trip_join_get_message_url, trip_join_message_url_pick_number (both applied 2026-09-29)
 -- message_url = https://wa.me/<digits>?text=<url-encoded prefilled text>. Omitted (null) when the
 -- driver has no usable number. The raw number is never returned as its own field.
 -- Only the helper changes; trip_join_get calls it, so its signature/grants are untouched.
@@ -22,6 +22,8 @@ declare
   v_enc text := '';
   v_b int;
   v_url text := null;
+  v_wa text;
+  v_ph text;
 begin
   select * into t from public.driver_routines where id = p_trip_id;
   if not found then return null; end if;
@@ -42,8 +44,18 @@ begin
   v_left := greatest(v_total - v_left, 0);
 
   -- WhatsApp message link (digits only, no raw number returned)
-  v_num := regexp_replace(coalesce(nullif(t.driver_wa_id, ''), t.driver_phone, ''), '\D', '', 'g');
-  if length(v_num) between 8 and 15 then
+  -- Pick the first candidate with 11-15 digits. Telegram-form trips store a 10-digit wa_id
+  -- (no country code, not on WhatsApp), so driver_phone goes first for those.
+  v_wa := regexp_replace(coalesce(t.driver_wa_id, ''), '\D', '', 'g');
+  v_ph := regexp_replace(coalesce(t.driver_phone, ''), '\D', '', 'g');
+  if coalesce(t.platform, '') ilike 'telegram%' or t.telegram_chat_id is not null then
+    v_num := case when length(v_ph) between 11 and 15 then v_ph
+                  when length(v_wa) between 11 and 15 then v_wa end;
+  else
+    v_num := case when length(v_wa) between 11 and 15 then v_wa
+                  when length(v_ph) between 11 and 15 then v_ph end;
+  end if;
+  if v_num is not null then
     v_text := 'Hi ' || coalesce(v_first, 'there') || ', I am joining your ride '
       || coalesce(nullif(trim(split_part(coalesce(t.pickup_label, ''), ',', 1)), ''), 'your ride')
       || ' to '
