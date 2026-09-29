@@ -374,6 +374,14 @@ function localDateKey(iso) {
   var m = d.getMonth() + 1, day = d.getDate();
   return d.getFullYear() + '-' + (m < 10 ? '0' : '') + m + '-' + (day < 10 ? '0' : '') + day;
 }
+function hhmm(iso) { var d = new Date(iso); return (d.getHours() < 10 ? '0' : '') + d.getHours() + ':' + (d.getMinutes() < 10 ? '0' : '') + d.getMinutes(); }
+function exploreHrefFor(it) {
+  var h = '/explore?from=' + encodeURIComponent(it.origin_label || '') + '&to=' + encodeURIComponent(it.dest_label || '');
+  var ok = function (v) { return v != null && v !== '' && isFinite(Number(v)); };
+  if (ok(it.origin_lat) && ok(it.origin_lng)) h += '&o=' + encodeURIComponent(Number(it.origin_lat) + ',' + Number(it.origin_lng));
+  if (ok(it.dest_lat) && ok(it.dest_lng)) h += '&d=' + encodeURIComponent(Number(it.dest_lat) + ',' + Number(it.dest_lng));
+  return h + '&date=' + encodeURIComponent(localDateKey(it.depart_at)) + '&time=' + encodeURIComponent(hhmm(it.depart_at)) + '&flex=60';
+}
 function todayKey() { return localDateKey(new Date().toISOString()); }
 function hideToast() { clearTimeout(toastTimer); document.getElementById('toast').classList.remove('is-visible'); }
 
@@ -424,7 +432,7 @@ function allItems() {
   var out = STATE.rides.map(function (r) {
     return { id: r.booking_id, kind: 'booking', depart_at: r.depart_at, status: r.status, origin_label: r.origin_label, dest_label: r.dest_label };
   }).concat(STATE.requests.map(function (q) {
-    return { id: q.id, kind: 'request', depart_at: q.depart_at, status: 'request', origin_label: q.pickup_label, dest_label: q.dropoff_label, seats: q.seats };
+    return { id: q.id, kind: 'request', depart_at: q.depart_at, status: 'request', origin_label: q.pickup_label, dest_label: q.dropoff_label, seats: q.seats, origin_lat: q.pickup_lat, origin_lng: q.pickup_lng, dest_lat: q.dropoff_lat, dest_lng: q.dropoff_lng };
   }));
   return out.sort(function (a, b) { return new Date(a.depart_at) - new Date(b.depart_at); });
 }
@@ -751,7 +759,7 @@ function requestView(it) {
     '</div></section>' +
     '<section class="section"><div class="card"><h2 class="card__title">Your request</h2>' +
     '<p style="margin:0;font-size:14.5px">No driver has taken this request yet. You can also browse rides that are already posted.</p>' +
-    '<a class="btn btn-secondary btn-full" style="margin-top:12px" href="/explore">' + ico('search') + 'Explore rides</a></div></section>' +
+    '<a class="btn btn-secondary btn-full" style="margin-top:12px" href="' + esc(exploreHrefFor(it)) + '">' + ico('search') + 'Explore rides</a></div></section>' +
     '<div class="footer-space"></div></div>';
 }
 function requestBar() {
