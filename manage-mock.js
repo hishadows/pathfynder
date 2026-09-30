@@ -184,7 +184,10 @@
         setTimeout(function () {
           if (rawState() === 'invalid') { resolve({ error: 'invalid_token' }); return; }
           if (new URLSearchParams(location.search).get('pfail') === '1') { reject(new Error('mock profile failure')); return; }
-          resolve(clone(PROFILE));
+          var q = new URLSearchParams(location.search), out = clone(PROFILE);
+          if (q.has('pname')) out.name = q.get('pname'); /* test: ?pname= (empty = no name) */
+          if (q.get('pphoto')) out.photo_url = q.get('pphoto'); /* test: ?pphoto=<image url or data: uri> */
+          resolve(out);
         }, 200);
       });
     },
