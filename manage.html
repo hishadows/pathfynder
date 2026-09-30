@@ -1697,9 +1697,20 @@ function render() {
   var strip = document.getElementById('dateStrip');
   if (strip) {
     var sel = strip.querySelector('.is-selected');
+    /* Where "today" sits left-aligned (half of the previous chip peeking). Trailing space lets the strip scroll that far when few upcoming days exist. */
+    var tChip = strip.querySelector('[data-date="' + todayKey() + '"]'), todayTarget = 0;
+    if (tChip) {
+      var pChip = tChip.previousElementSibling;
+      todayTarget = pChip ? Math.max(0, tChip.offsetLeft - pChip.offsetWidth / 2 - 8) : 0;
+      var need = todayTarget + strip.clientWidth - strip.scrollWidth;
+      if (need > 0) strip.style.paddingRight = (16 + need) + 'px';
+    }
     if (STATE.stripScroll && sel) {
       STATE.stripScroll = false;
-      strip.scrollLeft = sel.offsetLeft - (strip.clientWidth - sel.offsetWidth) / 2;
+      if (sel.getAttribute('data-date') === todayKey()) {
+        /* Today toward the left; with a past day, only half of it peeks in at the left edge. */
+        strip.scrollLeft = todayTarget;
+      } else strip.scrollLeft = sel.offsetLeft - (strip.clientWidth - sel.offsetWidth) / 2;
     } else { strip.scrollLeft = keepScroll; }
   }
   if (showSkel || !payload) return;
