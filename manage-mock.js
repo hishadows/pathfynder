@@ -95,6 +95,7 @@
       { id: 'trip-p2', off: 2, key: 'draft' },
       { id: 'trip-p2b', off: 2, key: 'draft', hh: 21, mm: 0, reverse: true, empty: true } /* second trip same day, Essex -> Windsor, no bookings (editable) */
     ];
+    if (new URLSearchParams(location.search).get('future') === 'none') defs = defs.filter(function (d) { return d.off <= 0; }); /* test: ?future=none = no upcoming trips */
     var raw = rawState();
     if (raw === 'draft' || raw === 'active' || raw === 'completed') defs.push({ id: 'trip-today', off: 0, key: raw });
     defs.sort(function (a, b) { return (a.off - b.off) || ((a.hh == null ? 18 : a.hh) - (b.hh == null ? 18 : b.hh)); });

@@ -200,6 +200,10 @@ textarea.pt-input{padding:12px 14px;min-height:88px;resize:vertical}
 .trip-chip{flex:none;padding:8px 14px;border-radius:999px;border:1.5px solid var(--divider);background:var(--card);color:var(--text);font:inherit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
 .trip-chip.is-selected{background:var(--sel-bg);border-color:var(--sel-border)}
 .date-pill.is-selected{background:var(--sel-bg);border-color:var(--sel-border)}
+.date-pill--empty{background:transparent;opacity:.55;min-height:44px}
+.date-pill--empty .date-pill__top{font-weight:600;color:var(--text-2)}
+.date-pill--post{flex:none;min-width:84px;min-height:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:8px 14px;border-radius:14px;border:1.5px dashed var(--sel-border);background:transparent;color:var(--sel-border);opacity:.85;cursor:pointer;font:inherit;font-size:14px;font-weight:700}
+.date-pill--post svg{width:18px;height:18px}
 
 /* Empty state */
 .empty-day{display:flex;flex-direction:column;align-items:center;text-align:center;padding:40px 24px}
@@ -1161,6 +1165,15 @@ function dateStrip() {
     return '<button type="button" class="date-pill' + (k === STATE.selectedDate ? ' is-selected' : '') + '" data-action="pick-date" data-date="' + k + '"' + (k === STATE.selectedDate ? ' aria-current="date"' : '') + '>' +
       '<span class="date-pill__top">' + esc(top) + '</span><span class="date-pill__sub' + (k === today ? ' date-pill__sub--date' : '') + '">' + esc(sub) + '</span></button>';
   }).join('');
+  /* 7 empty future days after the last day that has a chip, then one dashed "+ Post" chip. */
+  var last = new Date(keys[keys.length - 1] + 'T12:00:00'), empties = '';
+  for (var i = 1; i <= 7; i++) {
+    var d = new Date(last.getTime()); d.setDate(d.getDate() + i);
+    var ek = localDateKey(d.toISOString());
+    empties += '<button type="button" class="date-pill date-pill--empty" data-action="post" data-date="' + esc(ek) + '" aria-label="' + esc('Post a trip on ' + postDateLabel(ek)) + '">' +
+      '<span class="date-pill__top">' + esc(fmtDateShort(d.toISOString())) + '</span><span class="date-pill__sub">\u2014</span></button>';
+  }
+  pills += empties + '<button type="button" class="date-pill--post" data-action="post" aria-label="Post a trip">' + ico('plus') + '<span>Post</span></button>';
   return '<section class="date-strip"><p class="date-strip__label">Your rides</p><div class="date-strip__row" id="dateStrip">' + pills + '</div>' + tripChips() + '</section>';
 }
 function fmtTime12(iso) { return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }); }
@@ -1674,7 +1687,7 @@ function render() {
   if (STATE.view === 'notifs') { app.classList.remove('has-bar'); renderNotifs(app); sheetHtml(); return; }
   if (STATE.errorType) { app.classList.remove('has-bar'); app.innerHTML = errorPage(); sheetHtml(); return; }
   var oldStrip = document.getElementById('dateStrip');
-  var keepScroll = oldStrip ? oldStrip.scrollLeft : 0;
+  var keepScroll = oldStrip ? oldStrip.scrollLeft : (STATE.stripSaved || 0); STATE.stripSaved = null; /* stripSaved: strip position remembered while the Post screen was open */
   var body = '', showBar = false, payload = STATE.payload;
   var stale = STATE.loading && !STATE.skelShown && !payload && STATE.stale; /* previous trip, dimmed, until the skeleton delay passes */
   var showSkel = STATE.loading && !stale;
@@ -2272,7 +2285,12 @@ function postLoadRecent() {
 }
 /* Returns true when handled. */
 function postAction(action, t) {
-  if (action === 'post') { hideToast(); STATE.sheet = null; sheetHtml(); postInit(); STATE.view = 'post'; window.scrollTo(0, 0); renderPost(); postLoadRecent(); return true; }
+  if (action === 'post') {
+    var dsEl = document.getElementById('dateStrip'); if (dsEl) STATE.stripSaved = dsEl.scrollLeft;
+    var preDate = t.getAttribute('data-date');
+    hideToast(); STATE.sheet = null; sheetHtml(); postInit();
+    if (preDate && postDays().some(function (d) { return d.key === preDate; })) POST.dates = [preDate]; /* YYYY-MM-DD local, same format as the step-2 tiles */
+    STATE.view = 'post'; window.scrollTo(0, 0); renderPost(); postLoadRecent(); return true; }
   if (!POST) return true;
   var id = t.getAttribute('data-id');
   function go(step) { POST.step = step; window.scrollTo(0, 0); renderPost(); }
