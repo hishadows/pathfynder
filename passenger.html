@@ -557,7 +557,7 @@ function doCancel(id, isRequest) {
 }
 function shareText(payload) {
   var trip = payload.trip;
-  return 'Join me on this ride ' + shortLabel(trip.origin_label) + ' → ' + shortLabel(trip.dest_label) + ', ' + fmtDateShort(trip.depart_at) + (trip.join_url ? ': ' + trip.join_url : '');
+  return 'Join me on this ride ' + shortLabel(trip.origin_label) + ' → ' + shortLabel(trip.dest_label) + ', ' + fmtDateShort(trip.depart_at) + (trip.join_url ? ': ' + trip.join_url + '?i=friend' : '');
 }
 function doShare() {
   var p = STATE.payload;

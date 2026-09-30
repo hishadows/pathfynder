@@ -1,12 +1,29 @@
 {
-  "installCommand": "echo skip-root-install",
+  "installCommand": "npm install --no-audit --no-fund",
   "buildCommand": "chmod +x build.sh && ./build.sh",
   "outputDirectory": "public",
   "cleanUrls": true,
   "rewrites": [
-    { "source": "/r/:code", "destination": "/api/r?code=:code" },
-    { "source": "/m/:token", "destination": "/manage" },
-    { "source": "/j/:code", "destination": "/join" },
-    { "source": "/p/:token", "destination": "/passenger" }
-  ]
+    {
+      "source": "/r/:code",
+      "destination": "/api/r?code=:code"
+    },
+    {
+      "source": "/m/:token",
+      "destination": "/manage"
+    },
+    {
+      "source": "/j/:code",
+      "destination": "/api/j?code=:code"
+    },
+    {
+      "source": "/p/:token",
+      "destination": "/passenger"
+    }
+  ],
+  "functions": {
+    "api/og.mjs": {
+      "includeFiles": "api/_og/**"
+    }
+  }
 }
