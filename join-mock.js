@@ -33,7 +33,7 @@
     if (st === 'expired') return { error: 'expired' };
     var full = st === 'full';
     return { trip: {
-      code: code, status: full ? 'full' : 'open',
+      code: code, driver_id: '7d2e9b40-0002-4b00-8000-00000000d002', status: full ? 'full' : 'open',
       driver_first_name: 'Rahul', round_trip: true, title: 'Windsor to Essex daily commute',
       message_url: qp('nomsg') ? null : 'https://wa.me/15550000000?text=Hi%20Rahul', // mock only; live RPC builds it (no raw phone); ?nomsg=1 omits it
       origin_label: 'Windsor, ON', dest_label: 'Essex, ON', stops_count: 2,
