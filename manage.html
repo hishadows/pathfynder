@@ -1190,11 +1190,11 @@ function tripChips() {
   return '<div class="trip-chips" id="tripChips">' + chips + '</div>';
 }
 function emptyDay() {
-  return '<div class="empty-day"><h2>No ride on this day</h2>' +
+  return '<div class="empty-day"><h2>' + (STATE.selectedDate === todayKey() ? 'No trip today' : 'No ride on this day') + '</h2>' +
     '<p>Post a trip so passengers can book, or find a ride to join.</p>' +
     '<div class="empty-day__btns">' +
     '<button type="button" class="btn btn-cta" data-action="post">Post a trip</button>' +
-    '<a class="btn btn-secondary" href="/explore">Explore rides</a>' +
+    '<a class="btn btn-secondary" href="/explore?type=passenger">' + ico('search') + 'Explore passenger requests</a>' +
     '</div></div>';
 }
 function skeleton() {
