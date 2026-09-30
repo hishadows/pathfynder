@@ -835,3 +835,79 @@ end $$;
 --     return public._trip_manage_payload(d.id, p_trip_id);
 --   end $$;
 --   drop function if exists public._pax_notify(uuid, text, text, text);
+
+-- ============================================================
+-- Migration: passenger_tokens_on_request (applied live)
+-- Passengers get a private home token automatically, like drivers.
+-- ============================================================
+create or replace function public._passenger_for_wa(p_wa text, p_name text)
+returns uuid
+language plpgsql
+security definer
+set search_path to 'public', 'extensions'
+as $$
+declare
+  v_wa text := regexp_replace(coalesce(p_wa, ''), '\D', '', 'g');
+  v_name text := left(nullif(btrim(coalesce(p_name, '')), ''), 60);
+  ps public.passengers;
+begin
+  if length(v_wa) < 7 or length(v_wa) > 15 then return null; end if;
+  perform pg_advisory_xact_lock(hashtext('pax_wa:' || v_wa));
+  select * into ps from public.passengers where wa_id = v_wa order by created_at asc nulls last, id limit 1;
+  if not found then
+    insert into public.passengers (wa_id, name) values (v_wa, v_name) returning * into ps;
+  elsif coalesce(btrim(ps.name), '') = '' and v_name is not null then
+    update public.passengers set name = v_name where id = ps.id;
+  end if;
+  return ps.id;
+end $$;
+
+create or replace function public.passenger_manage_url(p_wa_id text)
+returns text
+language plpgsql
+security definer
+set search_path to 'public', 'extensions'
+as $$
+declare v_id uuid; t text;
+begin
+  v_id := public._passenger_for_wa(p_wa_id, null);
+  if v_id is null then return null; end if;
+  select manage_token into t from public.passengers where id = v_id;
+  return 'https://www.pathfynder.ca/p/' || t;
+end $$;
+
+create or replace function public.passenger_requests_set_passenger()
+returns trigger
+language plpgsql
+security definer
+set search_path to 'public', 'extensions'
+as $$
+begin
+  if new.passenger_id is null and nullif(btrim(coalesce(new.passenger_wa_id, '')), '') is not null then
+    begin
+      new.passenger_id := public._passenger_for_wa(
+        new.passenger_wa_id,
+        coalesce(nullif(new.passenger_name_web, ''), nullif(new.passenger_name, '')));
+    exception when others then
+      raise warning 'passenger_requests_set_passenger failed: %', sqlerrm;
+      new.passenger_id := null;
+    end;
+  end if;
+  return new;
+end $$;
+
+drop trigger if exists trg_passenger_requests_set_passenger on public.passenger_requests;
+create trigger trg_passenger_requests_set_passenger
+  before insert or update of passenger_wa_id on public.passenger_requests
+  for each row execute function public.passenger_requests_set_passenger();
+
+revoke all on function public._passenger_for_wa(text, text) from public, anon, authenticated;
+revoke all on function public.passenger_manage_url(text) from public, anon, authenticated;
+revoke all on function public.passenger_requests_set_passenger() from public, anon, authenticated;
+grant execute on function public.passenger_manage_url(text) to service_role;
+grant execute on function public._passenger_for_wa(text, text) to service_role;
+
+-- One-off backfill (run once):
+-- update public.passenger_requests
+--    set passenger_id = public._passenger_for_wa(passenger_wa_id, coalesce(nullif(passenger_name_web,''), nullif(passenger_name,'')))
+--  where passenger_id is null and passenger_wa_id is not null;
