@@ -54,16 +54,15 @@ button{font:inherit}
 
 /* Header */
 .app-bar{position:sticky;top:0;z-index:3;background:var(--header);color:var(--header-text)}
-.app-bar__inner{display:flex;align-items:center;gap:12px;min-height:56px;padding:8px 16px}
-.brand{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;background:#FFFFFF;flex:none;overflow:hidden}
-.brand img{width:22px;height:22px;object-fit:contain}
+.app-bar__inner{display:flex;align-items:center;gap:12px;min-height:60px;padding:8px 16px}
 .app-bar__title{margin:0;font-size:18px;font-weight:600;line-height:1.2}
-.app-bar__sub{margin:0;font-size:12.5px;color:var(--header-sub)}
-.profile-btn{margin-left:auto;flex:none;width:40px;height:40px;border-radius:50%;border:0;padding:0;background:rgba(255,255,255,.16);color:var(--header-text);display:grid;place-items:center;cursor:pointer}
-.profile-btn svg{width:22px;height:22px}
-.add-btn{margin-left:auto;flex:none;width:40px;height:40px;border-radius:50%;border:0;padding:0;background:rgba(255,255,255,.16);color:var(--header-text);display:grid;place-items:center;cursor:pointer}
-.add-btn svg{width:22px;height:22px}
-.add-btn + .profile-btn{margin-left:0}
+.hd-avatar{flex:none;width:40px;height:40px;border-radius:50%;border:0;padding:0;background:#FFFFFF;color:var(--header);display:grid;place-items:center;font-size:18px;font-weight:700;cursor:pointer;overflow:hidden}
+.hd-avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.hd-id{flex:1;min-width:0}
+.hd-name{margin:0;font-size:21px;font-weight:700;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hd-sub{margin:1px 0 0;font-size:12px;letter-spacing:.02em;color:var(--header-sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hd-post{flex:none;display:inline-flex;align-items:center;gap:4px;height:38px;padding:0 14px 0 10px;border-radius:19px;border:0;background:#FFFFFF;color:#0B3D2E;font:inherit;font-size:14px;font-weight:700;cursor:pointer}
+.hd-post svg{width:20px;height:20px;stroke-width:2.5}
 .bell-btn{position:relative;flex:none;width:40px;height:40px;border-radius:50%;border:0;padding:0;margin-left:0;background:rgba(255,255,255,.16);color:var(--header-text);display:grid;place-items:center;cursor:pointer}
 .bell-btn svg{width:22px;height:22px}
 .bell-badge{position:absolute;top:-3px;right:-3px;min-width:20px;height:20px;padding:0 4px;border-radius:10px;border:2px solid var(--header);background:var(--danger);color:#FFFFFF;font-size:11px;font-weight:700;line-height:16px;text-align:center}
@@ -193,6 +192,10 @@ textarea.pt-input{padding:12px 14px;min-height:88px;resize:vertical}
 .trip-chip{flex:none;padding:8px 14px;border-radius:999px;border:1.5px solid var(--divider);background:var(--card);color:var(--text);font:inherit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
 .trip-chip.is-selected{background:var(--sel-bg);border-color:var(--sel-border)}
 .date-pill.is-selected{background:var(--sel-bg);border-color:var(--sel-border)}
+.date-pill--empty{background:transparent;opacity:.55;min-height:44px}
+.date-pill--empty .date-pill__top{font-weight:600;color:var(--text-2)}
+.date-pill--post{flex:none;min-width:84px;min-height:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:8px 14px;border-radius:14px;border:1.5px dashed var(--sel-border);background:transparent;color:var(--sel-border);opacity:.85;cursor:pointer;font:inherit;font-size:14px;font-weight:700}
+.date-pill--post svg{width:18px;height:18px}
 
 /* Empty state */
 .empty-day{display:flex;flex-direction:column;align-items:center;text-align:center;padding:40px 24px}
@@ -589,7 +592,7 @@ var PATHS = {
   bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
   mail: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/>',
   search: '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
-  plusCircle: '<circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/>'
+  plus: '<path d="M12 5v14M5 12h14"/>'
 };
 function ico(name) {
   return '<svg class="i" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + PATHS[name] + '</svg>';
@@ -600,13 +603,40 @@ var ICON_WA = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentCo
 var ICON_WA_LG = '<svg class="i" viewBox="0 0 24 24" width="19" height="19" aria-hidden="true"><path fill="currentColor" stroke="none" d="' + WA_PATH + '"/></svg>';
 
 /* ---------- Render: shell ---------- */
+/* Passenger name/photo for the home header: live STATE.profile wins, else the localStorage cache, else 'Passenger'. */
+var HDR_KEY = 'pf_passenger_hdr';
+function hdrCacheRead() { try { var v = JSON.parse(localStorage.getItem(HDR_KEY) || 'null'); return v && typeof v === 'object' ? v : {}; } catch (e) { return {}; } }
+function hdrCacheWrite() {
+  if (!STATE.profile) return;
+  try { localStorage.setItem(HDR_KEY, JSON.stringify({ name: STATE.profile.name || '', photo_url: STATE.profile.photo_url || '', id: STATE.profile.id || '' })); } catch (e) {}
+}
+function hdrInfo() {
+  var p = STATE.profile || hdrCacheRead();
+  return { name: String(p.name || '').trim() || 'Passenger', photo: p.photo_url || '', id: p.id || '' };
+}
+function hdrAvatarHtml(h) { return h.photo ? '<img src="' + esc(h.photo) + '" alt="">' : pfAvatarHtml(h.id, 40, initial(h.name)); }
+function paintHeader() {
+  var n = document.getElementById('hdName'), a = document.getElementById('hdAvatar');
+  if (!n || !a) return;
+  var h = hdrInfo();
+  n.textContent = h.name; a.innerHTML = hdrAvatarHtml(h);
+}
+/* Silent, once per page load: reuses apiProfileGet (same call as the Profile screen). Failure keeps the cached/fallback name. */
+function loadHeaderProfile() {
+  if (STATE.profile) return;
+  apiProfileGet().then(function (data) {
+    if (!data || data.error) return;
+    if (!STATE.profile) STATE.profile = data;
+    hdrCacheWrite(); paintHeader();
+  }).catch(function (e) { console.error('[passenger] header profile load failed', e); });
+}
 function header() {
+  var h = hdrInfo();
   return '<header class="app-bar"><div class="app-bar__inner">' +
-    '<span class="brand"><img src="/logo.png" alt=""></span>' +
-    '<div><h1 class="app-bar__title">Pathfynder</h1><p class="app-bar__sub">Passenger home</p></div>' +
-    '<button type="button" class="add-btn" data-action="post" aria-label="Request a ride">' + ico('plusCircle') + '</button>' +
+    '<button type="button" class="hd-avatar" id="hdAvatar" data-action="profile" aria-label="Profile">' + hdrAvatarHtml(h) + '</button>' +
+    '<div class="hd-id"><h1 class="hd-name" id="hdName">' + esc(h.name) + '</h1><p class="hd-sub">Pathfynder Rider Hub</p></div>' +
     '<button type="button" class="bell-btn" data-action="notifs" aria-label="Notifications">' + ico('bell') + '<span class="bell-badge" id="bellBadge"' + (STATE.notifUnread > 0 ? '' : ' hidden') + '>' + (STATE.notifUnread > 9 ? '9+' : STATE.notifUnread) + '</span></button>' +
-    '<button type="button" class="profile-btn" data-action="profile" aria-label="Profile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></button>' +
+    '<button type="button" class="hd-post" data-action="post" aria-label="Request a ride">' + ico('plus') + 'Request</button>' +
     '</div></header>';
 }
 function pillSub(k, today, list) {
@@ -633,6 +663,15 @@ function dateStrip() {
     return '<button type="button" class="date-pill' + (k === STATE.selectedDate ? ' is-selected' : '') + '" data-action="pick-date" data-date="' + k + '"' + (k === STATE.selectedDate ? ' aria-current="date"' : '') + '>' +
       '<span class="date-pill__top">' + esc(top) + '</span><span class="date-pill__sub' + (k === today ? ' date-pill__sub--date' : '') + '">' + esc(sub) + '</span></button>';
   }).join('');
+  /* 7 empty future days after the last day that has a chip, then one dashed "+ Request" chip. */
+  var last = new Date(keys[keys.length - 1] + 'T12:00:00'), empties = '';
+  for (var i = 1; i <= 7; i++) {
+    var d = new Date(last.getTime()); d.setDate(d.getDate() + i);
+    var ek = localDateKey(d.toISOString());
+    empties += '<button type="button" class="date-pill date-pill--empty" data-action="post" data-date="' + esc(ek) + '" aria-label="' + esc('Request a ride on ' + postDateLabel(ek)) + '">' +
+      '<span class="date-pill__top">' + esc(fmtDateShort(d.toISOString())) + '</span><span class="date-pill__sub">\u2014</span></button>';
+  }
+  pills += empties + '<button type="button" class="date-pill--post" data-action="post" aria-label="Request a ride">' + ico('plus') + '<span>Request</span></button>';
   return '<section class="date-strip"><p class="date-strip__label">Your rides</p><div class="date-strip__row" id="dateStrip">' + pills + '</div>' + itemChips() + '</section>';
 }
 /* One chip per ride/request when the selected date has 2+. */
@@ -648,11 +687,11 @@ function itemChips() {
 }
 function emptyDay() {
   var none = allItems().length === 0;
-  return '<div class="empty-day"><h2>' + (none ? 'No rides yet' : 'No ride on this day') + '</h2>' +
-    '<p>Request a ride and let drivers know where you are headed, or browse rides that are already posted.</p>' +
+  return '<div class="empty-day"><h2>' + (none ? 'No rides yet' : (STATE.selectedDate === todayKey() ? 'No ride today' : 'No ride on this day')) + '</h2>' +
+    '<p>Request a ride so a driver can send an offer.</p>' +
     '<div class="empty-day__btns">' +
     '<button type="button" class="btn btn-cta" data-action="post">Request a ride</button>' +
-    '<a class="btn btn-secondary" href="/explore">Explore rides</a>' +
+    '<a class="btn btn-secondary" href="/explore">' + ico('search') + 'Explore rides</a>' +
     '</div></div>';
 }
 function skeleton() {
@@ -796,7 +835,7 @@ function render() {
   if (STATE.view === 'notifs') { app.classList.remove('has-bar'); renderNotifs(app); sheetHtml(); return; }
   if (STATE.errorType) { app.classList.remove('has-bar'); app.innerHTML = errorPage(); sheetHtml(); return; }
   var oldStrip = document.getElementById('dateStrip');
-  var keepScroll = oldStrip ? oldStrip.scrollLeft : 0;
+  var keepScroll = oldStrip ? oldStrip.scrollLeft : (STATE.stripSaved || 0); STATE.stripSaved = null; /* stripSaved: strip position remembered while the request flow was open */
   var body = '', showBar = false, p = STATE.payload;
   var fade = STATE.fade && !STATE.loading; STATE.fade = STATE.loading ? STATE.fade : false;
   if (STATE.loading) { showBar = true; body = skeleton() + actionBarPlaceholder(); }
@@ -817,9 +856,20 @@ function render() {
   var strip = document.getElementById('dateStrip');
   if (strip) {
     var sel = strip.querySelector('.is-selected');
+    /* Where "today" sits left-aligned (half of the previous chip peeking). Trailing space lets the strip scroll that far when few upcoming days exist. */
+    var tChip = strip.querySelector('[data-date="' + todayKey() + '"]'), todayTarget = 0;
+    if (tChip) {
+      var pChip = tChip.previousElementSibling;
+      todayTarget = pChip ? Math.max(0, tChip.offsetLeft - pChip.offsetWidth / 2 - 8) : 0;
+      var need = todayTarget + strip.clientWidth - strip.scrollWidth;
+      if (need > 0) strip.style.paddingRight = (16 + need) + 'px';
+    }
     if (STATE.stripScroll && sel) {
       STATE.stripScroll = false;
-      strip.scrollLeft = sel.offsetLeft - (strip.clientWidth - sel.offsetWidth) / 2;
+      if (sel.getAttribute('data-date') === todayKey()) {
+        /* Today toward the left; with a past day, only half of it peeks in at the left edge. */
+        strip.scrollLeft = todayTarget;
+      } else strip.scrollLeft = sel.offsetLeft - (strip.clientWidth - sel.offsetWidth) / 2;
     } else { strip.scrollLeft = keepScroll; }
   }
 }
@@ -898,7 +948,7 @@ function loadProfile() {
   STATE.profileLoading = true; STATE.profileError = null; render();
   apiProfileGet().then(function (data) {
     if (!data || data.error) throw new Error((data && data.error) || 'empty');
-    STATE.profile = data; STATE.profileLoading = false; render();
+    STATE.profile = data; STATE.profileLoading = false; hdrCacheWrite(); render();
   }).catch(function (e) {
     console.error('[passenger] profile load failed', e);
     STATE.profileLoading = false; STATE.profile = null;
@@ -911,6 +961,7 @@ function saveProfile(patch, okMsg) {
     if (!data || data.error) throw new Error((data && data.error) || 'empty');
     if (patch.name != null) STATE.profile.name = data.name || patch.name;
     if (patch.photo != null) STATE.profile.photo_url = data.photo_url || patch.photo;
+    hdrCacheWrite();
     if (okMsg) toast(okMsg);
     return true;
   }).catch(function (e) {
@@ -1343,7 +1394,12 @@ function postLoadRecent() {
 }
 /* Returns true when handled. */
 function postAction(action, t) {
-  if (action === 'post') { hideToast(); STATE.sheet = null; sheetHtml(); postInit(); STATE.view = 'post'; window.scrollTo(0, 0); renderPost(); postLoadRecent(); return true; }
+  if (action === 'post') {
+    var dsEl = document.getElementById('dateStrip'); if (dsEl) STATE.stripSaved = dsEl.scrollLeft;
+    var preDate = t.getAttribute('data-date');
+    hideToast(); STATE.sheet = null; sheetHtml(); postInit();
+    if (preDate && postDays().some(function (d) { return d.key === preDate; })) POST.dates = [preDate]; /* YYYY-MM-DD local, same format as the step-2 tiles */
+    STATE.view = 'post'; window.scrollTo(0, 0); renderPost(); postLoadRecent(); return true; }
   if (!POST) return true;
   var id = t.getAttribute('data-id');
   function go(step) { POST.step = step; window.scrollTo(0, 0); renderPost(); }
@@ -1427,6 +1483,7 @@ function boot() {
   if (!STATE.isMock && !STATE.token) { STATE.loading = false; STATE.errorType = 'invalid_token'; render(); return; }
   load(true);
   refreshUnread();
+  loadHeaderProfile();
 }
 document.addEventListener('visibilitychange', function () {
   if (document.visibilityState === 'visible' && !STATE.pendingKey && !STATE.errorType && !STATE.loading && STATE.view === 'home') load(false);
