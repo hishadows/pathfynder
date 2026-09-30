@@ -135,6 +135,7 @@ textarea.input{padding:12px 14px;min-height:88px;resize:vertical}
 })();
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="/js/pf-avatar.js"></script>
 <script>
 (function () {
 'use strict';
@@ -312,7 +313,7 @@ function tripCard(t) {
   var stops = Number(t.stops_count) || 0;
   var joined = Number(t.joined_count) || 0;
   return '<section class="card" aria-label="Trip details">' +
-    '<div class="t-head"><div class="avatar" aria-hidden="true">' + esc(first.charAt(0).toUpperCase()) + '</div>' +
+    '<div class="t-head"><div class="avatar" aria-hidden="true">' + pfAvatarHtml(t.driver_id, 44, first.charAt(0).toUpperCase()) + '</div>' +
     '<div class="t-who">' + esc(first) + '</div>' +
     (/^https:\/\//i.test(String(t.message_url || '')) ? '<a class="t-msg" href="' + esc(t.message_url) + '" target="_blank" rel="noopener" aria-label="Message driver">' + IC_MSG + '</a>' : '') + '</div>' +
     (t.schedule_text ? '<p class="t-when">' + esc(t.schedule_text) + '</p>' : '') +

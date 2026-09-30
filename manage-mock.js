@@ -21,29 +21,29 @@
     var tripStatus = stateKey === 'draft' ? 'draft' : (stateKey === 'completed' ? 'completed' : 'active');
 
     var bookings = [
-      { id: 'b1', name: 'Sara', phone: '15195550101', seats: 1,
+      { id: 'b1', passenger_id: '3f1a6c10-0001-4a00-8000-00000000a001', name: 'Sara', phone: '15195550101', seats: 1,
         pickup_label: 'Peter Street, Windsor, Ontario, Canada', pickup_lat: 42.3178, pickup_lng: -83.0310,
         dropoff_label: 'Essex, Ontario, Canada', dropoff_lat: DEST.lat, dropoff_lng: DEST.lng,
         pickup_time: null, created_at: isoOffset(-3 * 24 * 3600e3), picked_up_at: null, dropped_off_at: null, note: "I'll be waiting by the red door, thanks!" },
-      { id: 'b2', name: 'Priya', phone: '15195550102', seats: 1,
+      { id: 'b2', passenger_id: '3f1a6c10-0002-4a00-8000-00000000a002', name: 'Priya', phone: '15195550102', seats: 1,
         pickup_label: '496 Askin Avenue, Windsor, Ontario N9B 2W8, Canada', pickup_lat: 42.3145, pickup_lng: -83.0655,
         dropoff_label: 'Essex, Ontario, Canada', dropoff_lat: DEST.lat, dropoff_lng: DEST.lng,
         pickup_time: null, created_at: isoOffset(-3 * 24 * 3600e3 + 60e3), picked_up_at: null, dropped_off_at: null, note: null },
-      { id: 'b3', name: 'Amit', phone: '15195550103', seats: 1,
+      { id: 'b3', passenger_id: '3f1a6c10-0003-4a00-8000-00000000a003', name: 'Amit', phone: '15195550103', seats: 1,
         pickup_label: '496 Askin Avenue, Windsor, Ontario N9B 2W8, Canada', pickup_lat: 42.3145, pickup_lng: -83.0655,
         dropoff_label: 'Leamington, Ontario, Canada', dropoff_lat: LEAMINGTON.lat, dropoff_lng: LEAMINGTON.lng,
         pickup_time: null, created_at: isoOffset(-3 * 24 * 3600e3 + 120e3), picked_up_at: null, dropped_off_at: null, note: 'Near the bus stop' },
-      { id: 'b4', name: 'Jordan', phone: '15195550104', seats: 1,
+      { id: 'b4', passenger_id: null, name: 'Jordan', phone: '15195550104', seats: 1,
         pickup_label: 'Ottawa Street, Windsor, Ontario, Canada', pickup_lat: 42.3080, pickup_lng: -83.0065,
         dropoff_label: 'Leamington, Ontario, Canada', dropoff_lat: LEAMINGTON.lat, dropoff_lng: LEAMINGTON.lng,
         pickup_time: null, created_at: isoOffset(-3 * 24 * 3600e3 + 180e3), picked_up_at: null, dropped_off_at: null, note: null },
       /* Picked up at the driver's origin (Windsor) */
-      { id: 'b5', name: 'Pranay', phone: '15195550105', seats: 1,
+      { id: 'b5', passenger_id: '3f1a6c10-0005-4a00-8000-00000000a005', name: 'Pranay', phone: '15195550105', seats: 1,
         pickup_label: 'Windsor, Ontario, Canada', pickup_lat: ORIGIN.lat, pickup_lng: ORIGIN.lng,
         dropoff_label: 'Leamington, Ontario, Canada', dropoff_lat: LEAMINGTON.lat, dropoff_lng: LEAMINGTON.lng,
         pickup_time: null, created_at: isoOffset(-3 * 24 * 3600e3 + 240e3), picked_up_at: null, dropped_off_at: null, note: null },
       /* Dropped at the destination (Essex) */
-      { id: 'b6', name: 'Sahil', phone: '15195550106', seats: 1,
+      { id: 'b6', passenger_id: '3f1a6c10-0006-4a00-8000-00000000a006', name: 'Sahil', phone: '15195550106', seats: 1,
         pickup_label: 'Tecumseh Road East, Windsor, Ontario, Canada', pickup_lat: 42.3055, pickup_lng: -82.9700,
         dropoff_label: 'Essex, Ontario, Canada', dropoff_lat: DEST.lat, dropoff_lng: DEST.lng,
         pickup_time: null, created_at: isoOffset(-3 * 24 * 3600e3 + 300e3), picked_up_at: null, dropped_off_at: null, note: null }
@@ -115,7 +115,7 @@
 
   /* Driver profile (mock of driver_profile_get). whatsapp_masked comes pre-masked; never a raw number. */
   var PROFILE = {
-    name: 'Test Driver', photo_url: null, whatsapp_masked: '+1 \u2022\u2022\u2022 \u2022\u2022\u2022 4821', notifications_enabled: false,
+    id: '7d2e9b40-0001-4b00-8000-00000000d001', name: 'Test Driver', photo_url: null, whatsapp_masked: '+1 \u2022\u2022\u2022 \u2022\u2022\u2022 4821', notifications_enabled: false,
     stats: { trips_completed: 42, member_since: '2026-09-01', passengers_drove: 118, total_earned: 1840 }
   };
 

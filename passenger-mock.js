@@ -71,7 +71,7 @@
         dest_label: r.to.label, dest_lat: r.to.lat, dest_lng: r.to.lng,
         stops: r.stops, price_per_seat: r.price, note: null, seats_total: 6,
         join_url: 'https://pathfynder.ca/j/DEMO42',
-        driver: { name: 'Rahul Sharma', photo: null, phone: qp('nophone') === '1' ? null : '15550100123' }
+        driver: { id: '7d2e9b40-0002-4b00-8000-00000000d002', name: 'Rahul Sharma', photo: null, phone: qp('nophone') === '1' ? null : '15550100123' }
       },
       booking: {
         id: r.id, status: r.status, seats: r.seats,
@@ -101,7 +101,7 @@
   }
 
   var PROFILE = {
-    name: 'Sam Taylor', photo_url: null, whatsapp_masked: '+1 ••• ••• 0111', notifications_enabled: false,
+    id: '5b8c1e20-0001-4c00-8000-00000000c001', name: 'Sam Taylor', photo_url: null, whatsapp_masked: '+1 ••• ••• 0111', notifications_enabled: false,
     stats: { rides_completed: 7, rides_upcoming: 3, member_since: '2026-09-01T12:00:00Z', total_spent: 96.5 }
   };
 

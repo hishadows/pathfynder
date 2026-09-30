@@ -331,6 +331,7 @@ textarea.pt-input{padding:12px 14px;min-height:88px;resize:vertical}
 })();
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="/js/pf-avatar.js"></script>
 <script src="/js/pf-notify-v5.js" defer></script>
 <script src="/js/pf-install-sheet-v2.js" defer></script>
 <script>
@@ -710,7 +711,7 @@ function driverRow(p) {
   var d = p.trip.driver || {};
   var digits = String(d.phone || '').replace(/\D/g, '');
   var fn = firstName(d.name) || 'driver';
-  var avatar = d.photo ? '<img src="' + esc(d.photo) + '" alt="">' : esc(initial(d.name));
+  var avatar = d.photo ? '<img src="' + esc(d.photo) + '" alt="">' : pfAvatarHtml(d.id, 40, initial(d.name));
   var contacts = digits
     ? '<a class="ic-btn" href="tel:+' + digits + '" aria-label="Call ' + esc(fn) + '">' + ICON_PHONE + '</a>' +
       '<a class="ic-btn" href="https://wa.me/' + digits + '" target="_blank" rel="noopener" aria-label="Message ' + esc(fn) + ' on WhatsApp">' + ICON_WA + '</a>'
@@ -855,7 +856,7 @@ function profileHeader() {
   return '<header class="app-bar"><div class="pf-bar__inner"><button type="button" class="pf-back" data-action="pf-back" aria-label="Back">' + ico('arrowLeft') + '</button><div><h1 class="app-bar__title">Profile</h1></div></div></header>';
 }
 function profileBody(p) {
-  var avatar = p.photo_url ? '<img src="' + esc(p.photo_url) + '" alt="">' : esc(initials(p.name));
+  var avatar = p.photo_url ? '<img src="' + esc(p.photo_url) + '" alt="">' : pfAvatarHtml(p.id, 96, initials(p.name));
   var nameBlock = STATE.editingName
     ? '<div class="pf-edit"><input class="pf-input" id="pfNameInput" type="text" maxlength="60" autocomplete="name" aria-label="Your name" value="' + esc(STATE.nameDraft) + '">' +
       (STATE.nameError ? '<p class="pf-err">' + esc(STATE.nameError) + '</p>' : '') +

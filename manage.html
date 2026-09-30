@@ -450,6 +450,7 @@ textarea.pt-input{padding:12px 14px;min-height:88px;resize:vertical}
 })();
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="/js/pf-avatar.js"></script>
 <script src="/js/pf-notify-v5.js" defer></script>
 <script src="/js/pf-install-sheet-v2.js" defer></script>
 <script>
@@ -1114,13 +1115,13 @@ var HDR_KEY = 'pf_driver_hdr';
 function hdrCacheRead() { try { var v = JSON.parse(localStorage.getItem(HDR_KEY) || 'null'); return v && typeof v === 'object' ? v : {}; } catch (e) { return {}; } }
 function hdrCacheWrite() {
   if (!STATE.profile) return;
-  try { localStorage.setItem(HDR_KEY, JSON.stringify({ name: STATE.profile.name || '', photo_url: STATE.profile.photo_url || '' })); } catch (e) {}
+  try { localStorage.setItem(HDR_KEY, JSON.stringify({ name: STATE.profile.name || '', photo_url: STATE.profile.photo_url || '', id: STATE.profile.id || '' })); } catch (e) {}
 }
 function hdrInfo() {
   var p = STATE.profile || hdrCacheRead();
-  return { name: String(p.name || '').trim() || 'Driver', photo: p.photo_url || '' };
+  return { name: String(p.name || '').trim() || 'Driver', photo: p.photo_url || '', id: p.id || '' };
 }
-function hdrAvatarHtml(h) { return h.photo ? '<img src="' + esc(h.photo) + '" alt="">' : esc(initial(h.name)); }
+function hdrAvatarHtml(h) { return h.photo ? '<img src="' + esc(h.photo) + '" alt="">' : pfAvatarHtml(h.id, 40, initial(h.name)); }
 function paintHeader() {
   var n = document.getElementById('hdName'), a = document.getElementById('hdAvatar');
   if (!n || !a) return;
@@ -1291,7 +1292,7 @@ function nsPaxRow(b, kind, multi, canAct, off) {
     '<a class="ns-ic" href="https://wa.me/' + digits + '" target="_blank" rel="noopener" aria-label="Message ' + esc(firstName(b.name)) + '">' + NS_ICON_WA + '</a>' : '';
   var seats = (b.seats || 1) + ' seat' + ((b.seats || 1) === 1 ? '' : 's');
   return '<div class="ns-pax"><div class="ns-pax__top">' +
-    '<span class="pax-avatar">' + esc(initial(b.name)) + '</span>' +
+    '<span class="pax-avatar">' + pfAvatarHtml(b.passenger_id, 36, initial(b.name)) + '</span>' +
     '<div class="ns-pax__id"><span class="ns-pax__name">' + esc(b.name) + '</span><span class="ns-pax__seats">' + seats + '</span></div>' +
     contacts + '</div>' +
     (b.note ? '<div class="ns-note">' + NS_ICON_NOTE + '<span>' + esc(b.note) + '</span></div>' : '') +
@@ -1429,7 +1430,7 @@ function passengerCard(b, trip) {
 
   if (dropped && !STATE.expanded[b.id]) {
     return '<div class="pax-card pax-card--collapsed pax-card--muted" data-action="toggle-expand" data-id="' + b.id + '">' +
-      '<span class="pax-avatar">' + esc(initial(b.name)) + '</span>' +
+      '<span class="pax-avatar">' + pfAvatarHtml(b.passenger_id, 36, initial(b.name)) + '</span>' +
       '<span class="pax-card__name">' + esc(b.name) + '</span>' +
       '<span style="margin-left:auto;font-size:13px;color:var(--text-2)">Dropped off ✓</span>' +
     '</div>';
@@ -1441,7 +1442,7 @@ function passengerCard(b, trip) {
   var toggleAttrs = dropped ? ' data-action="toggle-expand" data-id="' + b.id + '" style="cursor:pointer"' : '';
 
   var head = '<div class="pax-card__top"' + toggleAttrs + '>' +
-    '<span class="pax-avatar">' + esc(initial(b.name)) + '</span>' +
+    '<span class="pax-avatar">' + pfAvatarHtml(b.passenger_id, 36, initial(b.name)) + '</span>' +
     '<div class="pax-card__id"><span class="pax-card__name">' + esc(b.name) + '</span><span class="pax-card__meta">' + relTime(b.created_at) + '</span></div>' +
     contactBtn +
   '</div>';
@@ -1854,7 +1855,7 @@ function profileHeader() {
   return '<header class="app-bar"><div class="pf-bar__inner"><button type="button" class="pf-back" data-action="pf-back" aria-label="Back">' + ico('arrowLeft') + '</button><div><h1 class="app-bar__title">Profile</h1></div></div></header>';
 }
 function profileBody(p) {
-  var avatar = p.photo_url ? '<img src="' + esc(p.photo_url) + '" alt="">' : esc(initials(p.name));
+  var avatar = p.photo_url ? '<img src="' + esc(p.photo_url) + '" alt="">' : pfAvatarHtml(p.id, 96, initials(p.name));
   var nameBlock = STATE.editingName
     ? '<div class="pf-edit"><input class="pf-input" id="pfNameInput" type="text" maxlength="60" autocomplete="name" aria-label="Your name" value="' + esc(STATE.nameDraft) + '">' +
       (STATE.nameError ? '<p class="pf-err">' + esc(STATE.nameError) + '</p>' : '') +
