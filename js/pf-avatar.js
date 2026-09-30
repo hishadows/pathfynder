@@ -1,7 +1,7 @@
 /* Pathfynder shared DiceBear avatar helper.
    Seed = non-secret user id ONLY. Never pass a name, phone, email or any token (manage/passenger/join/share token). */
 (function () {
-  var AVATAR_STYLE = "lorelei";
+  var AVATAR_STYLE = "notionists";
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
