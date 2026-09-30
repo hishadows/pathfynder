@@ -1,0 +1,8 @@
+{
+  "name": "pathfynder-site",
+  "private": true,
+  "description": "Root package only so Vercel installs the dependency used by api/og.mjs (link-preview images). The pages themselves are plain HTML.",
+  "dependencies": {
+    "@vercel/og": "0.8.5"
+  }
+}

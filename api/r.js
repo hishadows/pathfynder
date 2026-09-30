@@ -9,11 +9,11 @@ var SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 var FALLBACK_URL = 'https://www.pathfynder.ca/explore';
 var TARGET_PREFIX = 'https://www.pathfynder.ca/';
 var CODE_RE = /^[A-Za-z0-9]{8}$/;
-// Same logo explore.html already uses for og:image, served from the repo root.
-var OG_IMAGE_URL = 'https://www.pathfynder.ca/logo.png';
+// Same brand card explore.html and index.html use for og:image, served from the repo root.
+var OG_IMAGE_URL = 'https://www.pathfynder.ca/og-brand.png';
 var OG_IMAGE_TYPE = 'image/png';
-var OG_IMAGE_WIDTH = 301;
-var OG_IMAGE_HEIGHT = 303;
+var OG_IMAGE_WIDTH = 1200;
+var OG_IMAGE_HEIGHT = 630;
 
 function escHtml(s) {
   return String(s).replace(/[&<>"']/g, function (c) {
