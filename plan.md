@@ -106,3 +106,4 @@ One task per session. Status: todo / done / parked.
 
 - 2026-09-29 — Passenger booked view: hero shows only own pickup/drop-off; Trip details card (driver route + note + status) now contains the driver row; removed "Your driver" card, tighter spacing. Verified at 390px light+dark via ?mock=1. Open: routeRows no longer uses isNear(), which is now unused in passenger.html.
 - 2026-09-29 — Vercel: hit the daily build rate limit ("retry in 24 hours"). Pranay set Ignored Build Step `[ "$VERCEL_GIT_COMMIT_REF" != "main" ]` so only `main` builds; `claude/*` previews are skipped. This note is also a test merge to see whether `main` builds again.
+- 2026-09-30 — Passenger tokens on request + `passenger_manage_url` (service_role) for the bot. Open: n8n must call driver_manage_url / passenger_manage_url and send the link; Telegram requests are linked by Telegram id (same as drivers).
