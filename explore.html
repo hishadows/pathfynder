@@ -111,8 +111,8 @@ body.no-scroll{overflow:hidden}
 /* App bar */
 .app-bar{position:sticky;top:0;z-index:3;background:var(--header);color:var(--header-text)}
 .app-bar__inner{display:flex;align-items:center;gap:12px;min-height:60px;padding:8px 8px 8px 16px}
-.brand{display:grid;place-items:center;width:36px;height:36px;border-radius:10px;background:var(--brand-bg);color:var(--brand-fg);flex:none}
-.brand .i{width:22px;height:22px;stroke-width:2.1}
+.brand{display:grid;place-items:center;width:36px;height:36px;border-radius:10px;background:var(--brand-bg);color:var(--brand-fg);flex:none;overflow:hidden}
+.brand img{width:100%;height:100%;object-fit:cover;display:block}
 .app-bar__titles{flex:1;min-width:0}
 .app-bar__title{margin:0;font-size:19px;font-weight:500;line-height:1.2}
 .app-bar__sub{margin:1px 0 0;font-size:13px;color:var(--header-sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -1534,7 +1534,7 @@ function removeFilter(key) {
 /* ---------- Page shell ---------- */
 function appBar(sub) {
   return '<header class="app-bar"><div class="app-bar__inner">' +
-    '<a class="brand js-explore-home" href="/explore" aria-label="Explore rides — start over">' + icon('pin') + '</a>' +
+    '<a class="brand js-explore-home" href="/explore" aria-label="Explore rides — start over"><img src="/logo.png" alt="" width="36" height="36"></a>' +
     '<div class="app-bar__titles"><h1 class="app-bar__title">Explore rides</h1><p class="app-bar__sub"><b>Pathfynder</b> · <span>' + sub + '</span></p></div>' +
     '<button type="button" class="icon-btn pf-bell js-notify-bell" aria-label="Notifications">' + icon('bell') + '<span class="pf-bell__dot"' + (state.notify.on === false ? '' : ' hidden') + '></span></button>' +
     '</div></header>';
