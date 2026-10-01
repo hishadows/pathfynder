@@ -435,6 +435,8 @@ textarea.pt-input{padding:12px 14px;min-height:88px;resize:vertical}
 .toast--top{bottom:auto;top:calc(12px + env(safe-area-inset-top))}
 
 .footer-space{height:8px}
+.legal-foot{text-align:center;font-size:13px;color:var(--text-2);padding:0 16px 8px}
+.legal-foot a{display:inline-block;min-height:44px;line-height:44px;padding:0 10px;color:var(--text-2);text-decoration:underline}
 </style>
 </head>
 <body>
@@ -1698,7 +1700,7 @@ function render() {
   else if (!payload) body = emptyDay();
   else {
     showBar = stale ? true : payload.trip.status !== 'completed';
-    body = '<div class="main-body' + (stale ? ' is-stale' : (fade ? ' fade-in' : '')) + '">' + heroSection(payload) + passengersSection(payload) + '<div class="footer-space"></div></div>' +
+    body = '<div class="main-body' + (stale ? ' is-stale' : (fade ? ' fade-in' : '')) + '">' + heroSection(payload) + passengersSection(payload) + '<div class="footer-space"></div><div class="legal-foot"><a href="/terms">Terms</a> &middot; <a href="/privacy">Privacy</a></div></div>' +
       (stale ? actionBarPlaceholder() : actionBar(payload));
   }
   if (payload) {

@@ -319,6 +319,8 @@ textarea.pt-input{padding:12px 14px;min-height:88px;resize:vertical}
 .toast.is-visible{opacity:1}
 .toast--top{bottom:auto;top:calc(12px + env(safe-area-inset-top))}
 .footer-space{height:8px}
+.legal-foot{text-align:center;font-size:13px;color:var(--text-2);padding:0 16px 8px}
+.legal-foot a{display:inline-block;min-height:44px;line-height:44px;padding:0 10px;color:var(--text-2);text-decoration:underline}
 </style>
 </head>
 <body>
@@ -803,7 +805,7 @@ function requestView(it) {
     '<section class="section"><div class="card"><h2 class="card__title">Your request</h2>' +
     '<p style="margin:0;font-size:14.5px">No driver has taken this request yet. You can also browse rides that are already posted.</p>' +
     '<a class="btn btn-secondary btn-full" style="margin-top:12px" href="' + esc(exploreHrefFor(it)) + '">' + ico('search') + 'Explore rides</a></div></section>' +
-    '<div class="footer-space"></div></div>';
+    '<div class="footer-space"></div><div class="legal-foot"><a href="/terms">Terms</a> &middot; <a href="/privacy">Privacy</a></div></div>';
 }
 function requestBar() {
   return '<div class="action-bar"><div class="action-bar__row">' +
@@ -844,7 +846,7 @@ function render() {
   else {
     var bar = rideBar(p);
     showBar = !!bar;
-    body = '<div class="main-body' + (fade ? ' fade-in' : '') + '">' + heroCard(p) + progressCard(p) + bookingCard(p) + '<div class="footer-space"></div></div>' + bar;
+    body = '<div class="main-body' + (fade ? ' fade-in' : '') + '">' + heroCard(p) + progressCard(p) + bookingCard(p) + '<div class="footer-space"></div><div class="legal-foot"><a href="/terms">Terms</a> &middot; <a href="/privacy">Privacy</a></div></div>' + bar;
   }
   if (p && p.booking) {
     /* keep the strip in step with the freshest status */
