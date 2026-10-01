@@ -97,6 +97,8 @@ textarea.input{padding:12px 14px;min-height:88px;resize:vertical}
 @media (prefers-reduced-motion: reduce){.spin{animation:none}}
 .vsteps{margin:12px 0 0;padding-left:20px;text-align:left;font-size:14.5px;line-height:1.5;color:var(--text-2)}
 .hint{margin:8px 0 0;font-size:13px;color:var(--text-2);line-height:1.4}
+.legal-note{margin:12px 0 0;text-align:center;font-size:12.5px;line-height:1.4;color:var(--text-2)}
+.legal-note a{color:var(--text-2);text-decoration:underline;display:inline-block;padding:10px 0;margin:-10px 0}
 .err{margin:10px 0 0;font-size:13.5px;color:var(--danger);line-height:1.4}
 .btns{display:flex;gap:10px;margin-top:16px}
 .btn{flex:1;min-height:50px;border-radius:14px;border:0;font-size:16px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;background:var(--cta);color:var(--cta-text)}
@@ -349,7 +351,8 @@ function stepHtml() {
     '<div class="field"><label class="label" for="in-note">Note for the driver (optional)</label><textarea class="input" id="in-note" maxlength="300" placeholder="Landmark, luggage, anything helpful">' + esc(STATE.note) + '</textarea></div>' +
     (STATE.returning ? '' : '<p class="hint">Next you’ll confirm on WhatsApp. No typing your name or number.</p>') +
     '<p class="err" id="err" role="alert"' + (STATE.error ? '' : ' hidden') + '>' + esc(STATE.error) + '</p>' +
-    '<div class="btns">' + last + '</div></div>';
+    '<div class="btns">' + last + '</div>' +
+    '<p class="legal-note">By booking you agree to our <a href="/terms">Terms</a> and <a href="/privacy">Privacy Policy</a>.</p></div>';
 }
 function waUrl(code) { return 'https://wa.me/' + BOT_WA + '?text=' + encodeURIComponent('BOOK ' + code); }
 function verifyHtml() {
