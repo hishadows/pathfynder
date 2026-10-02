@@ -123,9 +123,6 @@ body.no-scroll{overflow:hidden}
 :root{--nt-bg:#E1F5EE;--nt-ink:#085041;--nt-sub:#0F6E56;--nt-btn:#008069;--nt-dot:#25D366}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--nt-bg:rgba(0,168,132,.14);--nt-ink:#9FE1CB;--nt-sub:#5DCAA5;--nt-btn:#00A884;--nt-dot:#00A884}}
 :root[data-theme="dark"]{--nt-bg:rgba(0,168,132,.14);--nt-ink:#9FE1CB;--nt-sub:#5DCAA5;--nt-btn:#00A884;--nt-dot:#00A884}
-.pf-bell{position:relative;width:44px;height:44px}
-.pf-bell .i{width:22px;height:22px}
-.pf-bell__dot{position:absolute;top:10px;right:10px;width:8px;height:8px;border-radius:50%;background:var(--nt-dot);border:1.5px solid var(--header);box-sizing:content-box}
 .pf-banner{position:relative;display:flex;gap:10px;padding:12px;border-radius:10px;background:var(--nt-bg);color:var(--nt-ink)}
 .pf-banner__ico{width:20px;height:20px;flex:none;color:var(--nt-ink)}
 .pf-banner__body{flex:1;min-width:0;padding-right:18px}
@@ -1246,7 +1243,6 @@ function notifyBanner() {
 }
 function refreshNotifyUI() {
   var on = state.notify.on;
-  document.querySelectorAll('.pf-bell__dot').forEach(function (d) { d.hidden = on !== false && !state.notify.needsLink; });
   var banner = document.querySelector('.pf-banner');
   var html = notifyBanner();
   if (!html) { if (banner) banner.remove(); }
@@ -1536,7 +1532,6 @@ function appBar(sub) {
   return '<header class="app-bar"><div class="app-bar__inner">' +
     '<a class="brand js-explore-home" href="/explore" aria-label="Explore rides — start over"><img src="/logo.png" alt="" width="36" height="36"></a>' +
     '<div class="app-bar__titles"><h1 class="app-bar__title">Explore rides</h1><p class="app-bar__sub"><b>Pathfynder</b> · <span>' + sub + '</span></p></div>' +
-    '<button type="button" class="icon-btn pf-bell js-notify-bell" aria-label="Notifications">' + icon('bell') + '<span class="pf-bell__dot"' + (state.notify.on === false ? '' : ' hidden') + '></span></button>' +
     '</div></header>';
 }
 function searchPanel() {
@@ -2018,7 +2013,6 @@ document.addEventListener('click', function (e) {
   var noop = t.closest('[data-action="noop"]');
   if (noop) { e.preventDefault(); return; }
 
-  if (t.closest('.js-notify-bell')) { window.location.assign(notifyUrl()); return; }
   var notifyOn = t.closest('.js-notify-on');
   if (notifyOn) { turnOnNotifications(notifyOn); return; }
   if (t.closest('.js-banner-x')) {
