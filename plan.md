@@ -48,7 +48,7 @@ One task per session. Status: todo / done / parked.
 
 11. **Matching around stops** ✅ — explore/bot matching should also match passengers near a driver's `driver_routines.stops` (not only origin/destination).
    - Done when: a passenger whose pickup/drop-off is near a posted stop sees that driver in Explore and bot matches.
-   - Status: done 2026-10-02 (DB live; explore.html `via=` needs merge; notify_check_new_matches paste pending).
+   - Status: done 2026-10-02 (DB live incl. notify_check_new_matches; explore.html `via=` shipped in PR #106).
 
 ## Session notes
 
@@ -119,3 +119,4 @@ One task per session. Status: todo / done / parked.
 - 2026-10-02 — Task 9 done: hq_check + gated get_feed/get_power_users, muse phone/contact_public hidden, match_driver_to_scraped_passengers locked, leftover grants revoked. Open: after HQ deploy paste the DROP file; extracted_data_01 still has MAINTAIN for anon (no data access, low).
 - 2026-10-02 — Task 9 shipped: HQ live with server-side passphrase, old HQ RPCs + extracted_data_01 policies dropped, VITE_DASHBOARD_PASSCODE removed. Open: passphrase rotation not applied yet.
 - 2026-10-02 — Task 11: driver routes follow their stops in Explore/bot/alerts; driver bot replies + Explore link carry `via`. Open: paste design/stops-matching-notify-paste.sql (apply_migration timed out), merge explore.html, real-phone check; no live passengers near a stop yet, so the gain isn't visible in counts today.
+- 2026-10-02 — Header post button icon-only (+) on driver + passenger home, beside the bell. Open: check on a real phone.
