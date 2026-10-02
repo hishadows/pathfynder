@@ -627,6 +627,8 @@ function parseUrl() {
     to: p.get('to') || '',
     oCoords: parseLatLng(p.get('o')),
     dCoords: parseLatLng(p.get('d')),
+    /* via = driver's own stops (lat,lng;lat,lng), max 5, from the bot link */
+    via: (p.get('via') || '').split(';').map(parseLatLng).filter(Boolean).slice(0, 5),
     date: p.get('date') || null,
     sort: p.get('sort') || 'best',
     filters: {
@@ -649,6 +651,7 @@ var state = {
   mode: initial_.mode,
   from: initial_.from, to: initial_.to,
   fromPlace: null, toPlace: null,
+  via: initial_.via,
   date: initial_.date, dateChip: initial_.date ? 'Pick' : 'Today',
   filters: initial_.filters,
   sort: initial_.sort,
@@ -857,6 +860,7 @@ function buildFilters(f, originPlace, destPlace) {
   if (f.daily) out.daily = true;
   if (originPlace) out.from_name = originPlace.name;
   if (destPlace) out.to_name = destPlace.name;
+  if (state.mode === 'passenger' && state.via && state.via.length) out.via = state.via.map(function (v) { return { lat: v.lat, lng: v.lng }; });
   /* excludes the viewer's own Pathfynder bot rides server-side */
   var viewerToken = (window.PFNotify && window.PFNotify.token && window.PFNotify.token()) || window.PF_TOKEN;
   if (viewerToken) out.viewer_token = viewerToken;
@@ -1149,7 +1153,7 @@ function trySilentLocation() {
         state.from = label;
         state.fromPlace = { name: label, lat: lat, lng: lng, label: label };
         state.unresolved.from = null;
-        state.origin = 'gps';
+        state.origin = 'gps'; state.via = [];
         searchOrRender();
       });
     }, function (err) {
@@ -1961,25 +1965,25 @@ function setSearchInputs() {
   var fromEl = document.querySelector('.js-from'), toEl = document.querySelector('.js-to');
   if (!fromEl) return;
   wireAutocomplete(fromEl, document.getElementById('acFrom'), function (place) {
-    state.from = place.name; state.fromPlace = place; state.unresolved.from = null; state.origin = 'typed';
+    state.from = place.name; state.fromPlace = place; state.unresolved.from = null; state.origin = 'typed'; state.via = [];
     maybeSearch();
   });
   wireAutocomplete(toEl, document.getElementById('acTo'), function (place) {
-    state.to = place.name; state.toPlace = place; state.unresolved.to = null;
+    state.to = place.name; state.toPlace = place; state.unresolved.to = null; state.via = [];
     maybeSearch();
   });
   fromEl.addEventListener('change', function () {
     var v = fromEl.value.trim();
     var pickedLabel = state.fromPlace ? (state.fromPlace.label || state.fromPlace.name) : null;
-    if (!v) { state.from = ''; state.fromPlace = null; state.unresolved.from = null; state.origin = null; searchOrRender(); }
-    else if (state.fromPlace && v !== pickedLabel) { state.from = fromEl.value; state.fromPlace = null; state.unresolved.from = v; state.origin = null; render(); }
+    if (!v) { state.from = ''; state.fromPlace = null; state.unresolved.from = null; state.origin = null; state.via = []; searchOrRender(); }
+    else if (state.fromPlace && v !== pickedLabel) { state.from = fromEl.value; state.fromPlace = null; state.unresolved.from = v; state.origin = null; state.via = []; render(); }
     else if (!state.fromPlace) { state.from = fromEl.value; }
   });
   toEl.addEventListener('change', function () {
     var v = toEl.value.trim();
     var pickedLabel = state.toPlace ? (state.toPlace.label || state.toPlace.name) : null;
-    if (!v) { state.to = ''; state.toPlace = null; state.unresolved.to = null; searchOrRender(); }
-    else if (state.toPlace && v !== pickedLabel) { state.to = toEl.value; state.toPlace = null; state.unresolved.to = v; render(); }
+    if (!v) { state.to = ''; state.toPlace = null; state.unresolved.to = null; state.via = []; searchOrRender(); }
+    else if (state.toPlace && v !== pickedLabel) { state.to = toEl.value; state.toPlace = null; state.unresolved.to = v; state.via = []; render(); }
     else if (!state.toPlace) { state.to = toEl.value; }
   });
 }
@@ -2052,7 +2056,7 @@ document.addEventListener('click', function (e) {
   var swap = t.closest('.js-swap');
   if (swap) {
     var f = state.from, tp = state.fromPlace; state.from = state.to; state.fromPlace = state.toPlace; state.to = f; state.toPlace = tp;
-    state.origin = state.fromPlace ? 'typed' : null;
+    state.origin = state.fromPlace ? 'typed' : null; state.via = [];
     searchOrRender();
     return;
   }
