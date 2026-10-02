@@ -43,4 +43,4 @@ The dispatch app (app.pathfynder.ca) and the Telegram mini app (pathfynder-form)
 - Git: in cloud sessions, commit and push to the session's `claude/*` branch after each finished task. Never push to `main` directly. When Pranay says "merge", open a PR from the `claude/*` branch and merge it into `main`.
 - When a requirement is unclear, ask instead of guessing.
 - For bugs: show the exact file + line causing it before fixing.
-- Never render raw phone numbers.
+- Never render raw phone numbers. Exception: Explore may show numbers inside Facebook/Poparide original message text (public posts).

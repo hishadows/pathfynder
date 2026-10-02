@@ -1,13 +1,23 @@
 import { useState } from 'react'
+import { supabase } from '../lib/supabase'
 
 export default function Gate({ onPass }: { onPass: () => void }) {
   const [pw, setPw] = useState('')
   const [err, setErr] = useState(false)
-  const expected = import.meta.env.VITE_DASHBOARD_PASSCODE
+  const [checking, setChecking] = useState(false)
 
-  const submit = () => {
-    if (pw && pw === expected) onPass()
-    else setErr(true)
+  const submit = async () => {
+    if (checking) return
+    if (!pw) { setErr(true); return }
+    setChecking(true)
+    try {
+      const { data, error } = await supabase.rpc('hq_check', { p_pass: pw })
+      if (!error && data === true) {
+        try { sessionStorage.setItem('hq_pass', pw) } catch { /* storage unavailable */ }
+        onPass()
+      } else setErr(true)
+    } catch { setErr(true) }
+    finally { setChecking(false) }
   }
 
   return (
@@ -31,9 +41,9 @@ export default function Gate({ onPass }: { onPass: () => void }) {
           onKeyDown={(e) => e.key === 'Enter' && submit()}
           className="w-full py-3 px-4 bg-surface2 border border-border2 rounded-xl text-txt text-center tracking-[3px] outline-none focus:border-accent mb-3 placeholder:tracking-normal placeholder:text-txt-muted"
         />
-        <button onClick={submit}
-          className="w-full h-11 bg-accent rounded-xl text-white font-display font-semibold active:opacity-85">
-          Enter
+        <button onClick={submit} disabled={checking}
+          className="w-full h-11 bg-accent rounded-xl text-white font-display font-semibold active:opacity-85 disabled:opacity-60">
+          {checking ? 'Checking…' : 'Enter'}
         </button>
         {err && <div className="text-red text-xs mt-3">Incorrect passphrase</div>}
       </div>

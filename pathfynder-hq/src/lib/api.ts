@@ -37,6 +37,18 @@ export interface WindowStats {
 
 export type FeedType = 'all' | 'passenger' | 'driver'
 
+function getPass(): string | null {
+  try { return sessionStorage.getItem('hq_pass') } catch { return null }
+}
+
+/** Gated RPC failed the server-side passphrase check: drop the stored pass and send the user back to the gate. */
+function handleUnauthorized(error: { message?: string }) {
+  if (error?.message?.includes('unauthorized')) {
+    try { sessionStorage.removeItem('hq_pass') } catch { /* ignore */ }
+    window.dispatchEvent(new Event('hq-unauthorized'))
+  }
+}
+
 const typeArg = (t: FeedType): string | null =>
   t === 'passenger' ? 'passenger' : t === 'driver' ? 'Driver' : null
 
@@ -57,8 +69,9 @@ export async function fetchFeed(opts: {
     p_search: opts.search || null,
     p_limit: opts.limit,
     p_offset: opts.offset,
+    p_pass: getPass(),
   })
-  if (error) throw error
+  if (error) { handleUnauthorized(error); throw error }
   const rows = (data ?? []) as FeedRow[]
   return { rows, total: rows.length ? Number(rows[0].total_count) : 0 }
 }
@@ -122,8 +135,9 @@ export async function fetchPowerUsers(
     p_end: endUtc,
     p_type: typeArg(type),
     p_limit: limit,
+    p_pass: getPass(),
   })
-  if (error) throw error
+  if (error) { handleUnauthorized(error); throw error }
   return (data ?? []).map((d: any) => ({
     sender_number: d.sender_number,
     sender_name: d.sender_name,

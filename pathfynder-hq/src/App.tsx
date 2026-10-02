@@ -18,7 +18,9 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  const [authed, setAuthed] = useState(false)
+  const [authed, setAuthed] = useState(() => {
+    try { return !!sessionStorage.getItem('hq_pass') } catch { return false }
+  })
   const [range, setRange] = useState<Range>(PRESETS[2].make()) // default: last 30 days
   const [activePreset, setActivePreset] = useState('30d')
   const [stats, setStats] = useState<WindowStats | null>(null)
@@ -44,6 +46,12 @@ export default function App() {
   }, [range.start, range.end])
 
   useEffect(() => { if (authed) loadStats() }, [authed, loadStats, nonce])
+
+  useEffect(() => {
+    const onUnauthorized = () => setAuthed(false)
+    window.addEventListener('hq-unauthorized', onUnauthorized)
+    return () => window.removeEventListener('hq-unauthorized', onUnauthorized)
+  }, [])
 
   if (!authed) return <Gate onPass={() => setAuthed(true)} />
 
