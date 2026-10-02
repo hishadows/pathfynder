@@ -813,10 +813,16 @@ function failLoad(e) {
   STATE.loading = false; STATE.errorType = 'rpc_error'; STATE.payload = null;
   render();
 }
-/* First load only: open the trip from ?trip=<uuid> (bot link), else today, else the next upcoming trip, else today (empty state). */
+/* First load only: open the trip from ?trip=<uuid> (bot link) or /m/<token>?t=<uuid> (notification link), else today, else the next upcoming trip, else today (empty state). */
 function pickInitialTrip() {
-  var want = null;
-  try { want = new URLSearchParams(location.search).get('trip'); } catch (e) {}
+  var want = null, wantKey = 'trip';
+  try {
+    var sp = new URLSearchParams(location.search);
+    want = sp.get('trip');
+    /* notification links are /m/<token>?t=<trip uuid>; ?t= is a trip only when the token is in the path */
+    var tv = sp.get('t');
+    if (!want && tv && /\/m\/[^/]+/.test(location.pathname) && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tv)) { want = tv; wantKey = 't'; }
+  } catch (e) {}
   var hit = null, i;
   if (want) for (i = 0; i < STATE.trips.length; i++) if (STATE.trips[i].id === want) { hit = STATE.trips[i]; break; }
   if (!hit) {
@@ -827,7 +833,7 @@ function pickInitialTrip() {
   if (!hit) { STATE.selectedDate = todayKey(); return; }
   STATE.selectedDate = localDateKey(hit.depart_at); STATE.selectedTripId = hit.id;
   if (want) try { /* so a later reload is not stuck on this trip; token/mock params stay */
-    var u = new URL(location.href); u.searchParams.delete('trip');
+    var u = new URL(location.href); u.searchParams.delete(wantKey);
     history.replaceState(history.state, '', u.pathname + u.search + u.hash);
   } catch (e) {}
 }
