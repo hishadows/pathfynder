@@ -66,16 +66,32 @@ button{font:inherit}
 .bell-badge[hidden]{display:none}
 
 /* Notifications screen */
-.nf-wrap{padding:16px;display:flex;flex-direction:column;gap:8px;max-width:560px;margin:0 auto}
-.nf-row{display:flex;align-items:flex-start;gap:10px;width:100%;min-height:56px;padding:12px 14px;border:1px solid var(--divider);border-radius:14px;background:var(--card);color:var(--text);font:inherit;text-align:left;cursor:pointer}
-.nf-row.is-unread{background:var(--sel-bg);border-color:var(--sel-border)}
-.nf-dot{flex:none;width:8px;height:8px;border-radius:50%;margin-top:6px;background:var(--primary)}
-.nf-dot.is-off{background:transparent}
+.nf-wrap{padding:8px 16px 24px;display:flex;flex-direction:column;gap:6px;max-width:560px;margin:0 auto}
+.nf-h{margin:14px 4px 0;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2)}
+.nf-card{background:var(--card);border-radius:14px;overflow:hidden}
+.nf-card.is-old{opacity:.6}
+.nf-row{position:relative;display:flex;align-items:flex-start;gap:12px;width:100%;min-height:56px;padding:12px 14px 12px 20px;border:0;border-top:1px solid var(--divider);border-radius:0;background:transparent;color:var(--text);font:inherit;text-align:left;cursor:pointer}
+.nf-card>.nf-row:first-child{border-top:0}
+.nf-dot{position:absolute;left:7px;top:50%;width:8px;height:8px;margin-top:-4px;border-radius:50%;background:var(--primary)}
+.nf-ic{flex:none;width:38px;height:38px;border-radius:50%;display:grid;place-items:center}
+.nf-ic svg{width:20px;height:20px}
+.nf-ic--green{background:rgba(37,211,102,.16);color:#1A9A50}
+.nf-ic--amber{background:rgba(245,166,35,.18);color:#C77F00}
+.nf-ic--blue{background:rgba(59,130,246,.16);color:#2F7DD1}
+.nf-ic--red{background:rgba(229,72,77,.16);color:#D93B40}
+.nf-ic--gray{background:rgba(134,150,160,.2);color:var(--text-2)}
 .nf-main{flex:1;min-width:0}
 .nf-t{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
-.nf-t b{min-width:0;font-size:15px;font-weight:700;overflow-wrap:anywhere}
+.nf-tt{min-width:0;display:flex;align-items:baseline;gap:6px;font-size:15px;font-weight:500}
+.nf-row.is-unread .nf-tt{font-weight:700}
+.nf-tt span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nf-n{flex:none;padding:1px 7px;border-radius:10px;background:var(--bg);color:var(--text-2);font-size:12px;font-weight:600}
 .nf-t time{flex:none;font-size:12px;color:var(--text-2)}
 .nf-b{margin:2px 0 0;font-size:13.5px;color:var(--text-2);overflow-wrap:anywhere}
+.nf-act{display:inline-block;margin-top:8px;padding:5px 12px;border:1px solid var(--divider);border-radius:16px;color:var(--primary);font-size:13px;font-weight:600}
+.nf-more{width:100%;min-height:44px;border:0;border-top:1px solid var(--divider);background:transparent;color:var(--primary);font:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.nf-markall{margin-left:auto;flex:none;min-height:44px;padding:0 12px;border:0;background:transparent;color:var(--header-text);font:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.nf-markall[hidden]{display:none}
 .nf-skel{height:72px;border-radius:14px;background:var(--card);border:1px solid var(--divider)}
 .nf-empty{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;padding:36px 16px}
 .nf-empty .nf-empty__ic{color:var(--text-2)}
@@ -1539,6 +1555,10 @@ var PATHS = {
   camera: '<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"/><circle cx="12" cy="13" r="3.5"/>',
   pencil: '<path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/>',
   lock: '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+  nfUser: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+  nfClock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  nfX: '<circle cx="12" cy="12" r="9"/><path d="m9 9 6 6M15 9l-6 6"/>',
+  nfCheck: '<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>',
   bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
   mail: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/>',
   search: '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
@@ -2046,31 +2066,79 @@ function refreshUnread() {
     STATE.notifUnread = Number(d.unread_count) || 0; paintBadge();
   }).catch(function () {});
 }
+var NF_ICONS = { person: 'nfUser', clock: 'nfClock', search: 'search', x: 'nfX', check: 'nfCheck', bell: 'bell' };
+var NF_KIND = {
+  passenger_joined: ['person', 'green'], passenger_cancelled: ['x', 'red'], ride_cancelled: ['x', 'red'],
+  reminder: ['clock', 'amber'], ride_started: ['clock', 'amber'], picked_up: ['clock', 'amber'],
+  new_match: ['search', 'blue'], ride_completed: ['check', 'green']
+};
 function fmtNotifTime(iso) {
   var d = new Date(iso);
   if (isNaN(d.getTime())) return '';
   var diff = Date.now() - d.getTime();
-  if (diff < 60e3) return 'Just now';
-  if (diff < 3600e3) return Math.floor(diff / 60e3) + ' min ago';
+  if (diff < 60e3) return 'now';
+  if (diff < 3600e3) return Math.floor(diff / 60e3) + 'm';
   var now = new Date();
   var startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-  if (d.getTime() >= startToday) return Math.floor(diff / 3600e3) + ' h ago';
-  if (d.getTime() >= startToday - 86400e3) return 'Yesterday';
+  if (d.getTime() >= startToday) return Math.floor(diff / 3600e3) + 'h';
+  if (d.getTime() >= startToday - 6 * 86400e3) return d.toLocaleDateString('en-US', { weekday: 'short' });
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
+function nfGroup(iso) {
+  var d = new Date(iso).getTime();
+  var now = new Date();
+  var s = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  if (isNaN(d) || d < s - 86400e3) return 2;
+  return d >= s ? 0 : 1;
+}
+function nfSafeUrl(u) { return typeof u === 'string' && u.charAt(0) === '/' && u.charAt(1) !== '/' && u.indexOf('\\') < 0; }
+/* Collapses same-group repeats (same kind + title + body; match/reminder alerts by kind + route/day text). Input is newest first. */
+function nfMerge(items) {
+  var out = [], idx = {};
+  items.forEach(function (n) {
+    var k = n.kind + '|' + ((n.kind === 'new_match' || n.kind === 'reminder') ? (n.body || n.title) : (n.title || '') + '|' + (n.body || ''));
+    if (idx[k] != null) { var m = out[idx[k]]; m.count++; if (!n.read) m.unread = true; return; }
+    idx[k] = out.length;
+    out.push({ n: n, count: 1, unread: !n.read });
+  });
+  return out;
+}
+function nfRow(m) {
+  var n = m.n, k = NF_KIND[n.kind] || ['bell', 'gray'];
+  var raw = String(n.title || 'Notification'), cut = raw.indexOf(' · ');
+  var title = cut > 0 ? raw.slice(0, cut) : raw;
+  var detail = [cut > 0 ? raw.slice(cut + 3) : '', n.body || ''].filter(Boolean).join(' · ');
+  var act = !nfSafeUrl(n.url) ? '' : n.kind === 'passenger_joined' ? 'View ride' : n.kind === 'reminder' ? 'See passengers' : '';
+  var time = fmtNotifTime(n.created_at);
+  return '<button type="button" class="nf-row' + (m.unread ? ' is-unread' : '') + '" data-action="nf-open" data-id="' + esc(n.id) + '">' +
+    (m.unread ? '<span class="nf-dot" aria-label="Unread"></span>' : '') +
+    '<span class="nf-ic nf-ic--' + k[1] + '">' + ico(NF_ICONS[k[0]]) + '</span>' +
+    '<span class="nf-main"><span class="nf-t"><span class="nf-tt"><span>' + esc(title) + '</span>' + (m.count > 1 ? '<span class="nf-n" aria-label="' + m.count + ' times">×' + m.count + '</span>' : '') + '</span><time>' + esc(time) + '</time></span>' +
+    (detail ? '<span class="nf-b" style="display:block">' + esc(detail) + '</span>' : '') +
+    (act ? '<span class="nf-act" aria-hidden="true">' + act + ' ›</span>' : '') + '</span></button>';
+}
 function notifsHeader() {
-  return '<header class="app-bar"><div class="pf-bar__inner"><button type="button" class="pf-back" data-action="nf-back" aria-label="Back">' + ico('arrowLeft') + '</button><div><h1 class="app-bar__title">Notifications</h1></div></div></header>';
+  var unread = (STATE.notifs || []).some(function (n) { return !n.read; });
+  return '<header class="app-bar"><div class="pf-bar__inner"><button type="button" class="pf-back" data-action="nf-back" aria-label="Back">' + ico('arrowLeft') + '</button><div><h1 class="app-bar__title">Notifications</h1></div>' +
+    '<button type="button" class="nf-markall" data-action="nf-markall"' + (unread ? '' : ' hidden') + '>Mark all read</button></div></header>';
+}
+function nfBody() {
+  var heads = ['Today', 'Yesterday', 'Earlier'], groups = [[], [], []];
+  STATE.notifs.forEach(function (n) { groups[nfGroup(n.created_at)].push(n); });
+  return '<div class="nf-wrap">' + groups.map(function (g, i) {
+    if (!g.length) return '';
+    var rows = nfMerge(g), hidden = 0;
+    if (i === 2 && !STATE.nfMore && rows.length > 5) { hidden = rows.length - 5; rows = rows.slice(0, 5); }
+    return '<h2 class="nf-h">' + heads[i] + '</h2><div class="nf-card' + (i === 2 ? ' is-old' : '') + '">' + rows.map(nfRow).join('') +
+      (hidden ? '<button type="button" class="nf-more" data-action="nf-more">Show ' + hidden + ' older</button>' : '') + '</div>';
+  }).join('') + '</div>';
 }
 function renderNotifs(app) {
   var body;
   if (STATE.notifsLoading && !STATE.notifs) body = '<div class="nf-wrap" aria-busy="true"><div class="nf-skel"></div><div class="nf-skel"></div><div class="nf-skel"></div></div>';
   else if (STATE.notifsError || !STATE.notifs) body = '<div class="nf-wrap"><div class="pf-card"><p class="pf-err">We couldn\'t load your notifications. Please try again.</p><button type="button" class="btn btn-secondary btn-full" data-action="nf-retry">Try again</button></div></div>';
-  else if (!STATE.notifs.length) body = '<div class="nf-wrap"><div class="pf-card nf-empty"><span class="nf-empty__ic">' + ico('bell') + '</span><b>No notifications yet</b><span>You\'ll see new passengers here.</span></div></div>';
-  else body = '<div class="nf-wrap">' + STATE.notifs.map(function (n) {
-    return '<button type="button" class="nf-row' + (n.read ? '' : ' is-unread') + '" data-action="nf-open" data-id="' + esc(n.id) + '"><span class="nf-dot' + (n.read ? ' is-off' : '') + '"></span>' +
-      '<span class="nf-main"><span class="nf-t"><b>' + esc(n.title || 'Notification') + '</b><time>' + esc(fmtNotifTime(n.created_at)) + '</time></span>' +
-      (n.body ? '<p class="nf-b">' + esc(n.body) + '</p>' : '') + '</span></button>';
-  }).join('') + '</div>';
+  else if (!STATE.notifs.length) body = '<div class="nf-wrap"><div class="nf-card nf-empty"><span class="nf-empty__ic">' + ico('bell') + '</span><b>No notifications yet</b><span>You\'ll see new passengers here.</span></div></div>';
+  else body = nfBody();
   var y = window.pageYOffset || 0; /* keep scroll across re-renders; opening resets it in notifAction */
   app.innerHTML = notifsHeader() + body;
   window.scrollTo(0, y);
@@ -2093,9 +2161,16 @@ function loadNotifs() {
   });
 }
 function notifAction(action, t) {
-  if (action === 'notifs') { STATE.view = 'notifs'; STATE.notifs = null; window.scrollTo(0, 0); loadNotifs(); return true; }
+  if (action === 'notifs') { STATE.view = 'notifs'; STATE.notifs = null; STATE.nfMore = false; window.scrollTo(0, 0); loadNotifs(); return true; }
   if (action === 'nf-back') { STATE.view = 'home'; STATE.notifSeq++; render(); refreshUnread(); return true; }
   if (action === 'nf-retry') { loadNotifs(); return true; }
+  if (action === 'nf-more') { STATE.nfMore = true; render(); return true; }
+  if (action === 'nf-markall') {
+    (STATE.notifs || []).forEach(function (x) { x.read = true; });
+    STATE.notifUnread = 0; paintBadge(); render();
+    apiNotifMarkRead().catch(function (e) { console.error('[driver] mark read failed', e); });
+    return true;
+  }
   if (action === 'nf-open') {
     var id = t.getAttribute('data-id');
     var n = (STATE.notifs || []).find(function (x) { return String(x.id) === id; });
