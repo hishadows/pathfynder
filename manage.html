@@ -13,7 +13,7 @@
   --header:#008069; --header-text:#FFFFFF; --header-sub:rgba(255,255,255,.82);
   --primary:#008069; --cta:#008069; --cta-text:#FFFFFF; --cta-hover:#006D5B;
   --bg:#F0F2F5; --card:#FFFFFF; --muted-card:#F7F8FA;
-  --text:#111B21; --text-2:#667781; --divider:#E9EDEF;
+  --text:#111B21; --text-2:#667781; --divider:#E9EDEF; --dot:rgba(17,27,33,.22);
   --chip-soft:#D9FDD3; --chip-soft-text:#006D5B; --danger:#D93025;
   --hero-bg:#075E54; --hero-text:#FFFFFF; --hero-chip:rgba(255,255,255,.12); --hero-fill:#25D366;
   --overlay:rgba(11,20,26,.42); --shadow:0 -1px 4px rgba(11,20,26,.08);
@@ -24,7 +24,7 @@
     --header:#202C33; --header-text:#E9EDEF; --header-sub:#8696A0;
     --primary:#00A884; --cta:#005C4B; --cta-text:#E9EDEF; --cta-hover:#006D5B;
     --bg:#0B141A; --card:#202C33; --muted-card:#182229;
-    --text:#E9EDEF; --text-2:#8696A0; --divider:#2A3942;
+    --text:#E9EDEF; --text-2:#8696A0; --divider:#2A3942; --dot:var(--divider);
     --chip-soft:#0A332C; --chip-soft-text:#25D366; --danger:#F15C6D;
     --hero-bg:#075E54; --hero-text:#FFFFFF; --hero-chip:rgba(255,255,255,.12); --hero-fill:#25D366;
     --overlay:rgba(0,0,0,.62); --shadow:0 -1px 4px rgba(0,0,0,.4);
@@ -35,7 +35,7 @@
   --header:#202C33; --header-text:#E9EDEF; --header-sub:#8696A0;
   --primary:#00A884; --cta:#005C4B; --cta-text:#E9EDEF; --cta-hover:#006D5B;
   --bg:#0B141A; --card:#202C33; --muted-card:#182229;
-  --text:#E9EDEF; --text-2:#8696A0; --divider:#2A3942;
+  --text:#E9EDEF; --text-2:#8696A0; --divider:#2A3942; --dot:var(--divider);
   --chip-soft:#0A332C; --chip-soft-text:#25D366; --danger:#F15C6D;
   --hero-bg:#075E54; --hero-text:#FFFFFF; --hero-chip:rgba(255,255,255,.12); --hero-fill:#25D366;
   --overlay:rgba(0,0,0,.62); --shadow:0 -1px 4px rgba(0,0,0,.4);
@@ -199,6 +199,8 @@ textarea.pt-input{padding:12px 14px;min-height:88px;resize:vertical}
 .trip-chips::-webkit-scrollbar{display:none}
 .trip-chip{flex:none;padding:8px 14px;border-radius:999px;border:1.5px solid var(--divider);background:var(--card);color:var(--text);font:inherit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
 .trip-chip.is-selected{background:var(--sel-bg);border-color:var(--sel-border)}
+.trip-chip__n{color:var(--text-2);font-weight:400}
+.trip-chip.is-selected .trip-chip__n{color:var(--text);opacity:.72}
 .date-pill.is-selected{background:var(--sel-bg);border-color:var(--sel-border)}
 .date-pill--empty{background:transparent;opacity:.55;min-height:44px}
 .date-pill--empty .date-pill__top{font-weight:600;color:var(--text-2)}
@@ -261,7 +263,7 @@ textarea.pt-input{padding:12px 14px;min-height:88px;resize:vertical}
 .hero-track::-webkit-scrollbar{display:none}
 .hero-slide{align-self:flex-start;box-sizing:border-box;flex:0 0 100%;scroll-snap-align:start;scroll-snap-stop:always;min-width:100%;min-height:var(--hero-min,0);background:var(--hero-bg);color:var(--hero-text);padding:14px;border-radius:16px}
 .hero-dots{display:flex;justify-content:center;gap:6px;padding:12px 0 0;margin:0 0 -4px}
-.hero-dot{width:7px;height:7px;border-radius:4px;background:var(--divider);border:0;padding:0;cursor:pointer}
+.hero-dot{width:7px;height:7px;border-radius:4px;background:var(--dot);border:0;padding:0;cursor:pointer}
 .hero-dot.is-active{width:18px;background:var(--primary)}
 
 /* Maps card */
@@ -771,15 +773,18 @@ function localDateKey(iso) {
 }
 function todayKey() { return localDateKey(new Date().toISOString()); }
 function tripsForDate(key) {
-  return STATE.trips.filter(function (t) { return localDateKey(t.depart_at) === key; });
+  return STATE.trips.filter(function (t) { return localDateKey(t.depart_at) === key; })
+    .sort(function (a, b) { return new Date(a.depart_at) - new Date(b.depart_at); });
 }
-/* Keeps the selected trip if it is on this date; else the active one, else the earliest. */
+/* Keeps the selected trip if it is on this date; else the active one; else the next upcoming (not completed); else the last of the day. */
 function tripForDate(key) {
   var list = tripsForDate(key);
   if (!list.length) return null;
   for (var i = 0; i < list.length; i++) if (list[i].id === STATE.selectedTripId) return list[i];
   for (var j = 0; j < list.length; j++) if (list[j].status === 'active') return list[j];
-  return list[0];
+  var now = Date.now();
+  for (var k = 0; k < list.length; k++) if (new Date(list[k].depart_at).getTime() >= now && list[k].status !== 'completed') return list[k];
+  return list[list.length - 1];
 }
 function failLoad(e) {
   console.error('[manage] load failed', e);
@@ -1181,8 +1186,8 @@ function dateStrip() {
     var dstr = fmtDateShort(t ? t.depart_at : new Date().toISOString());
     var top, sub;
     if (k === today) { top = 'Today'; sub = dstr; }
-    else if (k < today) { top = dstr; sub = counts[k] > 1 ? counts[k] + ' rides' : 'Done'; }
-    else { top = dstr; sub = counts[k] > 1 ? counts[k] + ' rides' : (t.status === 'completed' ? 'Done' : (t.status === 'active' ? 'Live' : 'Upcoming')); }
+    else if (k < today) { top = dstr; sub = counts[k] > 1 ? counts[k] + ' trips' : 'Done'; }
+    else { top = dstr; sub = counts[k] > 1 ? counts[k] + ' trips' : (t.status === 'completed' ? 'Done' : (t.status === 'active' ? 'Live' : 'Upcoming')); }
     return '<button type="button" class="date-pill' + (k === STATE.selectedDate ? ' is-selected' : '') + '" data-action="pick-date" data-date="' + k + '"' + (k === STATE.selectedDate ? ' aria-current="date"' : '') + '>' +
       '<span class="date-pill__top">' + esc(top) + '</span><span class="date-pill__sub' + (k === today ? ' date-pill__sub--date' : '') + '">' + esc(sub) + '</span></button>';
   }).join('');
@@ -1199,13 +1204,17 @@ function dateStrip() {
 }
 function fmtTime12(iso) { return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }); }
 /* One chip per trip when the selected date has 2+ trips. */
+function ordinal(n) {
+  var v = n % 100, sfx = (v >= 11 && v <= 13) ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' }[n % 10] || 'th');
+  return n + sfx;
+}
 function tripChips() {
   var list = tripsForDate(STATE.selectedDate);
   if (list.length < 2) return '';
-  var chips = list.map(function (t) {
+  var chips = list.map(function (t, idx) {
     var sel = t.id === STATE.selectedTripId;
-    var label = fmtTime12(t.depart_at) + ' · ' + shortLabel(t.origin_label) + ' → ' + shortLabel(t.dest_label);
-    return '<button type="button" class="trip-chip' + (sel ? ' is-selected' : '') + '" data-action="pick-trip" data-id="' + esc(t.id) + '"' + (sel ? ' aria-current="true"' : '') + '>' + esc(label) + '</button>';
+    var rest = ' \u00b7 ' + fmtTime12(t.depart_at) + ' \u00b7 ' + shortLabel(t.origin_label) + ' \u2192 ' + shortLabel(t.dest_label);
+    return '<button type="button" class="trip-chip' + (sel ? ' is-selected' : '') + '" data-action="pick-trip" data-id="' + esc(t.id) + '"' + (sel ? ' aria-current="true"' : '') + '><span class="trip-chip__n">' + esc(ordinal(idx + 1)) + ' trip</span>' + esc(rest) + '</button>';
   }).join('');
   return '<div class="trip-chips" id="tripChips">' + chips + '</div>';
 }
