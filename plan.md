@@ -40,7 +40,7 @@ One task per session. Status: todo / done / parked.
 
 9. **Security: lock anon reads of `extracted_data_01`.**
    - Done when: anon can no longer select from `extracted_data_01` and the Telegram mini app still works.
-   - Status: in progress — Phase A+B done 2026-10-01 (new RPCs; mini app + dashboard switched, on claude/elegant-pascal-t7vjl4 in both repos). Phase C (revoke anon reads of phone columns + drop open policies on driver_routines/passenger_requests/telegram_users) waits for deploy + 1–2 days of clean logs + Pranay's yes.
+   - Status: in progress — step 1 (Phase A+B, new RPCs + pages) live 2026-10-02; step 2 done 2026-10-02 (sender_number/sender_name/original_message hidden from anon). Next: step 3 (#2 drop open policies on driver_routines/passenger_requests/telegram_users), HQ passphrase for get_feed/get_power_users (still return raw numbers), vault `telegram_bot_token`, rotate dashboard passphrase.
 
 10. **Notifications: iPhone "Add to Home Screen" pop-up** — when someone on iPhone Safari taps "Turn on notifications", show a polished bottom sheet: notifications only work once Pathfynder is added to the Home Screen, with step-by-step iPhone instructions. Not shown on Android (push works in Chrome) or inside the installed app.
    - Done when: on iPhone outside the installed app, "Turn on notifications" opens the sheet; Android and the installed app keep the old flow; looks right in light + dark at 390px and closes cleanly.
@@ -111,3 +111,4 @@ One task per session. Status: todo / done / parked.
 - 2026-10-01 — Legal pages live in repo: privacy.html + terms.html, footer links on manage.html and passenger.html (main-body renders only; manage empty-day screen has none). Open: privacy.html §6 still has the [12 months] placeholder; confirm Privacy Officer email/address. Next: add links to Explore, index, notifications, join.
 - 2026-10-01 — Legal links added to landing footer + join confirm step. Open: not yet seen on a real phone or on live /terms (local server has no cleanUrls). Still to link: Explore footer, notifications opt-in.
 - 2026-10-01 — Security #1/#2 Phase A+B: tg_* + dashboard_data RPCs, mini app (pathfynder-form) and dashboard.html switched off direct table reads/raw phones. Open: merge+deploy both repos, add vault secret `telegram_bot_token`, rotate dashboard passphrase, then Phase C.
+- 2026-10-02 — Security step 2: anon can read only id/pick up date/pickup_lat/Type on extracted_data_01; stats + HQ RPCs switched to SECURITY DEFINER; 5 unused number-returning RPCs revoked. Open: HQ get_feed/get_power_users still expose numbers (option B — passphrase later); Pranay asked to show phones in FB/Poparide message text on Explore (awaiting confirmation).
