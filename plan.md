@@ -48,7 +48,7 @@ One task per session. Status: todo / done / parked.
 
 11. **Matching around stops** ✅ — explore/bot matching should also match passengers near a driver's `driver_routines.stops` (not only origin/destination).
    - Done when: a passenger whose pickup/drop-off is near a posted stop sees that driver in Explore and bot matches.
-   - Status: done 2026-10-02 (DB live; explore.html `via=` needs merge; notify_check_new_matches paste pending).
+   - Status: done 2026-10-02 (DB live incl. notify_check_new_matches; explore.html `via=` shipped in PR #106).
 
 ## Session notes
 
