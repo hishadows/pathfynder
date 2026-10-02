@@ -38,9 +38,9 @@ One task per session. Status: todo / done / parked.
    - Done when: the app installs on Android + iOS, an install prompt shows where supported, and push opt-in works from Explore.
    - Status: todo (partly exists: dynamic manifest, `sw.js` push-only, push opt-in via `/notifications` + `js/pf-notify-v4.js`; no install prompt yet)
 
-9. **Security: lock anon reads of `extracted_data_01`.**
+9. **Security: lock anon reads of `extracted_data_01`.** ✅
    - Done when: anon can no longer select from `extracted_data_01` and the Telegram mini app still works.
-   - Status: in progress — step 1 (new RPCs + pages) and step 2 (sender_number hidden) done 2026-10-02; step 3 (3 tables locked) done 2026-10-02. Open: HQ passphrase for get_feed/get_power_users (still return raw numbers); vault `telegram_bot_token`; rotate dashboard passphrase.
+   - Status: done 2026-10-02 (steps 1–3 + task 9: no anon path returns raw phone numbers; HQ passphrase server-side). Pending Pranay: merge/deploy, paste design/security-task9-paste-after-deploy.sql after deploy, delete Vercel env VITE_DASHBOARD_PASSCODE, rotate dashboard passphrase, add vault `telegram_bot_token`.
 
 10. **Notifications: iPhone "Add to Home Screen" pop-up** — when someone on iPhone Safari taps "Turn on notifications", show a polished bottom sheet: notifications only work once Pathfynder is added to the Home Screen, with step-by-step iPhone instructions. Not shown on Android (push works in Chrome) or inside the installed app.
    - Done when: on iPhone outside the installed app, "Turn on notifications" opens the sheet; Android and the installed app keep the old flow; looks right in light + dark at 390px and closes cleanly.
@@ -114,3 +114,4 @@ One task per session. Status: todo / done / parked.
 - 2026-10-02 — Security step 2: anon can read only id/pick up date/pickup_lat/Type on extracted_data_01; stats + HQ RPCs switched to SECURITY DEFINER; 5 unused number-returning RPCs revoked. Open: HQ get_feed/get_power_users still expose numbers (option B — passphrase later); Pranay asked to show phones in FB/Poparide message text on Explore (awaiting confirmation).
 - 2026-10-02 — Security step 3: driver_routines/passenger_requests/telegram_users locked (policies dropped + grants revoked, applied by Pranay in SQL Editor because MCP apply_migration hangs on DROP POLICY). All page RPCs tested OK. Open: real-phone test, match_passenger_to_drivers revoke, HQ passphrase.
 - 2026-10-02 — Explore shows numbers in FB/Poparide original message (WhatsApp still masked); match_passenger_to_drivers locked to service_role. Open: check a FB post's message on Explore on a real phone; HQ passphrase next.
+- 2026-10-02 — Task 9 done: hq_check + gated get_feed/get_power_users, muse phone/contact_public hidden, match_driver_to_scraped_passengers locked, leftover grants revoked. Open: after HQ deploy paste the DROP file; extracted_data_01 still has MAINTAIN for anon (no data access, low).
