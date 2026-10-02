@@ -112,3 +112,4 @@ One task per session. Status: todo / done / parked.
 - 2026-10-01 — Legal links added to landing footer + join confirm step. Open: not yet seen on a real phone or on live /terms (local server has no cleanUrls). Still to link: Explore footer, notifications opt-in.
 - 2026-10-01 — Security #1/#2 Phase A+B: tg_* + dashboard_data RPCs, mini app (pathfynder-form) and dashboard.html switched off direct table reads/raw phones. Open: merge+deploy both repos, add vault secret `telegram_bot_token`, rotate dashboard passphrase, then Phase C.
 - 2026-10-02 — Manage: open linked/next trip instead of always today; trip chips keep position.
+- 2026-10-02 — Compact date strip + in-card/dots-row switcher on driver and passenger homes. Open: green-dot single upcoming day not exercised in driver mock.

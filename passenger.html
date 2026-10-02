@@ -179,25 +179,30 @@ textarea.pt-input{padding:12px 14px;min-height:88px;resize:vertical}
 .pt-rv dd{margin:0;flex:1;min-width:0;overflow-wrap:anywhere}
 
 /* Date strip */
-.date-strip{padding:12px 0 4px}
+.date-strip{padding:10px 0 2px}
 .date-strip__label{margin:0 16px 8px;font-size:12.5px;font-weight:600;color:var(--text-2)}
-.date-strip__row{display:flex;gap:8px;overflow-x:auto;padding:2px 16px 6px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.date-strip__row{display:flex;gap:8px;overflow-x:auto;padding:2px 16px 4px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
 .date-strip__row::-webkit-scrollbar{display:none}
-.date-pill{flex:none;min-width:84px;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 14px;border-radius:14px;border:1.5px solid var(--divider);background:var(--card);color:var(--text);cursor:pointer;font:inherit}
-.date-pill__top{font-size:15px;font-weight:700;line-height:1.25}
-.date-pill__sub{font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2);line-height:1.3}
-.date-pill__sub--date{text-transform:none;letter-spacing:0;font-size:12px}
-.trip-chips{display:flex;gap:8px;overflow-x:auto;padding:4px 16px 6px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
-.trip-chips::-webkit-scrollbar{display:none}
-.trip-chip{flex:none;padding:8px 14px;border-radius:999px;border:1.5px solid var(--divider);background:var(--card);color:var(--text);font:inherit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
-.trip-chip.is-selected{background:var(--sel-bg);border-color:var(--sel-border)}
-.trip-chip__n{color:var(--text-2);font-weight:400}
-.trip-chip.is-selected .trip-chip__n{color:var(--text);opacity:.72}
+.date-pill{flex:none;height:34px;display:flex;align-items:center;gap:6px;padding:0 13px;border-radius:18px;border:1.5px solid var(--divider);background:var(--card);color:var(--text);cursor:pointer;font:inherit;font-size:14px;font-weight:700;white-space:nowrap}
+.date-pill__dot{width:7px;height:7px;border-radius:50%;flex:none;background:var(--primary)}
+.date-pill__dot--done{background:var(--text-2)}
+.date-pill__dot--cancelled{background:#C0564B;opacity:.8}
+.date-pill__dot--request{background:#D9A23B}
+.date-pill__n{flex:none;min-width:18px;padding:0 6px;border-radius:9px;background:var(--primary);color:#fff;font-size:11px;font-weight:700;line-height:16px;text-align:center}
 .date-pill.is-selected{background:var(--sel-bg);border-color:var(--sel-border)}
-.date-pill--empty{background:transparent;opacity:.55;min-height:44px}
-.date-pill--empty .date-pill__top{font-weight:600;color:var(--text-2)}
-.date-pill--post{flex:none;min-width:84px;min-height:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:8px 14px;border-radius:14px;border:1.5px dashed var(--sel-border);background:transparent;color:var(--sel-border);opacity:.85;cursor:pointer;font:inherit;font-size:14px;font-weight:700}
-.date-pill--post svg{width:18px;height:18px}
+.date-pill--empty{background:transparent;opacity:.55;font-weight:600;color:var(--text-2)}
+.date-pill--post{flex:none;height:34px;display:flex;align-items:center;justify-content:center;gap:4px;padding:0 13px;border-radius:18px;border:1.5px dashed var(--sel-border);background:transparent;color:var(--sel-border);opacity:.85;cursor:pointer;font:inherit;font-size:14px;font-weight:700;white-space:nowrap}
+.date-pill--post svg{width:16px;height:16px}
+/* Switcher on the hero card (2+ items on the selected date) */
+.hero{position:relative}
+.sw{position:absolute;top:6px;right:8px;display:flex;align-items:center;background:rgba(255,255,255,.16);border-radius:16px;font-size:12.5px;font-weight:700;color:var(--hero-text)}
+.sw__b{min-width:32px;height:32px;border:0;background:transparent;color:inherit;font:inherit;font-size:16px;line-height:1;cursor:pointer;padding:0;display:grid;place-items:center}
+.sw__b:disabled{opacity:.35;cursor:default}
+.sw__n{height:32px;border:0;background:transparent;color:inherit;font:inherit;padding:0 2px;cursor:pointer;white-space:nowrap}
+.sheet__list{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.sheet__row{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;min-height:48px;padding:8px 12px;border-radius:12px;border:1.5px solid var(--divider);background:var(--card);color:var(--text);font:inherit;font-size:14px;font-weight:600;text-align:left;cursor:pointer}
+.sheet__row.is-selected{background:var(--sel-bg);border-color:var(--sel-border)}
+.sheet__row span{color:var(--text-2);font-weight:400}
 
 /* Empty state */
 .empty-day{display:flex;flex-direction:column;align-items:center;text-align:center;padding:40px 24px}
@@ -210,7 +215,8 @@ textarea.pt-input{padding:12px 14px;min-height:88px;resize:vertical}
 @keyframes shimmer{from{background-position:200% 0}to{background-position:-200% 0}}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 .fade-in{animation:fadeIn .2s ease-out}
-.skel-hero{box-sizing:border-box;min-height:250px;padding:14px;border-radius:16px;background:var(--card);border:1px solid var(--divider)}
+.skel-hero{position:relative;box-sizing:border-box;min-height:250px;padding:14px;border-radius:16px;background:var(--card);border:1px solid var(--divider)}
+.skel-sw{position:absolute;top:6px;right:8px;width:96px;height:32px;border-radius:16px}
 .skel-pill{width:92px;height:22px;border-radius:999px;margin-bottom:14px}
 .skel-stop{display:flex;align-items:center;gap:12px;min-height:30px;margin-bottom:6px}
 .skel-stop__dot{width:9px;height:9px;border-radius:50%;flex:none}
@@ -403,7 +409,7 @@ function hideToast() { clearTimeout(toastTimer); document.getElementById('toast'
 
 /* ---------- State ---------- */
 var STATE = {
-  token: null, isMock: false, rides: [], requests: [], selectedDate: null, selectedId: null, wantB: null, stripScroll: false, chipScroll: null,
+  token: null, isMock: false, rides: [], requests: [], selectedDate: null, selectedId: null, wantB: null, stripScroll: false,
   payload: null, tripCache: {}, loading: true, errorType: null, fade: false, pendingKey: null, sheet: null,
   view: 'home', profile: null, profileLoading: false, profileError: null, editingName: false, nameDraft: '', nameError: null, notifBusy: false,
   notifs: null, notifsLoading: false, notifsError: false, notifUnread: 0, notifSeq: 0
@@ -489,7 +495,7 @@ function load(showSkeleton) {
         for (var n = 0; n < all.length; n++) if (new Date(all[n].depart_at).getTime() >= nowMs && all[n].status !== 'completed' && all[n].status !== 'cancelled') { STATE.selectedDate = localDateKey(all[n].depart_at); STATE.selectedId = all[n].id; break; }
       }
       if (!STATE.selectedDate) STATE.selectedDate = today;
-      STATE.stripScroll = true; STATE.chipScroll = 'jump';
+      STATE.stripScroll = true;
     }
     loadItem(false);
   }).catch(failLoad);
@@ -526,12 +532,12 @@ function loadItem(showSkeleton) {
 }
 function selectDate(key) {
   if (key === STATE.selectedDate || STATE.pendingKey) return;
-  STATE.selectedDate = key; STATE.stripScroll = true; STATE.chipScroll = 'jump'; STATE.selectedId = null; STATE.payload = null; STATE.sheet = null;
+  STATE.selectedDate = key; STATE.stripScroll = true; STATE.selectedId = null; STATE.payload = null; STATE.sheet = null;
   loadItem(true);
 }
 function selectItem(id) {
   if (id === STATE.selectedId || STATE.pendingKey) return;
-  STATE.selectedId = id; STATE.chipScroll = 'smooth'; STATE.payload = null; STATE.sheet = null;
+  STATE.selectedId = id; STATE.payload = null; STATE.sheet = null;
   loadItem(true);
 }
 
@@ -654,12 +660,13 @@ function header() {
     '<button type="button" class="hd-post" data-action="post" aria-label="Request a ride">' + ico('plus') + 'Request</button>' +
     '</div></header>';
 }
+/* Status kind for a day's single item: drives the pill dot colour and aria-label. */
 function pillSub(k, today, list) {
   var it = list[0];
-  if (list.length > 1) return list.length + ' rides';
   if (k < today) return it.status === 'cancelled' ? 'Cancelled' : 'Done';
   return { upcoming: 'Upcoming', active: 'Live', picked_up: 'On board', completed: 'Done', cancelled: 'Cancelled', request: 'Requested' }[it.status] || 'Upcoming';
 }
+var PILL_DOT = { Upcoming: '', Live: '', 'On board': '', Done: ' date-pill__dot--done', Cancelled: ' date-pill__dot--cancelled', Requested: ' date-pill__dot--request' };
 function dateStrip() {
   var today = todayKey();
   var byDate = {}, keys = [today];
@@ -672,37 +679,48 @@ function dateStrip() {
   var pills = keys.map(function (k) {
     var list = byDate[k] || [];
     var dstr = fmtDateShort(list.length ? list[0].depart_at : new Date().toISOString());
-    var top, sub;
-    if (k === today) { top = 'Today'; sub = dstr; }
-    else { top = dstr; sub = pillSub(k, today, list); }
-    return '<button type="button" class="date-pill' + (k === STATE.selectedDate ? ' is-selected' : '') + '" data-action="pick-date" data-date="' + k + '"' + (k === STATE.selectedDate ? ' aria-current="date"' : '') + '>' +
-      '<span class="date-pill__top">' + esc(top) + '</span><span class="date-pill__sub' + (k === today ? ' date-pill__sub--date' : '') + '">' + esc(sub) + '</span></button>';
+    var top = k === today ? 'Today' : dstr, mark = '', label = top;
+    if (list.length > 1) { mark = '<span class="date-pill__n" aria-hidden="true">' + list.length + '</span>'; label = dstr + ', ' + list.length + ' rides'; }
+    else if (list.length) { var sub = pillSub(k, today, list); mark = '<span class="date-pill__dot' + PILL_DOT[sub] + '" aria-hidden="true"></span>'; label = dstr + ', ' + sub.toLowerCase(); }
+    var sel = k === STATE.selectedDate;
+    return '<button type="button" class="date-pill' + (sel ? ' is-selected' : '') + '" data-action="pick-date" data-date="' + k + '" aria-label="' + esc(label) + '"' + (sel ? ' aria-current="date"' : '') + '>' +
+      (list.length > 1 ? '' : mark) + '<span class="date-pill__top">' + esc(top) + '</span>' + (list.length > 1 ? mark : '') + '</button>';
   }).join('');
   /* 7 empty future days after the last day that has a chip, then one dashed "+ Request" chip. */
   var last = new Date(keys[keys.length - 1] + 'T12:00:00'), empties = '';
   for (var i = 1; i <= 7; i++) {
     var d = new Date(last.getTime()); d.setDate(d.getDate() + i);
     var ek = localDateKey(d.toISOString());
-    empties += '<button type="button" class="date-pill date-pill--empty" data-action="post" data-date="' + esc(ek) + '" aria-label="' + esc('Request a ride on ' + postDateLabel(ek)) + '">' +
-      '<span class="date-pill__top">' + esc(fmtDateShort(d.toISOString())) + '</span><span class="date-pill__sub">\u2014</span></button>';
+    empties += '<button type="button" class="date-pill date-pill--empty" data-action="post" data-date="' + esc(ek) + '" aria-label="' + esc('Request a ride on ' + postDateLabel(ek)) + '"><span class="date-pill__top">' + esc(fmtDateShort(d.toISOString())) + '</span></button>';
   }
   pills += empties + '<button type="button" class="date-pill--post" data-action="post" aria-label="Request a ride">' + ico('plus') + '<span>Request</span></button>';
-  return '<section class="date-strip"><p class="date-strip__label">Your rides</p><div class="date-strip__row" id="dateStrip">' + pills + '</div>' + itemChips() + '</section>';
+  return '<section class="date-strip"><div class="date-strip__row" id="dateStrip">' + pills + '</div></section>';
 }
-/* One chip per ride/request when the selected date has 2+. */
 function ordinal(n) {
   var v = n % 100, sfx = (v >= 11 && v <= 13) ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' }[n % 10] || 'th');
   return n + sfx;
 }
-function itemChips() {
+/* "‹ 1 of 2 ›" pill inside the hero card; only when the selected date has 2+ items. */
+function switcher() {
   var list = itemsForDate(STATE.selectedDate);
   if (list.length < 2) return '';
-  var chips = list.map(function (t, idx) {
-    var sel = t.id === STATE.selectedId;
-    var rest = ' \u00b7 ' + fmtTime12(t.depart_at) + ' \u00b7 ' + shortLabel(t.origin_label) + ' \u2192 ' + shortLabel(t.dest_label);
-    return '<button type="button" class="trip-chip' + (sel ? ' is-selected' : '') + '" data-action="pick-item" data-id="' + esc(t.id) + '"' + (sel ? ' aria-current="true"' : '') + '><span class="trip-chip__n">' + esc(ordinal(idx + 1)) + ' ' + (t.kind === 'request' ? 'request' : 'ride') + '</span>' + esc(rest) + '</button>';
-  }).join('');
-  return '<div class="trip-chips" id="tripChips">' + chips + '</div>';
+  var idx = 0;
+  list.forEach(function (t, i) { if (t.id === STATE.selectedId) idx = i; });
+  return '<div class="sw" role="group" aria-label="Rides on this day">' +
+    '<button type="button" class="sw__b" data-action="sw-prev" aria-label="Previous ride"' + (idx === 0 ? ' disabled' : '') + '>\u2039</button>' +
+    '<button type="button" class="sw__n" data-action="sw-list" aria-label="Choose a ride">' + (idx + 1) + ' of ' + list.length + '</button>' +
+    '<button type="button" class="sw__b" data-action="sw-next" aria-label="Next ride"' + (idx === list.length - 1 ? ' disabled' : '') + '>\u203a</button></div>';
+}
+function switcherStep(dir) {
+  var list = itemsForDate(STATE.selectedDate), idx = -1;
+  list.forEach(function (t, i) { if (t.id === STATE.selectedId) idx = i; });
+  var n = list[idx + dir];
+  if (n) selectItem(n.id);
+}
+function openItemSheet() {
+  var list = itemsForDate(STATE.selectedDate);
+  if (list.length < 2) return;
+  hideToast(); STATE.sheet = { kind: 'items', title: 'Rides on ' + fmtDateShort(list[0].depart_at), items: list }; sheetHtml();
 }
 function emptyDay() {
   var none = allItems().length === 0;
@@ -714,11 +732,12 @@ function emptyDay() {
     '</div></div>';
 }
 function skeleton() {
+  var multi = itemsForDate(STATE.selectedDate).length > 1;
   var ln = function (w, h) { return '<span class="sk skel-line" style="width:' + w + 'px' + (h ? ';height:' + h + 'px' : '') + '"></span>'; };
   var stop = '<div class="skel-stop"><span class="sk skel-stop__dot"></span><div class="skel-stop__lines">' + ln(130) + ln(56, 10) + '</div></div>';
   var row = '<div class="skel-card"><span class="sk skel-avatar"></span><div class="skel-lines">' + ln(140) + ln(90, 10) + '</div></div>';
   return '<div class="skel" aria-busy="true" aria-label="Loading ride">' +
-    '<section class="hero-wrap"><div class="skel-hero"><span class="sk skel-pill"></span>' + stop + stop +
+    '<section class="hero-wrap"><div class="skel-hero">' + (multi ? '<span class="sk skel-sw"></span>' : '') + '<span class="sk skel-pill"></span>' + stop + stop +
       '<div class="skel-chips"><span class="sk skel-chip"></span><span class="sk skel-chip"></span><span class="sk skel-chip"></span></div></div></section>' +
     row + row + '</div>';
 }
@@ -760,7 +779,7 @@ function heroCard(p) {
   }).join('');
   var priceChip = trip.price_per_seat != null ? fmtSeatPrice(trip.price_per_seat) + '/seat · ' + seatsWord(b.seats) + ' booked' : seatsWord(b.seats) + ' booked';
   return '<section class="hero-wrap"><div class="hero">' +
-    '<div class="hero-top"><span class="hero-pill' + (STATUS_CLASS[st] || '') + '">' + esc(STATUS_LABEL[st] || 'Upcoming') + '</span></div>' +
+    '<div class="hero-top"><span class="hero-pill' + (STATUS_CLASS[st] || '') + '">' + esc(STATUS_LABEL[st] || 'Upcoming') + '</span></div>' + switcher() +
     '<div class="hero-route">' + rows + '</div>' +
     '<div class="hero-chips"><span class="hero-chip">' + esc(fmtDateShort(trip.depart_at)) + '</span><span class="hero-chip">' + esc(fmtTime12(trip.depart_at)) + '</span><span class="hero-chip">' + esc(priceChip) + '</span></div>' +
     '</div></section>';
@@ -812,7 +831,7 @@ function rideBar(p) {
 }
 function requestView(it) {
   return '<div class="main-body"><section class="hero-wrap"><div class="hero">' +
-    '<div class="hero-top"><span class="hero-pill hero-pill--active">Looking for a driver</span></div>' +
+    '<div class="hero-top"><span class="hero-pill hero-pill--active">Looking for a driver</span></div>' + switcher() +
     '<div class="hero-route">' +
       '<div class="hero-route__stop"><span class="hero-route__dot"></span><div class="hero-route__text"><span class="hero-route__city">' + esc(shortLabel(it.origin_label)) + '</span><span class="hero-route__sub">Pickup</span></div></div>' +
       '<div class="hero-route__stop"><span class="hero-route__dot hero-route__dot--to"></span><div class="hero-route__text"><span class="hero-route__city">' + esc(shortLabel(it.dest_label)) + '</span><span class="hero-route__sub">Drop-off</span></div></div>' +
@@ -836,6 +855,14 @@ function sheetHtml() {
   var sb = document.getElementById('sheetBody');
   if (!s) { layer.classList.remove('is-open'); sb.innerHTML = ''; return; }
   layer.classList.add('is-open');
+  if (s.kind === 'items') {
+    sb.innerHTML = '<h3>' + esc(s.title) + '</h3><div class="sheet__list">' + s.items.map(function (t, i) {
+      var cur = t.id === STATE.selectedId;
+      return '<button type="button" class="sheet__row' + (cur ? ' is-selected' : '') + '" data-action="pick-item" data-id="' + esc(t.id) + '"' + (cur ? ' aria-current="true"' : '') + '>' +
+        '<div><span>' + esc(ordinal(i + 1)) + ' ' + (t.kind === 'request' ? 'request' : 'ride') + '</span> \u00b7 ' + esc(fmtTime12(t.depart_at)) + ' \u00b7 ' + esc(shortLabel(t.origin_label)) + ' \u2192 ' + esc(shortLabel(t.dest_label)) + '</div></button>';
+    }).join('') + '</div><div class="sheet__actions"><button type="button" class="btn btn-secondary" data-action="sheet-cancel">Close</button></div>';
+    return;
+  }
   sb.innerHTML =
     '<h3>' + esc(s.title) + '</h3><p>' + esc(s.message) + '</p>' +
     '<div class="sheet__actions">' +
@@ -854,7 +881,7 @@ function render() {
   if (STATE.view === 'notifs') { app.classList.remove('has-bar'); renderNotifs(app); sheetHtml(); return; }
   if (STATE.errorType) { app.classList.remove('has-bar'); app.innerHTML = errorPage(); sheetHtml(); return; }
   var oldStrip = document.getElementById('dateStrip');
-  var oldChips = document.getElementById('tripChips'), keepChips = oldChips ? oldChips.scrollLeft : 0, keepY = window.scrollY;
+  var keepY = window.scrollY;
   var keepScroll = oldStrip ? oldStrip.scrollLeft : (STATE.stripSaved || 0); STATE.stripSaved = null; /* stripSaved: strip position remembered while the request flow was open */
   var body = '', showBar = false, p = STATE.payload;
   var fade = STATE.fade && !STATE.loading; STATE.fade = STATE.loading ? STATE.fade : false;
@@ -891,17 +918,6 @@ function render() {
         strip.scrollLeft = todayTarget;
       } else strip.scrollLeft = sel.offsetLeft - (strip.clientWidth - sel.offsetWidth) / 2;
     } else { strip.scrollLeft = keepScroll; }
-  }
-  var chips = document.getElementById('tripChips');
-  if (chips) {
-    var cSel = chips.querySelector('.is-selected'), cMode = STATE.chipScroll; STATE.chipScroll = null;
-    if (cSel && cMode) {
-      /* Scrolls only the chip row (never the page): selected chip centered when possible. */
-      var cr = chips.getBoundingClientRect(), sr = cSel.getBoundingClientRect();
-      var target = Math.max(0, Math.min(chips.scrollWidth - chips.clientWidth, chips.scrollLeft + (sr.left - cr.left) - (chips.clientWidth - sr.width) / 2));
-      if (cMode === 'smooth' && oldChips) { chips.scrollLeft = keepChips; chips.scrollTo({ left: target, behavior: 'smooth' }); }
-      else chips.scrollLeft = target;
-    } else chips.scrollLeft = keepChips;
   }
   if (oldStrip && window.scrollY !== keepY) window.scrollTo(0, keepY);
 }
@@ -1484,7 +1500,10 @@ document.body.addEventListener('click', function (e) {
   if (action.indexOf('pf-') === 0 || action === 'profile') { if (profileAction(action, t)) return; }
   if (action === 'post' || action.indexOf('post-') === 0) { if (postAction(action, t)) return; }
   if (action === 'retry') { STATE.errorType = null; load(true); return; }
-  if (action === 'pick-item') { selectItem(t.getAttribute('data-id')); return; }
+  if (action === 'sw-prev') { switcherStep(-1); return; }
+  if (action === 'sw-next') { switcherStep(1); return; }
+  if (action === 'sw-list') { openItemSheet(); return; }
+  if (action === 'pick-item') { var pid = t.getAttribute('data-id'); if (STATE.sheet) closeSheet(); selectItem(pid); return; }
   if (action === 'pick-date') { selectDate(t.getAttribute('data-date')); return; }
   if (action === 'share') { doShare(); return; }
   if (action === 'open-cancel-sheet') {
