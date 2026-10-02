@@ -69,16 +69,32 @@ button{font:inherit}
 .bell-badge[hidden]{display:none}
 
 /* Notifications screen */
-.nf-wrap{padding:16px;display:flex;flex-direction:column;gap:8px;max-width:560px;margin:0 auto}
-.nf-row{display:flex;align-items:flex-start;gap:10px;width:100%;min-height:56px;padding:12px 14px;border:1px solid var(--divider);border-radius:14px;background:var(--card);color:var(--text);font:inherit;text-align:left;cursor:pointer}
-.nf-row.is-unread{background:var(--sel-bg);border-color:var(--sel-border)}
-.nf-dot{flex:none;width:8px;height:8px;border-radius:50%;margin-top:6px;background:var(--primary)}
-.nf-dot.is-off{background:transparent}
+.nf-wrap{padding:8px 16px 24px;display:flex;flex-direction:column;gap:6px;max-width:560px;margin:0 auto}
+.nf-h{margin:14px 4px 0;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2)}
+.nf-card{background:var(--card);border-radius:14px;overflow:hidden}
+.nf-card.is-old{opacity:.6}
+.nf-row{position:relative;display:flex;align-items:flex-start;gap:12px;width:100%;min-height:56px;padding:12px 14px 12px 20px;border:0;border-top:1px solid var(--divider);border-radius:0;background:transparent;color:var(--text);font:inherit;text-align:left;cursor:pointer}
+.nf-card>.nf-row:first-child{border-top:0}
+.nf-dot{position:absolute;left:7px;top:50%;width:8px;height:8px;margin-top:-4px;border-radius:50%;background:var(--primary)}
+.nf-ic{flex:none;width:38px;height:38px;border-radius:50%;display:grid;place-items:center}
+.nf-ic svg{width:20px;height:20px}
+.nf-ic--green{background:rgba(37,211,102,.16);color:#1A9A50}
+.nf-ic--amber{background:rgba(245,166,35,.18);color:#C77F00}
+.nf-ic--blue{background:rgba(59,130,246,.16);color:#2F7DD1}
+.nf-ic--red{background:rgba(229,72,77,.16);color:#D93B40}
+.nf-ic--gray{background:rgba(134,150,160,.2);color:var(--text-2)}
 .nf-main{flex:1;min-width:0}
 .nf-t{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
-.nf-t b{min-width:0;font-size:15px;font-weight:700;overflow-wrap:anywhere}
+.nf-tt{min-width:0;display:flex;align-items:baseline;gap:6px;font-size:15px;font-weight:500}
+.nf-row.is-unread .nf-tt{font-weight:700}
+.nf-tt span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nf-n{flex:none;padding:1px 7px;border-radius:10px;background:var(--bg);color:var(--text-2);font-size:12px;font-weight:600}
 .nf-t time{flex:none;font-size:12px;color:var(--text-2)}
 .nf-b{margin:2px 0 0;font-size:13.5px;color:var(--text-2);overflow-wrap:anywhere}
+.nf-act{display:inline-block;margin-top:8px;padding:5px 12px;border:1px solid var(--divider);border-radius:16px;color:var(--primary);font-size:13px;font-weight:600}
+.nf-more{width:100%;min-height:44px;border:0;border-top:1px solid var(--divider);background:transparent;color:var(--primary);font:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.nf-markall{margin-left:auto;flex:none;min-height:44px;padding:0 12px;border:0;background:transparent;color:var(--header-text);font:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.nf-markall[hidden]{display:none}
 .nf-skel{height:72px;border-radius:14px;background:var(--card);border:1px solid var(--divider)}
 .nf-empty{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;padding:36px 16px}
 .nf-empty .nf-empty__ic{color:var(--text-2)}
@@ -179,23 +195,30 @@ textarea.pt-input{padding:12px 14px;min-height:88px;resize:vertical}
 .pt-rv dd{margin:0;flex:1;min-width:0;overflow-wrap:anywhere}
 
 /* Date strip */
-.date-strip{padding:12px 0 4px}
+.date-strip{padding:10px 0 2px}
 .date-strip__label{margin:0 16px 8px;font-size:12.5px;font-weight:600;color:var(--text-2)}
-.date-strip__row{display:flex;gap:8px;overflow-x:auto;padding:2px 16px 6px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.date-strip__row{display:flex;gap:8px;overflow-x:auto;padding:2px 16px 4px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
 .date-strip__row::-webkit-scrollbar{display:none}
-.date-pill{flex:none;min-width:84px;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 14px;border-radius:14px;border:1.5px solid var(--divider);background:var(--card);color:var(--text);cursor:pointer;font:inherit}
-.date-pill__top{font-size:15px;font-weight:700;line-height:1.25}
-.date-pill__sub{font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2);line-height:1.3}
-.date-pill__sub--date{text-transform:none;letter-spacing:0;font-size:12px}
-.trip-chips{display:flex;gap:8px;overflow-x:auto;padding:4px 16px 6px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
-.trip-chips::-webkit-scrollbar{display:none}
-.trip-chip{flex:none;padding:8px 14px;border-radius:999px;border:1.5px solid var(--divider);background:var(--card);color:var(--text);font:inherit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
-.trip-chip.is-selected{background:var(--sel-bg);border-color:var(--sel-border)}
+.date-pill{flex:none;height:34px;display:flex;align-items:center;gap:6px;padding:0 13px;border-radius:18px;border:1.5px solid var(--divider);background:var(--card);color:var(--text);cursor:pointer;font:inherit;font-size:14px;font-weight:700;white-space:nowrap}
+.date-pill__dot{width:7px;height:7px;border-radius:50%;flex:none;background:var(--primary)}
+.date-pill__dot--done{background:var(--text-2)}
+.date-pill__dot--cancelled{background:#C0564B;opacity:.8}
+.date-pill__dot--request{background:#D9A23B}
+.date-pill__n{flex:none;min-width:18px;padding:0 6px;border-radius:9px;background:var(--primary);color:#fff;font-size:11px;font-weight:700;line-height:16px;text-align:center}
 .date-pill.is-selected{background:var(--sel-bg);border-color:var(--sel-border)}
-.date-pill--empty{background:transparent;opacity:.55;min-height:44px}
-.date-pill--empty .date-pill__top{font-weight:600;color:var(--text-2)}
-.date-pill--post{flex:none;min-width:84px;min-height:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:8px 14px;border-radius:14px;border:1.5px dashed var(--sel-border);background:transparent;color:var(--sel-border);opacity:.85;cursor:pointer;font:inherit;font-size:14px;font-weight:700}
-.date-pill--post svg{width:18px;height:18px}
+.date-pill--empty{background:transparent;opacity:.55;font-weight:600;color:var(--text-2)}
+.date-pill--post{flex:none;height:34px;display:flex;align-items:center;justify-content:center;gap:4px;padding:0 13px;border-radius:18px;border:1.5px dashed var(--sel-border);background:transparent;color:var(--sel-border);opacity:.85;cursor:pointer;font:inherit;font-size:14px;font-weight:700;white-space:nowrap}
+.date-pill--post svg{width:16px;height:16px}
+/* Switcher on the hero card (2+ items on the selected date) */
+.hero{position:relative}
+.sw{position:absolute;top:6px;right:8px;display:flex;align-items:center;background:rgba(255,255,255,.16);border-radius:16px;font-size:12.5px;font-weight:700;color:var(--hero-text)}
+.sw__b{min-width:32px;height:32px;border:0;background:transparent;color:inherit;font:inherit;font-size:16px;line-height:1;cursor:pointer;padding:0;display:grid;place-items:center}
+.sw__b:disabled{opacity:.35;cursor:default}
+.sw__n{height:32px;border:0;background:transparent;color:inherit;font:inherit;padding:0 2px;cursor:pointer;white-space:nowrap}
+.sheet__list{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.sheet__row{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;min-height:48px;padding:8px 12px;border-radius:12px;border:1.5px solid var(--divider);background:var(--card);color:var(--text);font:inherit;font-size:14px;font-weight:600;text-align:left;cursor:pointer}
+.sheet__row.is-selected{background:var(--sel-bg);border-color:var(--sel-border)}
+.sheet__row span{color:var(--text-2);font-weight:400}
 
 /* Empty state */
 .empty-day{display:flex;flex-direction:column;align-items:center;text-align:center;padding:40px 24px}
@@ -208,7 +231,8 @@ textarea.pt-input{padding:12px 14px;min-height:88px;resize:vertical}
 @keyframes shimmer{from{background-position:200% 0}to{background-position:-200% 0}}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 .fade-in{animation:fadeIn .2s ease-out}
-.skel-hero{box-sizing:border-box;min-height:250px;padding:14px;border-radius:16px;background:var(--card);border:1px solid var(--divider)}
+.skel-hero{position:relative;box-sizing:border-box;min-height:250px;padding:14px;border-radius:16px;background:var(--card);border:1px solid var(--divider)}
+.skel-sw{position:absolute;top:6px;right:8px;width:96px;height:32px;border-radius:16px}
 .skel-pill{width:92px;height:22px;border-radius:999px;margin-bottom:14px}
 .skel-stop{display:flex;align-items:center;gap:12px;min-height:30px;margin-bottom:6px}
 .skel-stop__dot{width:9px;height:9px;border-radius:50%;flex:none}
@@ -452,13 +476,15 @@ function allItems() {
 }
 function itemsForDate(key) { return allItems().filter(function (t) { return localDateKey(t.depart_at) === key; }); }
 function itemById(id) { var l = allItems(); for (var i = 0; i < l.length; i++) if (l[i].id === id) return l[i]; return null; }
-/* Keeps the selected item if it is on this date; else the live one, else the earliest. */
+/* Keeps the selected item if it is on this date; else the live one; else the next upcoming (not completed/cancelled); else the last of the day. */
 function itemForDate(key) {
   var list = itemsForDate(key);
   if (!list.length) return null;
   for (var i = 0; i < list.length; i++) if (list[i].id === STATE.selectedId) return list[i];
   for (var j = 0; j < list.length; j++) if (list[j].status === 'active' || list[j].status === 'picked_up') return list[j];
-  return list[0];
+  var now = Date.now();
+  for (var k = 0; k < list.length; k++) if (new Date(list[k].depart_at).getTime() >= now && list[k].status !== 'completed' && list[k].status !== 'cancelled') return list[k];
+  return list[list.length - 1];
 }
 
 /* ---------- Loading ---------- */
@@ -477,7 +503,16 @@ function load(showSkeleton) {
       var w = itemById(STATE.wantB); STATE.wantB = null;
       if (w) { STATE.selectedDate = localDateKey(w.depart_at); STATE.selectedId = w.id; STATE.stripScroll = true; }
     }
-    if (!STATE.selectedDate) { STATE.selectedDate = todayKey(); STATE.stripScroll = true; }
+    if (!STATE.selectedDate) {
+      /* First load only: today if it has items, else the next upcoming item, else today (empty state). */
+      var today = todayKey(), nowMs = Date.now();
+      if (!itemsForDate(today).length) {
+        var all = allItems();
+        for (var n = 0; n < all.length; n++) if (new Date(all[n].depart_at).getTime() >= nowMs && all[n].status !== 'completed' && all[n].status !== 'cancelled') { STATE.selectedDate = localDateKey(all[n].depart_at); STATE.selectedId = all[n].id; break; }
+      }
+      if (!STATE.selectedDate) STATE.selectedDate = today;
+      STATE.stripScroll = true;
+    }
     loadItem(false);
   }).catch(failLoad);
 }
@@ -591,6 +626,10 @@ var PATHS = {
   camera: '<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"/><circle cx="12" cy="13" r="3.5"/>',
   pencil: '<path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/>',
   lock: '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+  nfUser: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+  nfClock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  nfX: '<circle cx="12" cy="12" r="9"/><path d="m9 9 6 6M15 9l-6 6"/>',
+  nfCheck: '<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>',
   bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
   mail: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/>',
   search: '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
@@ -636,17 +675,18 @@ function header() {
   var h = hdrInfo();
   return '<header class="app-bar"><div class="app-bar__inner">' +
     '<button type="button" class="hd-avatar" id="hdAvatar" data-action="profile" aria-label="Profile">' + hdrAvatarHtml(h) + '</button>' +
-    '<div class="hd-id"><h1 class="hd-name" id="hdName">' + esc(h.name) + '</h1><p class="hd-sub">Pathfynder Rider Hub</p></div>' +
+    '<div class="hd-id"><h1 class="hd-name" id="hdName">' + esc(h.name) + '</h1><p class="hd-sub">Passenger&#39;s hub</p></div>' +
     '<button type="button" class="bell-btn" data-action="notifs" aria-label="Notifications">' + ico('bell') + '<span class="bell-badge" id="bellBadge"' + (STATE.notifUnread > 0 ? '' : ' hidden') + '>' + (STATE.notifUnread > 9 ? '9+' : STATE.notifUnread) + '</span></button>' +
     '<button type="button" class="hd-post" data-action="post" aria-label="Request a ride">' + ico('plus') + 'Request</button>' +
     '</div></header>';
 }
+/* Status kind for a day's single item: drives the pill dot colour and aria-label. */
 function pillSub(k, today, list) {
   var it = list[0];
-  if (list.length > 1) return list.length + ' rides';
   if (k < today) return it.status === 'cancelled' ? 'Cancelled' : 'Done';
   return { upcoming: 'Upcoming', active: 'Live', picked_up: 'On board', completed: 'Done', cancelled: 'Cancelled', request: 'Requested' }[it.status] || 'Upcoming';
 }
+var PILL_DOT = { Upcoming: '', Live: '', 'On board': '', Done: ' date-pill__dot--done', Cancelled: ' date-pill__dot--cancelled', Requested: ' date-pill__dot--request' };
 function dateStrip() {
   var today = todayKey();
   var byDate = {}, keys = [today];
@@ -659,33 +699,48 @@ function dateStrip() {
   var pills = keys.map(function (k) {
     var list = byDate[k] || [];
     var dstr = fmtDateShort(list.length ? list[0].depart_at : new Date().toISOString());
-    var top, sub;
-    if (k === today) { top = 'Today'; sub = dstr; }
-    else { top = dstr; sub = pillSub(k, today, list); }
-    return '<button type="button" class="date-pill' + (k === STATE.selectedDate ? ' is-selected' : '') + '" data-action="pick-date" data-date="' + k + '"' + (k === STATE.selectedDate ? ' aria-current="date"' : '') + '>' +
-      '<span class="date-pill__top">' + esc(top) + '</span><span class="date-pill__sub' + (k === today ? ' date-pill__sub--date' : '') + '">' + esc(sub) + '</span></button>';
+    var top = k === today ? 'Today' : dstr, mark = '', label = top;
+    if (list.length > 1) { mark = '<span class="date-pill__n" aria-hidden="true">' + list.length + '</span>'; label = dstr + ', ' + list.length + ' rides'; }
+    else if (list.length) { var sub = pillSub(k, today, list); mark = '<span class="date-pill__dot' + PILL_DOT[sub] + '" aria-hidden="true"></span>'; label = dstr + ', ' + sub.toLowerCase(); }
+    var sel = k === STATE.selectedDate;
+    return '<button type="button" class="date-pill' + (sel ? ' is-selected' : '') + '" data-action="pick-date" data-date="' + k + '" aria-label="' + esc(label) + '"' + (sel ? ' aria-current="date"' : '') + '>' +
+      (list.length > 1 ? '' : mark) + '<span class="date-pill__top">' + esc(top) + '</span>' + (list.length > 1 ? mark : '') + '</button>';
   }).join('');
   /* 7 empty future days after the last day that has a chip, then one dashed "+ Request" chip. */
   var last = new Date(keys[keys.length - 1] + 'T12:00:00'), empties = '';
   for (var i = 1; i <= 7; i++) {
     var d = new Date(last.getTime()); d.setDate(d.getDate() + i);
     var ek = localDateKey(d.toISOString());
-    empties += '<button type="button" class="date-pill date-pill--empty" data-action="post" data-date="' + esc(ek) + '" aria-label="' + esc('Request a ride on ' + postDateLabel(ek)) + '">' +
-      '<span class="date-pill__top">' + esc(fmtDateShort(d.toISOString())) + '</span><span class="date-pill__sub">\u2014</span></button>';
+    empties += '<button type="button" class="date-pill date-pill--empty" data-action="post" data-date="' + esc(ek) + '" aria-label="' + esc('Request a ride on ' + postDateLabel(ek)) + '"><span class="date-pill__top">' + esc(fmtDateShort(d.toISOString())) + '</span></button>';
   }
   pills += empties + '<button type="button" class="date-pill--post" data-action="post" aria-label="Request a ride">' + ico('plus') + '<span>Request</span></button>';
-  return '<section class="date-strip"><p class="date-strip__label">Your rides</p><div class="date-strip__row" id="dateStrip">' + pills + '</div>' + itemChips() + '</section>';
+  return '<section class="date-strip"><div class="date-strip__row" id="dateStrip">' + pills + '</div></section>';
 }
-/* One chip per ride/request when the selected date has 2+. */
-function itemChips() {
+function ordinal(n) {
+  var v = n % 100, sfx = (v >= 11 && v <= 13) ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' }[n % 10] || 'th');
+  return n + sfx;
+}
+/* "‹ 1 of 2 ›" pill inside the hero card; only when the selected date has 2+ items. */
+function switcher() {
   var list = itemsForDate(STATE.selectedDate);
   if (list.length < 2) return '';
-  var chips = list.map(function (t) {
-    var sel = t.id === STATE.selectedId;
-    var label = (t.kind === 'request' ? 'Request · ' : '') + fmtTime12(t.depart_at) + ' · ' + shortLabel(t.origin_label) + ' → ' + shortLabel(t.dest_label);
-    return '<button type="button" class="trip-chip' + (sel ? ' is-selected' : '') + '" data-action="pick-item" data-id="' + esc(t.id) + '"' + (sel ? ' aria-current="true"' : '') + '>' + esc(label) + '</button>';
-  }).join('');
-  return '<div class="trip-chips" id="tripChips">' + chips + '</div>';
+  var idx = 0;
+  list.forEach(function (t, i) { if (t.id === STATE.selectedId) idx = i; });
+  return '<div class="sw" role="group" aria-label="Rides on this day">' +
+    '<button type="button" class="sw__b" data-action="sw-prev" aria-label="Previous ride"' + (idx === 0 ? ' disabled' : '') + '>\u2039</button>' +
+    '<button type="button" class="sw__n" data-action="sw-list" aria-label="Choose a ride">' + (idx + 1) + ' of ' + list.length + '</button>' +
+    '<button type="button" class="sw__b" data-action="sw-next" aria-label="Next ride"' + (idx === list.length - 1 ? ' disabled' : '') + '>\u203a</button></div>';
+}
+function switcherStep(dir) {
+  var list = itemsForDate(STATE.selectedDate), idx = -1;
+  list.forEach(function (t, i) { if (t.id === STATE.selectedId) idx = i; });
+  var n = list[idx + dir];
+  if (n) selectItem(n.id);
+}
+function openItemSheet() {
+  var list = itemsForDate(STATE.selectedDate);
+  if (list.length < 2) return;
+  hideToast(); STATE.sheet = { kind: 'items', title: 'Rides on ' + fmtDateShort(list[0].depart_at), items: list }; sheetHtml();
 }
 function emptyDay() {
   var none = allItems().length === 0;
@@ -697,11 +752,12 @@ function emptyDay() {
     '</div></div>';
 }
 function skeleton() {
+  var multi = itemsForDate(STATE.selectedDate).length > 1;
   var ln = function (w, h) { return '<span class="sk skel-line" style="width:' + w + 'px' + (h ? ';height:' + h + 'px' : '') + '"></span>'; };
   var stop = '<div class="skel-stop"><span class="sk skel-stop__dot"></span><div class="skel-stop__lines">' + ln(130) + ln(56, 10) + '</div></div>';
   var row = '<div class="skel-card"><span class="sk skel-avatar"></span><div class="skel-lines">' + ln(140) + ln(90, 10) + '</div></div>';
   return '<div class="skel" aria-busy="true" aria-label="Loading ride">' +
-    '<section class="hero-wrap"><div class="skel-hero"><span class="sk skel-pill"></span>' + stop + stop +
+    '<section class="hero-wrap"><div class="skel-hero">' + (multi ? '<span class="sk skel-sw"></span>' : '') + '<span class="sk skel-pill"></span>' + stop + stop +
       '<div class="skel-chips"><span class="sk skel-chip"></span><span class="sk skel-chip"></span><span class="sk skel-chip"></span></div></div></section>' +
     row + row + '</div>';
 }
@@ -743,7 +799,7 @@ function heroCard(p) {
   }).join('');
   var priceChip = trip.price_per_seat != null ? fmtSeatPrice(trip.price_per_seat) + '/seat · ' + seatsWord(b.seats) + ' booked' : seatsWord(b.seats) + ' booked';
   return '<section class="hero-wrap"><div class="hero">' +
-    '<div class="hero-top"><span class="hero-pill' + (STATUS_CLASS[st] || '') + '">' + esc(STATUS_LABEL[st] || 'Upcoming') + '</span></div>' +
+    '<div class="hero-top"><span class="hero-pill' + (STATUS_CLASS[st] || '') + '">' + esc(STATUS_LABEL[st] || 'Upcoming') + '</span></div>' + switcher() +
     '<div class="hero-route">' + rows + '</div>' +
     '<div class="hero-chips"><span class="hero-chip">' + esc(fmtDateShort(trip.depart_at)) + '</span><span class="hero-chip">' + esc(fmtTime12(trip.depart_at)) + '</span><span class="hero-chip">' + esc(priceChip) + '</span></div>' +
     '</div></section>';
@@ -795,7 +851,7 @@ function rideBar(p) {
 }
 function requestView(it) {
   return '<div class="main-body"><section class="hero-wrap"><div class="hero">' +
-    '<div class="hero-top"><span class="hero-pill hero-pill--active">Looking for a driver</span></div>' +
+    '<div class="hero-top"><span class="hero-pill hero-pill--active">Looking for a driver</span></div>' + switcher() +
     '<div class="hero-route">' +
       '<div class="hero-route__stop"><span class="hero-route__dot"></span><div class="hero-route__text"><span class="hero-route__city">' + esc(shortLabel(it.origin_label)) + '</span><span class="hero-route__sub">Pickup</span></div></div>' +
       '<div class="hero-route__stop"><span class="hero-route__dot hero-route__dot--to"></span><div class="hero-route__text"><span class="hero-route__city">' + esc(shortLabel(it.dest_label)) + '</span><span class="hero-route__sub">Drop-off</span></div></div>' +
@@ -819,6 +875,14 @@ function sheetHtml() {
   var sb = document.getElementById('sheetBody');
   if (!s) { layer.classList.remove('is-open'); sb.innerHTML = ''; return; }
   layer.classList.add('is-open');
+  if (s.kind === 'items') {
+    sb.innerHTML = '<h3>' + esc(s.title) + '</h3><div class="sheet__list">' + s.items.map(function (t, i) {
+      var cur = t.id === STATE.selectedId;
+      return '<button type="button" class="sheet__row' + (cur ? ' is-selected' : '') + '" data-action="pick-item" data-id="' + esc(t.id) + '"' + (cur ? ' aria-current="true"' : '') + '>' +
+        '<div><span>' + esc(ordinal(i + 1)) + ' ' + (t.kind === 'request' ? 'request' : 'ride') + '</span> \u00b7 ' + esc(fmtTime12(t.depart_at)) + ' \u00b7 ' + esc(shortLabel(t.origin_label)) + ' \u2192 ' + esc(shortLabel(t.dest_label)) + '</div></button>';
+    }).join('') + '</div><div class="sheet__actions"><button type="button" class="btn btn-secondary" data-action="sheet-cancel">Close</button></div>';
+    return;
+  }
   sb.innerHTML =
     '<h3>' + esc(s.title) + '</h3><p>' + esc(s.message) + '</p>' +
     '<div class="sheet__actions">' +
@@ -837,6 +901,7 @@ function render() {
   if (STATE.view === 'notifs') { app.classList.remove('has-bar'); renderNotifs(app); sheetHtml(); return; }
   if (STATE.errorType) { app.classList.remove('has-bar'); app.innerHTML = errorPage(); sheetHtml(); return; }
   var oldStrip = document.getElementById('dateStrip');
+  var keepY = window.scrollY;
   var keepScroll = oldStrip ? oldStrip.scrollLeft : (STATE.stripSaved || 0); STATE.stripSaved = null; /* stripSaved: strip position remembered while the request flow was open */
   var body = '', showBar = false, p = STATE.payload;
   var fade = STATE.fade && !STATE.loading; STATE.fade = STATE.loading ? STATE.fade : false;
@@ -874,6 +939,7 @@ function render() {
       } else strip.scrollLeft = sel.offsetLeft - (strip.clientWidth - sel.offsetWidth) / 2;
     } else { strip.scrollLeft = keepScroll; }
   }
+  if (oldStrip && window.scrollY !== keepY) window.scrollTo(0, keepY);
 }
 
 /* ---------- Profile screen ---------- */
@@ -1049,31 +1115,79 @@ function refreshUnread() {
     STATE.notifUnread = Number(d.unread_count) || 0; paintBadge();
   }).catch(function () {});
 }
+var NF_ICONS = { person: 'nfUser', clock: 'nfClock', search: 'search', x: 'nfX', check: 'nfCheck', bell: 'bell' };
+var NF_KIND = {
+  passenger_joined: ['person', 'green'], passenger_cancelled: ['x', 'red'], ride_cancelled: ['x', 'red'],
+  reminder: ['clock', 'amber'], ride_started: ['clock', 'amber'], picked_up: ['clock', 'amber'],
+  new_match: ['search', 'blue'], ride_completed: ['check', 'green']
+};
 function fmtNotifTime(iso) {
   var d = new Date(iso);
   if (isNaN(d.getTime())) return '';
   var diff = Date.now() - d.getTime();
-  if (diff < 60e3) return 'Just now';
-  if (diff < 3600e3) return Math.floor(diff / 60e3) + ' min ago';
+  if (diff < 60e3) return 'now';
+  if (diff < 3600e3) return Math.floor(diff / 60e3) + 'm';
   var now = new Date();
   var startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-  if (d.getTime() >= startToday) return Math.floor(diff / 3600e3) + ' h ago';
-  if (d.getTime() >= startToday - 86400e3) return 'Yesterday';
+  if (d.getTime() >= startToday) return Math.floor(diff / 3600e3) + 'h';
+  if (d.getTime() >= startToday - 6 * 86400e3) return d.toLocaleDateString('en-US', { weekday: 'short' });
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
+function nfGroup(iso) {
+  var d = new Date(iso).getTime();
+  var now = new Date();
+  var s = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  if (isNaN(d) || d < s - 86400e3) return 2;
+  return d >= s ? 0 : 1;
+}
+function nfSafeUrl(u) { return typeof u === 'string' && u.charAt(0) === '/' && u.charAt(1) !== '/' && u.indexOf('\\') < 0; }
+/* Collapses same-group repeats (same kind + title + body; match/reminder alerts by kind + route/day text). Input is newest first. */
+function nfMerge(items) {
+  var out = [], idx = {};
+  items.forEach(function (n) {
+    var k = n.kind + '|' + ((n.kind === 'new_match' || n.kind === 'reminder') ? (n.body || n.title) : (n.title || '') + '|' + (n.body || ''));
+    if (idx[k] != null) { var m = out[idx[k]]; m.count++; if (!n.read) m.unread = true; return; }
+    idx[k] = out.length;
+    out.push({ n: n, count: 1, unread: !n.read });
+  });
+  return out;
+}
+function nfRow(m) {
+  var n = m.n, k = NF_KIND[n.kind] || ['bell', 'gray'];
+  var raw = String(n.title || 'Notification'), cut = raw.indexOf(' · ');
+  var title = cut > 0 ? raw.slice(0, cut) : raw;
+  var detail = [cut > 0 ? raw.slice(cut + 3) : '', n.body || ''].filter(Boolean).join(' · ');
+  var act = !nfSafeUrl(n.url) ? '' : n.kind === 'passenger_joined' ? 'View ride' : n.kind === 'reminder' ? 'See drivers' : '';
+  var time = fmtNotifTime(n.created_at);
+  return '<button type="button" class="nf-row' + (m.unread ? ' is-unread' : '') + '" data-action="nf-open" data-id="' + esc(n.id) + '">' +
+    (m.unread ? '<span class="nf-dot" aria-label="Unread"></span>' : '') +
+    '<span class="nf-ic nf-ic--' + k[1] + '">' + ico(NF_ICONS[k[0]]) + '</span>' +
+    '<span class="nf-main"><span class="nf-t"><span class="nf-tt"><span>' + esc(title) + '</span>' + (m.count > 1 ? '<span class="nf-n" aria-label="' + m.count + ' times">×' + m.count + '</span>' : '') + '</span><time>' + esc(time) + '</time></span>' +
+    (detail ? '<span class="nf-b" style="display:block">' + esc(detail) + '</span>' : '') +
+    (act ? '<span class="nf-act" aria-hidden="true">' + act + ' ›</span>' : '') + '</span></button>';
+}
 function notifsHeader() {
-  return '<header class="app-bar"><div class="pf-bar__inner"><button type="button" class="pf-back" data-action="nf-back" aria-label="Back">' + ico('arrowLeft') + '</button><div><h1 class="app-bar__title">Notifications</h1></div></div></header>';
+  var unread = (STATE.notifs || []).some(function (n) { return !n.read; });
+  return '<header class="app-bar"><div class="pf-bar__inner"><button type="button" class="pf-back" data-action="nf-back" aria-label="Back">' + ico('arrowLeft') + '</button><div><h1 class="app-bar__title">Notifications</h1></div>' +
+    '<button type="button" class="nf-markall" data-action="nf-markall"' + (unread ? '' : ' hidden') + '>Mark all read</button></div></header>';
+}
+function nfBody() {
+  var heads = ['Today', 'Yesterday', 'Earlier'], groups = [[], [], []];
+  STATE.notifs.forEach(function (n) { groups[nfGroup(n.created_at)].push(n); });
+  return '<div class="nf-wrap">' + groups.map(function (g, i) {
+    if (!g.length) return '';
+    var rows = nfMerge(g), hidden = 0;
+    if (i === 2 && !STATE.nfMore && rows.length > 5) { hidden = rows.length - 5; rows = rows.slice(0, 5); }
+    return '<h2 class="nf-h">' + heads[i] + '</h2><div class="nf-card' + (i === 2 ? ' is-old' : '') + '">' + rows.map(nfRow).join('') +
+      (hidden ? '<button type="button" class="nf-more" data-action="nf-more">Show ' + hidden + ' older</button>' : '') + '</div>';
+  }).join('') + '</div>';
 }
 function renderNotifs(app) {
   var body;
   if (STATE.notifsLoading && !STATE.notifs) body = '<div class="nf-wrap" aria-busy="true"><div class="nf-skel"></div><div class="nf-skel"></div><div class="nf-skel"></div></div>';
   else if (STATE.notifsError || !STATE.notifs) body = '<div class="nf-wrap"><div class="pf-card"><p class="pf-err">We couldn\'t load your notifications. Please try again.</p><button type="button" class="btn btn-secondary btn-full" data-action="nf-retry">Try again</button></div></div>';
-  else if (!STATE.notifs.length) body = '<div class="nf-wrap"><div class="pf-card nf-empty"><span class="nf-empty__ic">' + ico('bell') + '</span><b>No notifications yet</b><span>You\'ll see updates about your rides here.</span></div></div>';
-  else body = '<div class="nf-wrap">' + STATE.notifs.map(function (n) {
-    return '<button type="button" class="nf-row' + (n.read ? '' : ' is-unread') + '" data-action="nf-open" data-id="' + esc(n.id) + '"><span class="nf-dot' + (n.read ? ' is-off' : '') + '"></span>' +
-      '<span class="nf-main"><span class="nf-t"><b>' + esc(n.title || 'Notification') + '</b><time>' + esc(fmtNotifTime(n.created_at)) + '</time></span>' +
-      (n.body ? '<p class="nf-b">' + esc(n.body) + '</p>' : '') + '</span></button>';
-  }).join('') + '</div>';
+  else if (!STATE.notifs.length) body = '<div class="nf-wrap"><div class="nf-card nf-empty"><span class="nf-empty__ic">' + ico('bell') + '</span><b>No notifications yet</b><span>You\'ll see updates about your rides here.</span></div></div>';
+  else body = nfBody();
   var y = window.pageYOffset || 0;
   app.innerHTML = notifsHeader() + body;
   window.scrollTo(0, y);
@@ -1096,9 +1210,16 @@ function loadNotifs() {
   });
 }
 function notifAction(action, t) {
-  if (action === 'notifs') { STATE.view = 'notifs'; STATE.notifs = null; window.scrollTo(0, 0); loadNotifs(); return true; }
+  if (action === 'notifs') { STATE.view = 'notifs'; STATE.notifs = null; STATE.nfMore = false; window.scrollTo(0, 0); loadNotifs(); return true; }
   if (action === 'nf-back') { STATE.view = 'home'; STATE.notifSeq++; render(); refreshUnread(); return true; }
   if (action === 'nf-retry') { loadNotifs(); return true; }
+  if (action === 'nf-more') { STATE.nfMore = true; render(); return true; }
+  if (action === 'nf-markall') {
+    (STATE.notifs || []).forEach(function (x) { x.read = true; });
+    STATE.notifUnread = 0; paintBadge(); render();
+    apiNotifMarkRead().catch(function (e) { console.error('[passenger] mark read failed', e); });
+    return true;
+  }
   if (action === 'nf-open') {
     var id = t.getAttribute('data-id');
     var n = (STATE.notifs || []).find(function (x) { return String(x.id) === id; });
@@ -1454,7 +1575,10 @@ document.body.addEventListener('click', function (e) {
   if (action.indexOf('pf-') === 0 || action === 'profile') { if (profileAction(action, t)) return; }
   if (action === 'post' || action.indexOf('post-') === 0) { if (postAction(action, t)) return; }
   if (action === 'retry') { STATE.errorType = null; load(true); return; }
-  if (action === 'pick-item') { selectItem(t.getAttribute('data-id')); return; }
+  if (action === 'sw-prev') { switcherStep(-1); return; }
+  if (action === 'sw-next') { switcherStep(1); return; }
+  if (action === 'sw-list') { openItemSheet(); return; }
+  if (action === 'pick-item') { var pid = t.getAttribute('data-id'); if (STATE.sheet) closeSheet(); selectItem(pid); return; }
   if (action === 'pick-date') { selectDate(t.getAttribute('data-date')); return; }
   if (action === 'share') { doShare(); return; }
   if (action === 'open-cancel-sheet') {
