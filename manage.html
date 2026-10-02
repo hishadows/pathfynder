@@ -1161,7 +1161,7 @@ function header() {
   var h = hdrInfo();
   return '<header class="app-bar"><div class="app-bar__inner">' +
     '<button type="button" class="hd-avatar" id="hdAvatar" data-action="profile" aria-label="Profile">' + hdrAvatarHtml(h) + '</button>' +
-    '<div class="hd-id"><h1 class="hd-name" id="hdName">' + esc(h.name) + '</h1><p class="hd-sub">Pathfynder Driver Hub</p></div>' +
+    '<div class="hd-id"><h1 class="hd-name" id="hdName">' + esc(h.name) + '</h1><p class="hd-sub">Offer ride</p></div>' +
     '<button type="button" class="bell-btn" data-action="notifs" aria-label="Notifications">' + ico('bell') + '<span class="bell-badge" id="bellBadge"' + (STATE.notifUnread > 0 ? '' : ' hidden') + '>' + (STATE.notifUnread > 9 ? '9+' : STATE.notifUnread) + '</span></button>' +
     '<button type="button" class="hd-post" data-action="post" aria-label="Post a trip">' + ico('plus') + 'Post</button>' +
     '</div></header>';
