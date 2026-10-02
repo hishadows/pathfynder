@@ -358,8 +358,8 @@ tr:hover td{background:rgba(255,255,255,.015)}
 var SUPABASE_URL  = 'https://omussxfyrztjahbdrrpi.supabase.co';
 var SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9tdXNzeGZ5cnp0amFoYmRycnBpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MjI1NjAsImV4cCI6MjA5NTk5ODU2MH0.ySigym7uOaFIQm01nErPfn4kE6j4MOVKoNntt_Mosak';
 
-// SHA-256 of "pf@founder2026"
-var PASS_HASH = '5b7eb8e3613957b5ffbf41589cffba6aacc4782a8214afdf2a84f9788c5bd710';
+// Passphrase is verified server-side by dashboard_data(); kept in memory only for refreshes
+var DASH_PASS = '';
 
 // No-op storage — prevents Supabase from touching localStorage/cookies
 // which gets blocked by Edge tracking prevention
@@ -379,12 +379,6 @@ try {
 // ═══════════════════════════════════
 // AUTH
 // ═══════════════════════════════════
-async function sha256(str) {
-  var enc = new TextEncoder().encode(str);
-  var buf = await crypto.subtle.digest('SHA-256', enc);
-  return Array.from(new Uint8Array(buf)).map(function(b){ return b.toString(16).padStart(2,'0'); }).join('');
-}
-
 var authPwEl  = document.getElementById('auth-pw');
 var authBtnEl = document.getElementById('auth-btn');
 var authErrEl = document.getElementById('auth-err');
@@ -402,20 +396,16 @@ function tryAuth() {
   if (!pw) return;
   authBtnEl.textContent = '…';
   authErrEl.style.display = 'none';
-  sha256(pw).then(function(h) {
-    if (h === PASS_HASH) {
-      showDashboard();
-    } else {
-      authErrEl.style.display = 'block';
-      authBtnEl.textContent = 'Access Dashboard →';
-      authPwEl.value = '';
-      authPwEl.focus();
-    }
+  Promise.resolve().then(function() { return db.rpc('dashboard_data', {p_pass: pw}); }).then(function(r) {
+    if (r.error) throw r.error;
+    DASH_PASS = pw;
+    showDashboard();
   }).catch(function(e) {
-    // crypto.subtle unavailable (HTTP) — fallback: compare plain (dev only)
-    authErrEl.textContent = 'Secure context required (use HTTPS)';
+    var bad = e && /forbidden/i.test(e.message || '');
+    authErrEl.textContent = bad ? 'Incorrect passphrase' : 'Could not verify — try again';
     authErrEl.style.display = 'block';
     authBtnEl.textContent = 'Access Dashboard →';
+    if (bad) { authPwEl.value = ''; authPwEl.focus(); }
   });
 }
 
@@ -694,8 +684,16 @@ async function fetchLive() {
   } catch(e){ console.warn('activity chart:', e); }
 
   // ── Rides (small table, fetch all) ──
+  var dd = null;
   try {
-    var r = await db.from('driver_routines').select('*').order('created_at', {ascending:false});
+    var ddr = await db.rpc('dashboard_data', {p_pass: DASH_PASS});
+    if (ddr.error) throw ddr.error;
+    dd = ddr.data;
+  } catch(e){ console.warn('dashboard_data:', e); }
+  dd = dd || {};
+
+  try {
+    var r = {data: dd.rides};
     if (r.data && r.data.length) {
       document.getElementById('k-drivers').textContent = r.data.length;
       document.getElementById('k-active').textContent  = r.data.filter(function(x){return x.ride_status==='open';}).length;
@@ -720,7 +718,7 @@ async function fetchLive() {
 
   // ── Bookings ──
   try {
-    var pb = await db.from('passenger_requests').select('*').order('created_at', {ascending:false}).limit(50);
+    var pb = {data: dd.bookings};
     if (pb.data) {
       document.getElementById('book-badge').textContent = pb.data.length + ' bookings';
       document.getElementById('book-tbody').innerHTML = pb.data.length
@@ -737,14 +735,14 @@ async function fetchLive() {
 
   // ── Telegram users ──
   try {
-    var tu = await db.from('telegram_users').select('*').order('created_at', {ascending:false});
+    var tu = {data: dd.tg_users};
     if (tu.data) {
       document.getElementById('k-tg').textContent      = tu.data.length;
       document.getElementById('tg-badge').textContent  = tu.data.length + ' users';
       document.getElementById('tg-tbody').innerHTML = tu.data.map(function(u){
         return '<tr><td class="td-name">'+(u.name||'—')+'</td>'+
                '<td style="color:var(--accent)">@'+(u.telegram_username||'—')+'</td>'+
-               '<td style="font-size:11px">'+(u.whatsapp_number||'—')+'</td>'+
+               '<td style="font-size:11px">'+(u.whatsapp_masked||'—')+'</td>'+
                '<td>'+timeAgo(u.created_at)+'</td></tr>';
       }).join('');
     }
