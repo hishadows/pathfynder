@@ -46,9 +46,9 @@ One task per session. Status: todo / done / parked.
    - Done when: on iPhone outside the installed app, "Turn on notifications" opens the sheet; Android and the installed app keep the old flow; looks right in light + dark at 390px and closes cleanly.
    - Status: done (2026-09-27)
 
-11. **Matching around stops** — explore/bot matching should also match passengers near a driver's `driver_routines.stops` (not only origin/destination).
+11. **Matching around stops** ✅ — explore/bot matching should also match passengers near a driver's `driver_routines.stops` (not only origin/destination).
    - Done when: a passenger whose pickup/drop-off is near a posted stop sees that driver in Explore and bot matches.
-   - Status: todo
+   - Status: done 2026-10-02 (DB live; explore.html `via=` needs merge; notify_check_new_matches paste pending).
 
 ## Session notes
 
@@ -118,3 +118,4 @@ One task per session. Status: todo / done / parked.
 - 2026-10-02 — Explore shows numbers in FB/Poparide original message (WhatsApp still masked); match_passenger_to_drivers locked to service_role. Open: check a FB post's message on Explore on a real phone; HQ passphrase next.
 - 2026-10-02 — Task 9 done: hq_check + gated get_feed/get_power_users, muse phone/contact_public hidden, match_driver_to_scraped_passengers locked, leftover grants revoked. Open: after HQ deploy paste the DROP file; extracted_data_01 still has MAINTAIN for anon (no data access, low).
 - 2026-10-02 — Task 9 shipped: HQ live with server-side passphrase, old HQ RPCs + extracted_data_01 policies dropped, VITE_DASHBOARD_PASSCODE removed. Open: passphrase rotation not applied yet.
+- 2026-10-02 — Task 11: driver routes follow their stops in Explore/bot/alerts; driver bot replies + Explore link carry `via`. Open: paste design/stops-matching-notify-paste.sql (apply_migration timed out), merge explore.html, real-phone check; no live passengers near a stop yet, so the gain isn't visible in counts today.
