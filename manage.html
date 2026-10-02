@@ -786,6 +786,24 @@ function failLoad(e) {
   STATE.loading = false; STATE.errorType = 'rpc_error'; STATE.payload = null;
   render();
 }
+/* First load only: open the trip from ?trip=<uuid> (bot link), else today, else the next upcoming trip, else today (empty state). */
+function pickInitialTrip() {
+  var want = null;
+  try { want = new URLSearchParams(location.search).get('trip'); } catch (e) {}
+  var hit = null, i;
+  if (want) for (i = 0; i < STATE.trips.length; i++) if (STATE.trips[i].id === want) { hit = STATE.trips[i]; break; }
+  if (!hit) {
+    var today = todayKey(), now = Date.now();
+    if (tripsForDate(today).length) { STATE.selectedDate = today; return; }
+    for (i = 0; i < STATE.trips.length; i++) if (new Date(STATE.trips[i].depart_at).getTime() >= now) { hit = STATE.trips[i]; break; }
+  }
+  if (!hit) { STATE.selectedDate = todayKey(); return; }
+  STATE.selectedDate = localDateKey(hit.depart_at); STATE.selectedTripId = hit.id;
+  if (want) try { /* so a later reload is not stuck on this trip; token/mock params stay */
+    var u = new URL(location.href); u.searchParams.delete('trip');
+    history.replaceState(history.state, '', u.pathname + u.search + u.hash);
+  } catch (e) {}
+}
 /* Loads the trip list, then the trip for the selected date (today by default). */
 function load(showSkeleton) {
   if (showSkeleton) { STATE.loading = true; STATE.stale = null; STATE.skelShown = true; render(); }
@@ -793,7 +811,7 @@ function load(showSkeleton) {
     if (!list || list.error === 'invalid_token') { STATE.loading = false; STATE.errorType = 'invalid_token'; STATE.payload = null; render(); return; }
     if (!list.trips) { STATE.loading = false; STATE.errorType = 'rpc_error'; STATE.payload = null; render(); return; }
     STATE.trips = list.trips.slice().sort(function (a, b) { return new Date(a.depart_at) - new Date(b.depart_at); });
-    if (!STATE.selectedDate) { STATE.selectedDate = todayKey(); STATE.stripScroll = true; }
+    if (!STATE.selectedDate) { pickInitialTrip(); STATE.stripScroll = true; STATE.chipScroll = 'jump'; }
     loadTrip(false);
   }).catch(failLoad);
 }
@@ -843,7 +861,7 @@ function loadTrip(showSkeleton) {
 }
 function selectDate(key) {
   if (key === STATE.selectedDate || STATE.pendingKey) return;
-  STATE.selectedDate = key; STATE.stripScroll = true;
+  STATE.selectedDate = key; STATE.stripScroll = true; STATE.chipScroll = 'jump';
   STATE.selectedTripId = null;
   STATE.stale = STATE.payload || (STATE.loading && !STATE.skelShown ? STATE.stale : null);
   STATE.slideAuto = true; STATE.expanded = {}; STATE.payload = null; STATE.sheet = null;
@@ -851,7 +869,7 @@ function selectDate(key) {
 }
 function selectTrip(id) {
   if (id === STATE.selectedTripId || STATE.pendingKey) return;
-  STATE.selectedTripId = id;
+  STATE.selectedTripId = id; STATE.chipScroll = 'smooth';
   STATE.stale = STATE.payload || (STATE.loading && !STATE.skelShown ? STATE.stale : null);
   STATE.slideAuto = true; STATE.expanded = {}; STATE.payload = null; STATE.sheet = null;
   loadTrip(true);
@@ -1690,6 +1708,7 @@ function render() {
   if (STATE.view === 'notifs') { app.classList.remove('has-bar'); renderNotifs(app); sheetHtml(); return; }
   if (STATE.errorType) { app.classList.remove('has-bar'); app.innerHTML = errorPage(); sheetHtml(); return; }
   var oldStrip = document.getElementById('dateStrip');
+  var oldChips = document.getElementById('tripChips'), keepChips = oldChips ? oldChips.scrollLeft : 0, keepY = window.scrollY;
   var keepScroll = oldStrip ? oldStrip.scrollLeft : (STATE.stripSaved || 0); STATE.stripSaved = null; /* stripSaved: strip position remembered while the Post screen was open */
   var body = '', showBar = false, payload = STATE.payload;
   var stale = STATE.loading && !STATE.skelShown && !payload && STATE.stale; /* previous trip, dimmed, until the skeleton delay passes */
@@ -1729,6 +1748,18 @@ function render() {
       } else strip.scrollLeft = sel.offsetLeft - (strip.clientWidth - sel.offsetWidth) / 2;
     } else { strip.scrollLeft = keepScroll; }
   }
+  var chips = document.getElementById('tripChips');
+  if (chips) {
+    var cSel = chips.querySelector('.is-selected'), cMode = STATE.chipScroll; STATE.chipScroll = null;
+    if (cSel && cMode) {
+      /* Scrolls only the chip row (never the page): selected chip centered when possible. */
+      var cr = chips.getBoundingClientRect(), sr = cSel.getBoundingClientRect();
+      var target = Math.max(0, Math.min(chips.scrollWidth - chips.clientWidth, chips.scrollLeft + (sr.left - cr.left) - (chips.clientWidth - sr.width) / 2));
+      if (cMode === 'smooth' && oldChips) { chips.scrollLeft = keepChips; chips.scrollTo({ left: target, behavior: 'smooth' }); }
+      else chips.scrollLeft = target;
+    } else chips.scrollLeft = keepChips;
+  }
+  if (oldStrip && window.scrollY !== keepY) window.scrollTo(0, keepY);
   if (showSkel || !payload) return;
 
   var car = document.querySelector('.ns-car');

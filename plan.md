@@ -111,3 +111,4 @@ One task per session. Status: todo / done / parked.
 - 2026-10-01 — Legal pages live in repo: privacy.html + terms.html, footer links on manage.html and passenger.html (main-body renders only; manage empty-day screen has none). Open: privacy.html §6 still has the [12 months] placeholder; confirm Privacy Officer email/address. Next: add links to Explore, index, notifications, join.
 - 2026-10-01 — Legal links added to landing footer + join confirm step. Open: not yet seen on a real phone or on live /terms (local server has no cleanUrls). Still to link: Explore footer, notifications opt-in.
 - 2026-10-01 — Security #1/#2 Phase A+B: tg_* + dashboard_data RPCs, mini app (pathfynder-form) and dashboard.html switched off direct table reads/raw phones. Open: merge+deploy both repos, add vault secret `telegram_bot_token`, rotate dashboard passphrase, then Phase C.
+- 2026-10-02 — Manage: open linked/next trip instead of always today; trip chips keep position.
