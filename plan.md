@@ -40,7 +40,7 @@ One task per session. Status: todo / done / parked.
 
 9. **Security: lock anon reads of `extracted_data_01`.**
    - Done when: anon can no longer select from `extracted_data_01` and the Telegram mini app still works.
-   - Status: in progress — step 1 (Phase A+B, new RPCs + pages) live 2026-10-02; step 2 done 2026-10-02 (sender_number/sender_name/original_message hidden from anon). Next: step 3 (#2 drop open policies on driver_routines/passenger_requests/telegram_users), HQ passphrase for get_feed/get_power_users (still return raw numbers), vault `telegram_bot_token`, rotate dashboard passphrase.
+   - Status: in progress — step 1 (new RPCs + pages) and step 2 (sender_number hidden) done 2026-10-02; step 3 (3 tables locked) done 2026-10-02. Open: HQ passphrase for get_feed/get_power_users (still return raw numbers); `match_passenger_to_drivers(uuid)` (SECURITY DEFINER, anon-executable, returns driver_wa_id) to revoke; vault `telegram_bot_token`; rotate dashboard passphrase.
 
 10. **Notifications: iPhone "Add to Home Screen" pop-up** — when someone on iPhone Safari taps "Turn on notifications", show a polished bottom sheet: notifications only work once Pathfynder is added to the Home Screen, with step-by-step iPhone instructions. Not shown on Android (push works in Chrome) or inside the installed app.
    - Done when: on iPhone outside the installed app, "Turn on notifications" opens the sheet; Android and the installed app keep the old flow; looks right in light + dark at 390px and closes cleanly.
@@ -112,3 +112,4 @@ One task per session. Status: todo / done / parked.
 - 2026-10-01 — Legal links added to landing footer + join confirm step. Open: not yet seen on a real phone or on live /terms (local server has no cleanUrls). Still to link: Explore footer, notifications opt-in.
 - 2026-10-01 — Security #1/#2 Phase A+B: tg_* + dashboard_data RPCs, mini app (pathfynder-form) and dashboard.html switched off direct table reads/raw phones. Open: merge+deploy both repos, add vault secret `telegram_bot_token`, rotate dashboard passphrase, then Phase C.
 - 2026-10-02 — Security step 2: anon can read only id/pick up date/pickup_lat/Type on extracted_data_01; stats + HQ RPCs switched to SECURITY DEFINER; 5 unused number-returning RPCs revoked. Open: HQ get_feed/get_power_users still expose numbers (option B — passphrase later); Pranay asked to show phones in FB/Poparide message text on Explore (awaiting confirmation).
+- 2026-10-02 — Security step 3: driver_routines/passenger_requests/telegram_users locked (policies dropped + grants revoked, applied by Pranay in SQL Editor because MCP apply_migration hangs on DROP POLICY). All page RPCs tested OK. Open: real-phone test, match_passenger_to_drivers revoke, HQ passphrase.
