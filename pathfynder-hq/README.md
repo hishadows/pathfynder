@@ -11,7 +11,7 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:5173/admin.html — passcode is in `.env` (`VITE_DASHBOARD_PASSCODE`, default `pathfynder`).
+Open http://localhost:5173/admin.html — the passphrase is the dashboard passphrase, checked server-side (see below).
 
 ## Environment
 
@@ -21,10 +21,10 @@ Copy `.env.example` to `.env` and fill in (a working `.env` is already included)
 |-----|---------|
 | `VITE_SUPABASE_URL` | Supabase project URL |
 | `VITE_SUPABASE_ANON_KEY` | Anon key (public-safe; table is RLS-guarded, read-only) |
-| `VITE_DASHBOARD_PASSCODE` | Passphrase for the gate screen |
 
-`.env` is gitignored. The passcode gate is light obfuscation, not real security — anyone
-with the anon key can read the data. Keep the repo private.
+`.env` is gitignored. The passphrase is checked server-side: the gate calls the `hq_check` RPC
+(hash compared against `dashboard_auth`), and `get_feed` / `get_power_users` require `p_pass`
+and raise `unauthorized` without it. The passphrase is kept in `sessionStorage` for the tab only.
 
 ## Features
 
