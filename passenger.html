@@ -6,6 +6,26 @@
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#0E6F73">
 <link rel="icon" type="image/png" href="/logo.png">
+<script>
+/* Own web-app manifest per person (/p/<token>) so the Home Screen app scopes to '/' and Explore stays inside it. */
+(function () {
+  var m = location.pathname.match(/\/p\/([^/]+)/), t = m ? m[1] : null;
+  try { if (m) t = decodeURIComponent(m[1]); else t = new URLSearchParams(location.search).get('t'); } catch (e) { t = null; }
+  var mock = false;
+  try { mock = new URLSearchParams(location.search).get('mock') === '1'; } catch (e) {}
+  var l = document.createElement('link');
+  l.rel = 'manifest';
+  if (t && /^[A-Za-z0-9_-]{16,64}$/.test(t) && !mock) l.href = '/api/manifest?app=passenger&t=' + encodeURIComponent(t);
+  else if (mock) l.href = '/manifest.webmanifest';
+  else return;
+  document.head.appendChild(l);
+})();
+</script>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Pathfynder">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon-180.png">
 <title>My rides · Pathfynder</title>
 <script>try{var __t=localStorage.getItem("pf_theme");if(__t==="light"||__t==="dark")document.documentElement.setAttribute("data-theme",__t);}catch(e){}</script>
 <style>
@@ -676,7 +696,7 @@ function header() {
   return '<header class="app-bar"><div class="app-bar__inner">' +
     '<button type="button" class="hd-avatar" id="hdAvatar" data-action="profile" aria-label="Profile">' + hdrAvatarHtml(h) + '</button>' +
     '<div class="hd-id"><h1 class="hd-name" id="hdName">' + esc(h.name) + '</h1><p class="hd-sub">Passenger&#39;s hub</p></div>' +
-    '<a class="hd-explore" href="/explore?type=driver" aria-label="Find drivers on Explore">' + ico('search') + '</a>' +
+    '<a class="hd-explore" href="/explore?type=driver&back=1" aria-label="Find drivers on Explore">' + ico('search') + '</a>' +
     '<button type="button" class="bell-btn" data-action="notifs" aria-label="Notifications">' + ico('bell') + '<span class="bell-badge" id="bellBadge"' + (STATE.notifUnread > 0 ? '' : ' hidden') + '>' + (STATE.notifUnread > 9 ? '9+' : STATE.notifUnread) + '</span></button>' +
     '<button type="button" class="hd-post" data-action="post" aria-label="Request a ride">' + ico('plus') + '</button>' +
     '</div></header>';
