@@ -8,8 +8,8 @@ var UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 // installed app, scope '/' so the header Explore link stays inside it. Bad token -> Explore manifest.
 var TOKEN_RE = /^[A-Za-z0-9_-]{16,64}$/;
 var APPS = {
-  driver: { name: 'Pathfynder Driver', id: '/m', path: '/m/', theme: '#008069', bg: '#F0F2F5' },
-  passenger: { name: 'Pathfynder Passenger', id: '/p', path: '/p/', theme: '#0E6F73', bg: '#EDF6F6' }
+  driver: { name: 'Rideshare', id: '/m', path: '/m/', theme: '#008069', bg: '#F0F2F5' },
+  passenger: { name: 'Rideshare', id: '/p', path: '/p/', theme: '#0E6F73', bg: '#EDF6F6' }
 };
 
 module.exports = async function handler(req, res) {
@@ -20,7 +20,7 @@ module.exports = async function handler(req, res) {
 
   var manifest = app ? {
     name: app.name,
-    short_name: 'Pathfynder',
+    short_name: app.name,
     id: app.id,
     start_url: app.path + t,
     scope: '/',
