@@ -441,6 +441,11 @@ textarea.pt-input{padding:12px 14px;min-height:88px;resize:vertical}
 
 .pax-actions{display:flex;gap:8px}
 .pax-actions .btn{flex:1}
+.pax-actions{justify-content:center}
+.pax-actions .btn.btn-quiet{flex:none;width:auto}
+.btn-quiet{background:transparent;border:0;color:var(--text-2);font-size:14px;font-weight:600;height:40px;min-height:40px;padding:0 12px}
+.btn-quiet .i{width:18px;height:18px}
+.btn-quiet:hover,.btn-quiet:active{color:var(--danger)}
 .pax-done-line{font-size:14px;color:var(--text-2)}
 .pax-done-line strong{color:var(--text)}
 
@@ -1546,16 +1551,18 @@ function passengerCard(b, trip) {
   '</div>';
 
 
+  var noteHtml = (b.note && String(b.note).trim()) ? '<div class="ns-note">' + NS_ICON_NOTE + '<span>' + esc(String(b.note).trim()) + '</span></div>' : '';
+
   var actions = '';
   if (!completed) {
     if (picked && !dropped) {
       actions = '<span class="pax-onboard">On board</span>';
     } else if (!dropped && trip.status === 'draft') {
-      actions = '<div class="pax-actions"><button type="button" class="btn btn-secondary btn-danger-text btn-full" data-action="remove" data-id="' + b.id + '">' + ico('userMinus') + 'Remove passenger</button></div>';
+      actions = '<div class="pax-actions"><button type="button" class="btn btn-quiet" data-action="remove" data-id="' + b.id + '">' + ico('userMinus') + 'Remove passenger</button></div>';
     }
   }
 
-  return '<div class="' + cardClass + '">' + head + timeline + actions + '</div>';
+  return '<div class="' + cardClass + '">' + head + timeline + noteHtml + actions + '</div>';
 }
 function passengersSection(payload) {
   var trip = payload.trip;
