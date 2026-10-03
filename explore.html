@@ -15,6 +15,10 @@
     if (t && u) { try { u.searchParams.set('t', t); history.replaceState(history.state, '', u.pathname + u.search + u.hash); } catch (e) {} }
   }
   window.PF_TOKEN = t || null;
+  /* ?back=1 (opened from the driver/passenger home): show a back arrow for the whole session. */
+  var bk = false;
+  try { bk = u && u.searchParams.get('back') === '1'; if (bk) sessionStorage.setItem('pf_back', '1'); else bk = sessionStorage.getItem('pf_back') === '1'; } catch (e) {}
+  window.PF_BACK = !!bk;
   var l = document.createElement('link');
   l.rel = 'manifest';
   l.href = t ? '/api/manifest?t=' + encodeURIComponent(t) : '/manifest.webmanifest';
@@ -111,6 +115,9 @@ body.no-scroll{overflow:hidden}
 /* App bar */
 .app-bar{position:sticky;top:0;z-index:3;background:var(--header);color:var(--header-text)}
 .app-bar__inner{display:flex;align-items:center;gap:12px;min-height:60px;padding:8px 8px 8px 16px}
+.back-btn{flex:none;width:40px;height:40px;margin:0 -4px 0 -8px;border:0;border-radius:50%;padding:0;background:transparent;color:var(--header-text);display:grid;place-items:center;cursor:pointer;font:inherit}
+.back-btn:active{background:rgba(255,255,255,.16)}
+.back-btn svg{width:24px;height:24px}
 .brand{display:grid;place-items:center;width:36px;height:36px;border-radius:10px;background:var(--brand-bg);color:var(--brand-fg);flex:none;overflow:hidden}
 .brand img{width:100%;height:100%;object-fit:cover;display:block}
 .app-bar__titles{flex:1;min-width:0}
@@ -999,6 +1006,7 @@ function syncUrl() {
   if (f.hide_business) p.set('nb', '1');
   if (f.luggage_ok) p.set('lug', '1');
   if (window.PF_TOKEN) p.set('t', window.PF_TOKEN);
+  if (window.PF_BACK) p.set('back', '1');
   history.replaceState(null, '', location.pathname + '?' + p.toString());
 }
 function savePlacesCache() {
@@ -1534,6 +1542,7 @@ function removeFilter(key) {
 /* ---------- Page shell ---------- */
 function appBar(sub) {
   return '<header class="app-bar"><div class="app-bar__inner">' +
+    (window.PF_BACK ? '<button type="button" class="back-btn js-back" aria-label="Back"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>' : '') +
     '<a class="brand js-explore-home" href="/explore" aria-label="Explore rides — start over"><img src="/logo.png" alt="" width="36" height="36"></a>' +
     '<div class="app-bar__titles"><h1 class="app-bar__title">Explore rides</h1><p class="app-bar__sub"><b>Pathfynder</b> · <span>' + sub + '</span></p></div>' +
     '</div></header>';
@@ -2022,6 +2031,14 @@ document.addEventListener('click', function (e) {
   if (t.closest('.js-banner-x')) {
     try { sessionStorage.setItem('pf_banner_x', '1'); } catch (e2) {}
     var bx = document.querySelector('.pf-banner'); if (bx) bx.remove();
+    return;
+  }
+
+  if (t.closest('.js-back')) {
+    var ref = '';
+    try { ref = document.referrer && new URL(document.referrer).origin === location.origin ? document.referrer : ''; } catch (e2) {}
+    if (ref && history.length > 1) history.back();
+    else location.href = ref || '/';
     return;
   }
 
