@@ -814,6 +814,7 @@ function localDateKey(iso) {
   return d.getFullYear() + '-' + (m < 10 ? '0' : '') + m + '-' + (day < 10 ? '0' : '') + day;
 }
 function todayKey() { return localDateKey(new Date().toISOString()); }
+function isInstalledApp() { try { return (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true; } catch (e) { return false; } }
 function tripsForDate(key) {
   return STATE.trips.filter(function (t) { return localDateKey(t.depart_at) === key; })
     .sort(function (a, b) { return new Date(a.depart_at) - new Date(b.depart_at); });
@@ -845,6 +846,7 @@ function pickInitialTrip() {
   } catch (e) {}
   var hit = null, i;
   if (want) for (i = 0; i < STATE.trips.length; i++) if (STATE.trips[i].id === want) { hit = STATE.trips[i]; break; }
+  if (!hit && isInstalledApp()) { STATE.selectedDate = todayKey(); return; } /* Home Screen app always opens on today */
   if (!hit) {
     var today = todayKey(), now = Date.now();
     if (tripsForDate(today).length) { STATE.selectedDate = today; return; }
