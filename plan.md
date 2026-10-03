@@ -120,3 +120,4 @@ One task per session. Status: todo / done / parked.
 - 2026-10-02 — Task 9 shipped: HQ live with server-side passphrase, old HQ RPCs + extracted_data_01 policies dropped, VITE_DASHBOARD_PASSCODE removed. Open: passphrase rotation not applied yet.
 - 2026-10-02 — Task 11: driver routes follow their stops in Explore/bot/alerts; driver bot replies + Explore link carry `via`. Open: paste design/stops-matching-notify-paste.sql (apply_migration timed out), merge explore.html, real-phone check; no live passengers near a stop yet, so the gain isn't visible in counts today.
 - 2026-10-02 — Header post button icon-only (+) on driver + passenger home, beside the bell. Open: check on a real phone.
+- 2026-10-03 — Header Explore icon on driver + passenger home. Open: real-phone check.

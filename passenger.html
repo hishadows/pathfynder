@@ -54,17 +54,17 @@ button{font:inherit}
 
 /* Header */
 .app-bar{position:sticky;top:0;z-index:3;background:var(--header);color:var(--header-text)}
-.app-bar__inner{display:flex;align-items:center;gap:12px;min-height:60px;padding:8px 16px}
+.app-bar__inner{display:flex;align-items:center;gap:8px;min-height:60px;padding:8px 16px}
 .app-bar__title{margin:0;font-size:18px;font-weight:600;line-height:1.2}
 .hd-avatar{flex:none;width:40px;height:40px;border-radius:50%;border:0;padding:0;background:#FFFFFF;color:var(--header);display:grid;place-items:center;font-size:18px;font-weight:700;cursor:pointer;overflow:hidden}
 .hd-avatar img{width:100%;height:100%;object-fit:cover;display:block}
-.hd-id{flex:1;min-width:0}
-.hd-name{margin:0;font-size:21px;font-weight:700;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hd-id{flex:1;min-width:0;margin-right:4px}
+.hd-name{margin:0;font-size:19px;font-weight:700;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hd-sub{margin:1px 0 0;font-size:12px;letter-spacing:.02em;color:var(--header-sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.hd-post{flex:none;display:grid;place-items:center;width:40px;height:40px;padding:0;border-radius:50%;border:0;background:#FFFFFF;color:#0B3D2E;cursor:pointer}
-.hd-post svg{width:22px;height:22px;stroke-width:2.5}
-.bell-btn{position:relative;flex:none;width:40px;height:40px;border-radius:50%;border:0;padding:0;margin-left:0;background:rgba(255,255,255,.16);color:var(--header-text);display:grid;place-items:center;cursor:pointer}
-.bell-btn svg{width:22px;height:22px}
+.hd-post{flex:none;display:grid;place-items:center;width:38px;height:38px;padding:0;border-radius:50%;border:0;background:#FFFFFF;color:#0B3D2E;cursor:pointer}
+.hd-post svg{width:20px;height:20px;stroke-width:2.5}
+.bell-btn,.hd-explore{position:relative;flex:none;width:38px;height:38px;border-radius:50%;border:0;padding:0;margin-left:0;background:rgba(255,255,255,.16);color:var(--header-text);display:grid;place-items:center;cursor:pointer;text-decoration:none}
+.bell-btn svg,.hd-explore svg{width:20px;height:20px}
 .bell-badge{position:absolute;top:-3px;right:-3px;min-width:20px;height:20px;padding:0 4px;border-radius:10px;border:2px solid var(--header);background:var(--danger);color:#FFFFFF;font-size:11px;font-weight:700;line-height:16px;text-align:center}
 .bell-badge[hidden]{display:none}
 
@@ -676,6 +676,7 @@ function header() {
   return '<header class="app-bar"><div class="app-bar__inner">' +
     '<button type="button" class="hd-avatar" id="hdAvatar" data-action="profile" aria-label="Profile">' + hdrAvatarHtml(h) + '</button>' +
     '<div class="hd-id"><h1 class="hd-name" id="hdName">' + esc(h.name) + '</h1><p class="hd-sub">Passenger&#39;s hub</p></div>' +
+    '<a class="hd-explore" href="/explore?type=driver" aria-label="Find drivers on Explore">' + ico('search') + '</a>' +
     '<button type="button" class="bell-btn" data-action="notifs" aria-label="Notifications">' + ico('bell') + '<span class="bell-badge" id="bellBadge"' + (STATE.notifUnread > 0 ? '' : ' hidden') + '>' + (STATE.notifUnread > 9 ? '9+' : STATE.notifUnread) + '</span></button>' +
     '<button type="button" class="hd-post" data-action="post" aria-label="Request a ride">' + ico('plus') + '</button>' +
     '</div></header>';
