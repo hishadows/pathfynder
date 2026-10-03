@@ -330,6 +330,14 @@ textarea.pt-input{padding:12px 14px;min-height:88px;resize:vertical}
 .prog__segs{display:flex;gap:3px}
 .prog__seg{flex:1;height:6px;border-radius:3px;background:var(--divider)}
 .prog__seg.is-picked{background:var(--ok)}
+.card--driver{background:var(--muted-card);box-shadow:none}
+.card--driver .card__title{text-transform:none;letter-spacing:0;font-size:15px;font-weight:700;color:var(--text);margin:0 0 4px}
+.card--driver .drv--in{margin-top:0;background:transparent;padding-left:0}
+.bk-label{margin:10px 0 2px;font-size:12px;color:var(--text-2)}
+.bk-note{display:flex;align-items:flex-start;gap:8px;padding:10px 12px;border-radius:12px;background:var(--card);border:1px solid var(--divider);font-size:14px;overflow-wrap:anywhere}
+.bk-note svg{width:16px;height:16px;flex:none;margin-top:2px;color:var(--text-2)}
+.bk-picked{display:flex;align-items:center;gap:6px;margin:10px 0 0;font-size:13.5px;font-weight:600;color:var(--ok)}
+.bk-picked svg{width:16px;height:16px;flex:none}
 .kv{display:flex;gap:12px;padding:9px 0;border-top:1px solid var(--divider);font-size:14.5px}
 .kv:first-of-type{border-top:0;padding-top:0}
 .kv dt{flex:0 0 78px;color:var(--text-2);font-size:13px;padding-top:1px}
@@ -661,6 +669,8 @@ function ico(name) {
 }
 var ICON_PHONE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.8a16 16 0 0 0 6 6l1.2-1.2a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg>';
 var WA_PATH = 'M12.04 2a9.9 9.9 0 0 0-8.5 14.98L2 22l5.17-1.5A9.9 9.9 0 1 0 12.04 2zm0 18.1a8.2 8.2 0 0 1-4.18-1.15l-.3-.18-3.07.89.9-2.99-.2-.31a8.2 8.2 0 1 1 6.85 3.74zm4.5-6.14c-.25-.12-1.46-.72-1.69-.8-.23-.09-.39-.13-.56.12-.16.25-.64.8-.78.97-.15.16-.29.18-.54.06a6.7 6.7 0 0 1-3.34-2.92c-.25-.43.25-.4.72-1.34.08-.16.04-.3-.02-.43l-.76-1.83c-.2-.48-.4-.41-.56-.42h-.47a.9.9 0 0 0-.65.3 2.7 2.7 0 0 0-.85 2.02c0 1.19.87 2.34.99 2.5.12.16 1.71 2.61 4.14 3.66 1.54.66 2.14.72 2.91.6.47-.07 1.46-.6 1.66-1.17.2-.58.2-1.07.14-1.17-.06-.1-.22-.16-.47-.28z';
+var ICON_NOTE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
+var ICON_CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
 var ICON_WA = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" stroke="none" d="' + WA_PATH + '"/></svg>';
 var ICON_WA_LG = '<svg class="i" viewBox="0 0 24 24" width="19" height="19" aria-hidden="true"><path fill="currentColor" stroke="none" d="' + WA_PATH + '"/></svg>';
 
@@ -853,12 +863,12 @@ function bookingCard(p) {
   var route = routeRows(p.trip).map(function (pt) {
     return '<div class="trip-route__stop"><span class="trip-route__dot"></span><span class="trip-route__city">' + esc(shortLabel(pt.label)) + '</span><span class="trip-route__sub">' + esc(pt.sub) + '</span></div>';
   }).join('');
-  var rows = (b.note ? '<div class="kv"><dt>Note</dt><dd>' + esc(b.note) + '</dd></div>' : '') +
-    (b.picked_up_at ? '<div class="kv"><dt>Status</dt><dd class="ok">Picked up at ' + esc(fmtTime12(b.picked_up_at)) + '</dd></div>' : '');
-  return '<section class="section"><div class="card card--trip"><h2 class="card__title">Trip details</h2>' +
-    '<div class="trip-route">' + route + '</div>' +
-    (rows ? '<dl style="margin:6px 0 0">' + rows + '</dl>' : '') +
+  var note = (b.note && String(b.note).trim()) ? '<p class="bk-label">Your note to the driver</p><div class="bk-note">' + ICON_NOTE + '<span>' + esc(String(b.note).trim()) + '</span></div>' : '';
+  var picked = b.picked_up_at ? '<p class="bk-picked">' + ICON_CHECK + 'Picked up at ' + esc(fmtTime12(b.picked_up_at)) + '</p>' : '';
+  return '<section class="section"><div class="card card--trip card--driver"><h2 class="card__title">Driver&#39;s details</h2>' +
     driverRow(p) +
+    '<p class="bk-label">Route</p><div class="trip-route">' + route + '</div>' +
+    note + picked +
     (why && (b.status === 'active' || b.status === 'picked_up') ? '<p class="note-hint" id="cancelWhy">' + esc(why) + '</p>' : '') +
     '</div></section>';
 }
