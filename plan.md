@@ -125,3 +125,4 @@ One task per session. Status: todo / done / parked.
 - 2026-10-03 — Home Screen name "Rideshare" for driver/passenger apps. Open: re-add icon on iPhone to confirm.
 - 2026-10-03 — Installed app opens on today; ?b= stripped on passenger page. Open: re-add icon and confirm on iPhone.
 - 2026-10-03 — Passenger note on driver's passenger cards, quiet Remove button, Driver's details card on passenger home. Open: real-phone check.
+- 2026-10-03 — Passenger bottom bar: Cancel left, Invite right.

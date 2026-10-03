@@ -877,8 +877,8 @@ function rideBar(p) {
   if (s === 'completed' || s === 'cancelled') return '';
   var off = !!cancelWhy(p) || STATE.pendingKey === 'cancel';
   return '<div class="action-bar"><div class="action-bar__row">' +
-    '<button type="button" class="btn btn-secondary" data-action="share">' + ico('userPlus') + 'Invite a friend</button>' +
     '<button type="button" class="btn btn-secondary btn-danger-text" data-action="open-cancel-sheet"' + (off ? ' disabled' : '') + '>' + ico('x') + 'Cancel my seat</button>' +
+    '<button type="button" class="btn btn-secondary" data-action="share">' + ico('userPlus') + 'Invite a friend</button>' +
     '</div></div>';
 }
 function requestView(it) {
