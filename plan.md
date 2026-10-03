@@ -122,3 +122,4 @@ One task per session. Status: todo / done / parked.
 - 2026-10-02 — Header post button icon-only (+) on driver + passenger home, beside the bell. Open: check on a real phone.
 - 2026-10-03 — Header Explore icon on driver + passenger home. Open: real-phone check.
 - 2026-10-03 — Fixed Explore opening in Safari from installed driver/passenger home (manifest scope '/'). Open: Pranay to remove + re-add the Home Screen icon and confirm on iPhone.
+- 2026-10-03 — Home Screen name "Rideshare" for driver/passenger apps. Open: re-add icon on iPhone to confirm.
