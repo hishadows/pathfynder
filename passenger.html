@@ -441,6 +441,7 @@ function exploreHrefFor(it) {
   return h + '&date=' + encodeURIComponent(localDateKey(it.depart_at)) + '&time=' + encodeURIComponent(hhmm(it.depart_at)) + '&flex=60';
 }
 function todayKey() { return localDateKey(new Date().toISOString()); }
+function isInstalledApp() { try { return (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true; } catch (e) { return false; } }
 function hideToast() { clearTimeout(toastTimer); document.getElementById('toast').classList.remove('is-visible'); }
 
 /* ---------- State ---------- */
@@ -526,7 +527,7 @@ function load(showSkeleton) {
     if (!STATE.selectedDate) {
       /* First load only: today if it has items, else the next upcoming item, else today (empty state). */
       var today = todayKey(), nowMs = Date.now();
-      if (!itemsForDate(today).length) {
+      if (!isInstalledApp() && !itemsForDate(today).length) { /* installed Home Screen app always opens on today */
         var all = allItems();
         for (var n = 0; n < all.length; n++) if (new Date(all[n].depart_at).getTime() >= nowMs && all[n].status !== 'completed' && all[n].status !== 'cancelled') { STATE.selectedDate = localDateKey(all[n].depart_at); STATE.selectedId = all[n].id; break; }
       }
@@ -1627,6 +1628,10 @@ function boot() {
   STATE.isMock = q.get('mock') === '1';
   STATE.token = getToken();
   STATE.wantB = q.get('b');
+  if (STATE.wantB) try { /* so a Home Screen icon added later can't stick to this booking; token/mock params stay */
+    var u = new URL(location.href); u.searchParams.delete('b');
+    history.replaceState(history.state, '', u.pathname + u.search + u.hash);
+  } catch (e) {}
   if (!STATE.isMock && !STATE.token) { STATE.loading = false; STATE.errorType = 'invalid_token'; render(); return; }
   load(true);
   refreshUnread();
