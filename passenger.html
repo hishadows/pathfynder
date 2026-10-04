@@ -716,6 +716,7 @@ function loadHeaderProfile() {
     if (!STATE.profile) STATE.profile = data;
     hdrCacheWrite(); paintHeader();
     if (STATE.view === 'notifs') render();
+    maybeAskAlerts();
   }).catch(function (e) { console.error('[passenger] header profile load failed', e); });
 }
 function header() {
@@ -931,6 +932,7 @@ function sheetHtml() {
     }).join('') + '</div><div class="sheet__actions"><button type="button" class="btn btn-secondary" data-action="sheet-cancel">Close</button></div>';
     return;
   }
+  if (s.kind === 'alerts') { sb.innerHTML = alertsSheetHtml(); return; }
   sb.innerHTML =
     '<h3>' + esc(s.title) + '</h3><p>' + esc(s.message) + '</p>' +
     '<div class="sheet__actions">' +
@@ -940,6 +942,25 @@ function sheetHtml() {
 }
 function openSheet(opts) { hideToast(); STATE.sheet = opts; sheetHtml(); }
 function closeSheet() { STATE.sheet = null; sheetHtml(); }
+
+/* ---------- "Turn on ride alerts" sheet ---------- */
+var ALERTS_SNOOZE_KEY = 'pf_alerts_ask_snooze', alertsAsked = false;
+function alertsSnoozed() { try { return Number(localStorage.getItem(ALERTS_SNOOZE_KEY)) > Date.now(); } catch (e) { return false; } }
+function alertsSnooze() { try { localStorage.setItem(ALERTS_SNOOZE_KEY, String(Date.now() + 3 * 86400000)); } catch (e) {} }
+function openAlertsSheet() { hideToast(); STATE.sheet = { kind: 'alerts' }; sheetHtml(); }
+/* Launch trigger: installed app only, once per page load, home view, nothing else open, not snoozed. Called once the profile is known. */
+function maybeAskAlerts() {
+  if (alertsAsked || !isInstalledApp() || !bellOff() || alertsSnoozed()) return;
+  if (STATE.view !== 'home' || STATE.sheet || STATE.errorType || POST) return;
+  alertsAsked = true; openAlertsSheet();
+}
+function alertsSheetHtml() {
+  return '<h3>Turn on ride alerts</h3><p>Get pinged when a driver matches or your ride changes.</p>' +
+    '<div class="sheet__actions">' +
+      '<button type="button" class="btn btn-cta btn-full" data-action="alerts-on"' + (STATE.notifBusy ? ' disabled' : '') + '>Turn on</button>' +
+      '<button type="button" class="btn btn-secondary" data-action="sheet-cancel">Not now</button>' +
+    '</div>';
+}
 
 /* ---------- Full render ---------- */
 function render() {
@@ -1561,6 +1582,7 @@ function postSubmit() {
     STATE.payload = null; STATE.sheet = null;
     window.scrollTo(0, 0);
     load(true);
+    if (bellOff()) setTimeout(function () { if (STATE.view === 'home' && !STATE.sheet && !POST && bellOff()) openAlertsSheet(); }, 700); /* post trigger: ignores the snooze */
   }).catch(function (e) { console.error('[passenger] request failed', e); P.busy = false; postRefreshNav(); toast("Couldn't send your request. Try again."); });
 }
 /* Recent routes: fetched when the form opens; failures are ignored silently. */
@@ -1648,7 +1670,8 @@ document.body.addEventListener('click', function (e) {
     openSheet({ title: 'Cancel this request?', message: 'Drivers will no longer see your request.', confirmLabel: 'Cancel request', keepLabel: 'Keep request', kind: 'request', id: STATE.payload.request.id });
     return;
   }
-  if (action === 'sheet-cancel' || action === 'close-sheet') { closeSheet(); return; }
+  if (action === 'alerts-on') { toggleNotif(); closeSheet(); return; } /* toggleNotif first: the permission prompt needs this tap */
+  if (action === 'sheet-cancel' || action === 'close-sheet') { if (STATE.sheet && STATE.sheet.kind === 'alerts') alertsSnooze(); closeSheet(); return; }
   if (action === 'sheet-confirm') {
     var s = STATE.sheet;
     closeSheet();
