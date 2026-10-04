@@ -50,7 +50,6 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Pathfynder">
 <script src="/js/pf-notify-v5.js" defer></script>
-<script src="/js/pf-install-sheet-v2.js" defer></script>
 <title>Find a ride · Pathfynder</title>
 <meta name="description" content="Find drivers and passengers across Ontario — from WhatsApp groups, Poparide and more.">
 <meta property="og:title" content="Find a ride · Pathfynder">
@@ -145,18 +144,6 @@ body.no-scroll{overflow:hidden}
 .app-bar__sub b{font-weight:600}
 .icon-btn{width:40px;height:40px;border-radius:50%;border:0;background:transparent;color:inherit;display:grid;place-items:center;cursor:pointer;flex:none}
 .icon-btn:hover{background:var(--header-hover)}
-/* Notifications: bell dot + turn-on banner */
-:root{--nt-bg:#E1F5EE;--nt-ink:#085041;--nt-sub:#0F6E56;--nt-btn:#008069;--nt-dot:#25D366}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--nt-bg:rgba(0,168,132,.14);--nt-ink:#9FE1CB;--nt-sub:#5DCAA5;--nt-btn:#00A884;--nt-dot:#00A884}}
-:root[data-theme="dark"]{--nt-bg:rgba(0,168,132,.14);--nt-ink:#9FE1CB;--nt-sub:#5DCAA5;--nt-btn:#00A884;--nt-dot:#00A884}
-.pf-banner{position:relative;display:flex;gap:10px;padding:12px;border-radius:10px;background:var(--nt-bg);color:var(--nt-ink)}
-.pf-banner__ico{width:20px;height:20px;flex:none;color:var(--nt-ink)}
-.pf-banner__body{flex:1;min-width:0;padding-right:18px}
-.pf-banner__title{margin:0;font-size:14px;font-weight:500;color:var(--nt-ink)}
-.pf-banner__sub{margin:2px 0 0;font-size:12px;color:var(--nt-sub)}
-.pf-banner__btn{margin-top:8px;border:0;border-radius:8px;padding:8px 14px;background:var(--nt-btn);color:#FFFFFF;font:inherit;font-size:14px;font-weight:500;cursor:pointer}
-.pf-banner__x{position:absolute;top:8px;right:8px;width:24px;height:24px;border:0;background:none;padding:0;color:var(--nt-ink);display:grid;place-items:center;cursor:pointer}
-.pf-banner__x .i{width:16px;height:16px}
 
 .app__col{display:flex;flex-direction:column}
 
@@ -698,7 +685,6 @@ var state = {
   loc: { coords: null },
   groupCard: { collapsed: false, message: null, messageKind: null, submitting: false, sentUrl: null },
   pendingRows: null, refreshInFlight: false,
-  notify: { on: null, mode: null, label: null },
 };
 if (state.date && state.date < torontoTodayStr(0)) state.date = torontoTodayStr(0);
 if (initial_.date) {
@@ -1329,86 +1315,6 @@ function shouldShowGroupCard(rows) {
      successful submit; a fresh page load always shows the card normally. */
   return !rows.some(function (r) { return r.source === 'whatsapp'; });
 }
-/* ---------- Notifications: bell dot, turn-on banner ---------- */
-function notifyUrl() {
-  return window.PF_TOKEN ? '/notifications?t=' + encodeURIComponent(window.PF_TOKEN) : '/notifications';
-}
-function bannerDismissed() {
-  try { return sessionStorage.getItem('pf_banner_x') === '1'; } catch (e) { return false; }
-}
-function notifyBanner() {
-  /* Only for visitors with a token (no token = no profile yet, so nothing to notify). */
-  var n = state.notify;
-  if (!window.PF_TOKEN || bannerDismissed()) return '';
-  if (n.on !== false) return '';
-  var mode = n.mode || (state.mode === 'passenger' ? 'passengers' : 'drivers');
-  var title = 'Get pinged for new ' + (mode === 'passengers' ? 'passengers' : 'drivers');
-  var sub = n.label;
-  return '<div class="pf-banner" role="region" aria-label="Notifications">' +
-    '<svg class="i pf-banner__ico" aria-hidden="true"><use href="#i-bell-ringing"/></svg>' +
-    '<div class="pf-banner__body"><p class="pf-banner__title">' + esc(title) + '</p>' +
-    (sub ? '<p class="pf-banner__sub">' + esc(sub) + '</p>' : '') +
-    '<button type="button" class="pf-banner__btn js-notify-on">' + 'Turn on notifications' + '</button></div>' +
-    '<button type="button" class="pf-banner__x js-banner-x" aria-label="Dismiss">' + icon('x') + '</button></div>';
-}
-function refreshNotifyUI() {
-  var on = state.notify.on;
-  var banner = document.querySelector('.pf-banner');
-  var html = notifyBanner();
-  if (!html) { if (banner) banner.remove(); }
-  else if (!banner && !state.loading && !state.error) {
-    var list = document.querySelector('.ride-list');
-    if (list) list.insertAdjacentHTML('afterbegin', html);
-  }
-  if (on === true) document.querySelectorAll('.empty__actions .js-notify-on').forEach(function (b) { b.remove(); });
-}
-function loadNotifyStatus() {
-  if (!window.PFNotify || !window.PF_TOKEN) return; /* no token = no notifications UI */
-  function apply(d) {
-    state.notify = { on: !!(d && d.on), mode: (d && d.mode) || null, label: (d && d.label) || null, hasDevice: !!(d && d.has_device) };
-    refreshNotifyUI();
-  }
-  function localStatus() {
-    window.PFNotify.status(window.PF_TOKEN).then(apply).catch(function () {});
-  }
-  /* With a token, trust the server first: if this person has notifications on anywhere
-     (e.g. the Home Screen app), hide the banner whatever this browser's local state is. */
-  if (window.PF_TOKEN && window.PFNotify.serverStatus) {
-    window.PFNotify.serverStatus(window.PF_TOKEN).then(function (d) {
-      if (d && d.on === true) apply(d); else localStatus();
-    }).catch(localStatus);
-  } else {
-    localStatus();
-  }
-}
-function turnOnNotifications(btn) {
-  var P = window.PFNotify;
-  if (!window.PF_TOKEN) return;
-  /* Server-first: a paused device of this number is switched back on server-side,
-     whatever this browser supports. */
-  if (P && P.resume && window.PF_TOKEN && state.notify.hasDevice && !P.isStandalone()) {
-    if (btn) btn.setAttribute('disabled', '');
-    P.resume(window.PF_TOKEN).then(function (r) {
-      if (r && r.ok) { state.notify.on = true; refreshNotifyUI(); }
-      else if (window.PFInstall && window.PFInstall.needed()) { if (btn) btn.removeAttribute('disabled'); window.PFInstall.open(); }
-      else window.location.assign(notifyUrl());
-    }).catch(function () { if (btn) btn.removeAttribute('disabled'); });
-    return;
-  }
-  /* iPhone Safari outside the Home Screen app: push can't work here, show how to add it */
-  if (window.PFInstall && window.PFInstall.needed()) { window.PFInstall.open(); return; }
-  if (!P || P.state() !== 'default') { window.location.assign(notifyUrl()); return; }
-  if (btn) btn.setAttribute('disabled', '');
-  P.enable(window.PF_TOKEN).then(function (st) {
-    if (st === 'granted') {
-      state.notify.on = true;
-      refreshNotifyUI();
-    }
-    else if (btn) btn.removeAttribute('disabled');
-  }).catch(function () { if (btn) btn.removeAttribute('disabled'); });
-}
-if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', loadNotifyStatus);
-else loadNotifyStatus();
 function renderEmptyState(rows, s) {
   /* Single render for every zero-results screen (initial load from URL
      params/bot links, a normal search, near-me, browse, after a filter/
@@ -1730,16 +1636,14 @@ function emptyState() {
   var title = hasTo
     ? ('No ' + (state.mode === 'driver' ? 'drivers' : 'passengers') + ' going your way yet')
     : ('No ' + (state.mode === 'driver' ? 'drivers' : 'passengers') + ' from ' + esc(c.from) + ' yet');
-  var pingLine = window.PF_TOKEN ? ' Turn on notifications and we\'ll ping you as soon as one does.' : '';
   var body = hasTo
-    ? ('Nobody has posted ' + esc(c.from) + ' → ' + esc(c.to) + (c.date ? (' for ' + esc(dayLabel(c.date))) : '') + '.' + pingLine)
-    : ('Nobody has posted from ' + esc(c.from) + (c.date ? (' for ' + esc(dayLabel(c.date))) : '') + ' yet.' + pingLine);
+    ? ('Nobody has posted ' + esc(c.from) + ' → ' + esc(c.to) + (c.date ? (' for ' + esc(dayLabel(c.date))) : '') + '.')
+    : ('Nobody has posted from ' + esc(c.from) + (c.date ? (' for ' + esc(dayLabel(c.date))) : '') + ' yet.');
   return '<div class="empty-card"><div class="empty__art" aria-hidden="true">' +
     '<svg width="52" height="52" viewBox="0 0 52 52" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="14" cy="38" r="4"/><path d="M38 22s-7-6.5-7-11.5a7 7 0 0 1 14 0C45 15.5 38 22 38 22z"/><circle cx="38" cy="10.5" r="2"/><path d="M18 38h10a6 6 0 0 0 0-12h-2a6 6 0 0 1 0-12h1" stroke-dasharray="3 4"/></svg></div>' +
     '<h2 class="empty__title">' + title + '</h2>' +
     '<p class="empty__text">' + body + '</p>' +
     '<div class="empty__actions">' +
-    (state.notify.on === true || !window.PF_TOKEN ? '' : '<button type="button" class="btn btn--wa js-notify-on">' + icon('bell') + 'Turn on notifications</button>') +
     '<!-- TODO: post-in-group bot link not built yet --><a class="btn btn--outline" href="#" data-action="noop">' + icon('plus') + 'Post in our WhatsApp group</a>' +
     '</div>' + nearbyHTML +
     "<!-- TODO: \"Close routes\" suggestions need nearby-route data we don't have yet --></div>";
@@ -1782,11 +1686,11 @@ function renderLanding() {
   } else if (state.error) {
     app.innerHTML = appBar('—') + '<div class="app__col">' + top + '<div class="ride-list" style="padding-top:12px">' + errorCard() + '</div>' + foot + '</div>';
   } else if (!state.rows.length) {
-    app.innerHTML = appBar('0 rides') + '<div class="app__col">' + top + '<div class="ride-list" style="padding-top:12px">' + notifyBanner() + renderEmptyState(state.rows, state) + '</div>' + foot + '</div>';
+    app.innerHTML = appBar('0 rides') + '<div class="app__col">' + top + '<div class="ride-list" style="padding-top:12px">' + renderEmptyState(state.rows, state) + '</div>' + foot + '</div>';
   } else {
     var rows = sortedRows();
     var landingOpts = { hideBadge: true, distanceNote: !!state.fromPlace };
-    app.innerHTML = appBar(plural(state.rows.length, 'ride')) + '<div class="app__col">' + top + landingResultsHead(rows) + '<div class="ride-list">' + notifyBanner() + (shouldShowGroupCard(state.rows) ? groupLinkCard() : '') + listHTML(rows, landingOpts) + '</div>' + foot + '</div>';
+    app.innerHTML = appBar(plural(state.rows.length, 'ride')) + '<div class="app__col">' + top + landingResultsHead(rows) + '<div class="ride-list">' + (shouldShowGroupCard(state.rows) ? groupLinkCard() : '') + listHTML(rows, landingOpts) + '</div>' + foot + '</div>';
   }
   wireApp();
   checkClamps();
@@ -1806,10 +1710,10 @@ function render() {
   } else if (state.error) {
     app.innerHTML = appBar('—') + '<div class="app__col">' + top + '<div class="ride-list" style="padding-top:12px">' + errorCard() + '</div>' + foot + '</div>';
   } else if (!state.rows.length) {
-    app.innerHTML = appBar('0 rides') + '<div class="app__col">' + top + '<div class="ride-list" style="padding-top:12px">' + notifyBanner() + renderEmptyState(state.rows, state) + '</div>' + foot + '</div>';
+    app.innerHTML = appBar('0 rides') + '<div class="app__col">' + top + '<div class="ride-list" style="padding-top:12px">' + renderEmptyState(state.rows, state) + '</div>' + foot + '</div>';
   } else {
     var rows = sortedRows();
-    app.innerHTML = appBar(plural(state.rows.length, 'ride')) + '<div class="app__col">' + top + resultsHead(rows) + '<div class="ride-list">' + notifyBanner() + (shouldShowGroupCard(state.rows) ? groupLinkCard() : '') + listHTML(rows) + '</div>' + foot + '</div>';
+    app.innerHTML = appBar(plural(state.rows.length, 'ride')) + '<div class="app__col">' + top + resultsHead(rows) + '<div class="ride-list">' + (shouldShowGroupCard(state.rows) ? groupLinkCard() : '') + listHTML(rows) + '</div>' + foot + '</div>';
   }
   wireApp();
   checkClamps();
@@ -2111,13 +2015,6 @@ document.addEventListener('click', function (e) {
   var noop = t.closest('[data-action="noop"]');
   if (noop) { e.preventDefault(); return; }
 
-  var notifyOn = t.closest('.js-notify-on');
-  if (notifyOn) { turnOnNotifications(notifyOn); return; }
-  if (t.closest('.js-banner-x')) {
-    try { sessionStorage.setItem('pf_banner_x', '1'); } catch (e2) {}
-    var bx = document.querySelector('.pf-banner'); if (bx) bx.remove();
-    return;
-  }
 
   if (t.closest('.js-back')) {
     var ref = '';
