@@ -126,3 +126,4 @@ One task per session. Status: todo / done / parked.
 - 2026-10-03 — Installed app opens on today; ?b= stripped on passenger page. Open: re-add icon and confirm on iPhone.
 - 2026-10-03 — Passenger note on driver's passenger cards, quiet Remove button, Driver's details card on passenger home. Open: real-phone check.
 - 2026-10-03 — Passenger bottom bar: Cancel left, Invite right.
+- 2026-10-04 — WhatsApp Message on Explore now needs a profile: token-less tap opens "Create your passenger/driver profile" sheet (role inferred from ride), user sends START <code> to bot, bot replies with profile link. Old "Link on WhatsApp" alert-code step removed; notifications banner hidden without token. Open: live START test on a real phone; confirm n8n credentials on new nodes; drop old explore_contact(text,text) overload, _zz_probe/_zz_probe2 functions and 2 leftover test codes (DROP/DELETE blocked in-session).

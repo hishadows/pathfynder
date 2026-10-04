@@ -15,6 +15,11 @@
     if (t && u) { try { u.searchParams.set('t', t); history.replaceState(history.state, '', u.pathname + u.search + u.hash); } catch (e) {} }
   }
   window.PF_TOKEN = t || null;
+  /* Profile token (driver /m or passenger /p link, saved by those pages): lets Message work on WhatsApp rides. Not a notify token. */
+  var pt = null;
+  try { pt = localStorage.getItem('pf_profile_token'); } catch (e) { pt = null; }
+  if (pt && !/^[A-Za-z0-9_-]{16,64}$/.test(pt)) pt = null;
+  window.PF_PROFILE = pt;
   /* ?back=1 (opened from the driver/passenger home): show a back arrow for the whole session. */
   var bk = false;
   try { bk = u && u.searchParams.get('back') === '1'; if (bk) sessionStorage.setItem('pf_back', '1'); else bk = sessionStorage.getItem('pf_back') === '1'; } catch (e) {}
@@ -379,6 +384,11 @@ body.no-scroll{overflow:hidden}
 .switch[aria-checked="true"]::after{transform:translateX(16px)}
 .sheet__foot{display:flex;align-items:center;gap:8px;padding:12px 16px 16px;border-top:1px solid var(--divider)}
 .sheet__foot .btn--primary{flex:1}
+/* create-profile sheet */
+.link-sheet__body{margin:0;font-size:14.5px;line-height:1.45;color:var(--text-2)}
+.link-sheet__code{margin:0;padding:16px 8px;border-radius:12px;background:var(--surface);border:1px solid var(--divider);text-align:center;font-size:34px;font-weight:700;letter-spacing:.28em;text-indent:.28em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:var(--text)}
+.link-sheet__code.is-loading{color:var(--text-2);opacity:.6}
+.link-sheet__switch{display:block;margin:6px 0 0;padding:0;border:0;background:none;color:var(--primary);font-size:13.5px;font-weight:600;cursor:pointer;text-align:left}
 /* route strip */
 .route-strip{padding:4px 2px 0}
 .route-strip__track{position:relative;height:120px;margin:0 8px}
@@ -1105,7 +1115,6 @@ document.addEventListener('visibilitychange', function () {
     hiddenAt = null;
     startAutoRefresh();
     if (wasHiddenLong && !isSheetOpen()) backgroundRefresh();
-    if (state.notify.needsLink) loadNotifyStatus(); /* back from WhatsApp after sending ALERTS <code> */
   }
 });
 
@@ -1193,10 +1202,13 @@ function toast(msg) {
   clearTimeout(toast._t);
   toast._t = setTimeout(function () { el.classList.remove('is-on'); }, 3200);
 }
+function contactToken() { return window.PF_TOKEN || window.PF_PROFILE || null; }
 function contact(id, btn) {
-  if (btn) btn.setAttribute('disabled', 'disabled');
   var srcRow = state.rows.find(function (r) { return r.id === id; });
   var isWhatsapp = isWa(srcRow) || /^pf:/.test(id);
+  /* WhatsApp rides need a profile: no token on this device -> create-profile sheet instead of the RPC */
+  if (isWhatsapp && !contactToken()) { openLinkSheet(id, srcRow); return; }
+  if (btn) btn.setAttribute('disabled', 'disabled');
   var popup = null;
   if (!isWhatsapp) {
     /* mobile browsers block window.open() called after an await — open it
@@ -1205,6 +1217,7 @@ function contact(id, btn) {
   }
   var contactParams = { p_id: id };
   if (/^pf:/.test(id)) contactParams.p_mode = (srcRow ? srcRow.role === 'passenger' : state.mode === 'passenger') ? 'passengers' : 'drivers';
+  if (isWhatsapp) contactParams.p_token = contactToken();
   db.rpc('explore_contact', contactParams).then(function (res) {
     if (res.error) throw res.error;
     var row = Array.isArray(res.data) ? res.data[0] : res.data;
@@ -1215,10 +1228,67 @@ function contact(id, btn) {
   }).catch(function (err) {
     if (popup) { try { popup.close(); } catch (e2) {} }
     var msg = (err && err.message) || '';
-    if (/rate_limited/i.test(msg)) toast('Too many requests — try again in a bit');
+    if (/link_required/i.test(msg)) openLinkSheet(id, srcRow);
+    else if (/rate_limited/i.test(msg)) toast('Too many requests — try again in a bit');
     else if (/not_available/i.test(msg)) toast('This ride is no longer available');
     else toast('Something went wrong — try again');
   }).finally(function () { if (btn) btn.removeAttribute('disabled'); });
+}
+
+/* ---------- Create-profile sheet (WhatsApp ride tapped with no token) ---------- */
+var BOT_WA = '916356600421'; /* only inside the wa.me link, never rendered (same as js/pf-notify-v5.js) */
+var linkSheet = { rideId: null, role: 'passenger', code: null, loading: false, failed: false, seq: 0 };
+function renderLinkSheet() {
+  var isP = linkSheet.role === 'passenger';
+  var other = isP ? 'driver' : 'passenger';
+  var who = isP ? 'drivers' : 'passengers';
+  var code = linkSheet.code;
+  var href = code ? 'https://wa.me/' + BOT_WA + '?text=' + encodeURIComponent('START ' + code) : '';
+  var cta = linkSheet.failed
+    ? '<button type="button" class="btn btn--wa js-link-retry">Try again</button>'
+    : (code ? '<a class="btn btn--wa" href="' + href + '" target="_blank" rel="noopener">' + icon('whatsapp') + 'Send on WhatsApp</a>'
+            : '<button type="button" class="btn btn--wa" disabled>' + icon('whatsapp') + 'Send on WhatsApp</button>');
+  return '<div class="sheet__grabber"></div><div class="sheet__body">' +
+    '<div class="sheet__head"><div><h2 class="sheet__title">Create your ' + esc(linkSheet.role) + ' profile</h2>' +
+    '<button type="button" class="link-sheet__switch js-link-switch">I\'m a ' + other + ' instead</button></div>' +
+    '<button type="button" class="icon-btn js-close-sheet" aria-label="Close">' + icon('x') + '</button></div>' +
+    '<p class="link-sheet__body">Send this code to Pathfynder on WhatsApp to create your profile. All your communication with ' + who + ' will happen directly on your WhatsApp.</p>' +
+    '<p class="link-sheet__code' + (code ? '' : ' is-loading') + '" aria-live="polite">' + (code ? esc(code) : '······') + '</p>' +
+    '</div><div class="sheet__cta">' + cta + '</div>';
+}
+function paintLinkSheet() {
+  var el = document.getElementById('sheetBody');
+  if (el && linkSheet.open) el.innerHTML = renderLinkSheet();
+}
+function fetchLinkCode() {
+  var seq = ++linkSheet.seq;
+  linkSheet.code = null; linkSheet.loading = true; linkSheet.failed = false;
+  paintLinkSheet();
+  db.rpc('contact_link_start', { p_role: linkSheet.role, p_ride_id: linkSheet.rideId }).then(function (res) {
+    if (res.error) {
+      /* RPC missing (local/demo): same mock fallback as explore_search */
+      if ((res.error.code === '42883' || /does not exist/i.test(res.error.message || '')) && window.EXPLORE_MOCK && window.EXPLORE_MOCK.linkStart) return window.EXPLORE_MOCK.linkStart(linkSheet.role);
+      throw res.error;
+    }
+    return res.data;
+  }).then(function (code) {
+    if (seq !== linkSheet.seq) return;
+    if (!code || typeof code !== 'string') throw new Error('empty');
+    linkSheet.code = code; linkSheet.loading = false;
+    paintLinkSheet();
+  }).catch(function (err) {
+    if (seq !== linkSheet.seq) return;
+    linkSheet.loading = false; linkSheet.failed = true;
+    paintLinkSheet();
+    toast(/rate_limited/i.test((err && err.message) || '') ? 'Too many requests — try again in a bit' : 'Something went wrong — try again');
+  });
+}
+function openLinkSheet(rideId, row) {
+  /* Role is inferred: a driver's ride -> viewer is a passenger; a passenger's request -> viewer is a driver. */
+  var posterRole = row ? row.role : (state.mode === 'passenger' ? 'passenger' : 'driver');
+  linkSheet.rideId = rideId; linkSheet.role = posterRole === 'passenger' ? 'driver' : 'passenger'; linkSheet.open = true;
+  openSheetLayer();
+  fetchLinkCode();
 }
 
 /* ---------- WhatsApp group-link card ---------- */
@@ -1238,19 +1308,18 @@ function bannerDismissed() {
   try { return sessionStorage.getItem('pf_banner_x') === '1'; } catch (e) { return false; }
 }
 function notifyBanner() {
-  /* Shown to everyone (not only WhatsApp-link visitors). A device turned on
-     without a token still needs its WhatsApp link step (needsLink). */
+  /* Only for visitors with a token (no token = no profile yet, so nothing to notify). */
   var n = state.notify;
-  if (bannerDismissed()) return '';
-  if (n.on !== false && !n.needsLink) return '';
+  if (!window.PF_TOKEN || bannerDismissed()) return '';
+  if (n.on !== false) return '';
   var mode = n.mode || (state.mode === 'passenger' ? 'passengers' : 'drivers');
-  var title = n.needsLink ? 'One more step to get pinged' : 'Get pinged for new ' + (mode === 'passengers' ? 'passengers' : 'drivers');
-  var sub = n.needsLink ? 'Link your WhatsApp so we know which rides to alert you about' : n.label;
+  var title = 'Get pinged for new ' + (mode === 'passengers' ? 'passengers' : 'drivers');
+  var sub = n.label;
   return '<div class="pf-banner" role="region" aria-label="Notifications">' +
     '<svg class="i pf-banner__ico" aria-hidden="true"><use href="#i-bell-ringing"/></svg>' +
     '<div class="pf-banner__body"><p class="pf-banner__title">' + esc(title) + '</p>' +
     (sub ? '<p class="pf-banner__sub">' + esc(sub) + '</p>' : '') +
-    '<button type="button" class="pf-banner__btn js-notify-on">' + (n.needsLink ? 'Link on WhatsApp' : 'Turn on notifications') + '</button></div>' +
+    '<button type="button" class="pf-banner__btn js-notify-on">' + 'Turn on notifications' + '</button></div>' +
     '<button type="button" class="pf-banner__x js-banner-x" aria-label="Dismiss">' + icon('x') + '</button></div>';
 }
 function refreshNotifyUI() {
@@ -1262,14 +1331,12 @@ function refreshNotifyUI() {
     var list = document.querySelector('.ride-list');
     if (list) list.insertAdjacentHTML('afterbegin', html);
   }
-  if (on === true && !state.notify.needsLink) document.querySelectorAll('.empty__actions .js-notify-on').forEach(function (b) { b.remove(); });
+  if (on === true) document.querySelectorAll('.empty__actions .js-notify-on').forEach(function (b) { b.remove(); });
 }
 function loadNotifyStatus() {
-  if (!window.PFNotify) return;
+  if (!window.PFNotify || !window.PF_TOKEN) return; /* no token = no notifications UI */
   function apply(d) {
-    var needsLink = !window.PF_TOKEN && !!(d && d.on) && d.linked === false;
-    if (needsLink && d.link_code && window.PFNotify.setLinkCode) window.PFNotify.setLinkCode(d.link_code);
-    state.notify = { on: !!(d && d.on), mode: (d && d.mode) || null, label: (d && d.label) || null, hasDevice: !!(d && d.has_device), needsLink: needsLink };
+    state.notify = { on: !!(d && d.on), mode: (d && d.mode) || null, label: (d && d.label) || null, hasDevice: !!(d && d.has_device) };
     refreshNotifyUI();
   }
   function localStatus() {
@@ -1285,23 +1352,9 @@ function loadNotifyStatus() {
     localStatus();
   }
 }
-function openLinkStep() {
-  /* No-token device that's on but not yet tied to a WhatsApp number. */
-  var P = window.PFNotify;
-  var show = function (code) {
-    if (code && window.PFInstall && window.PFInstall.openLink) window.PFInstall.openLink(code, loadNotifyStatus);
-    else window.location.assign(notifyUrl());
-  };
-  if (P.linkCode && P.linkCode()) { show(P.linkCode()); return; }
-  /* code expired or unknown: re-subscribing (permission already granted) returns a fresh one */
-  P.enable(null).then(function () {
-    if (P.linkCode && !P.linkCode()) { loadNotifyStatus(); return; } /* already linked */
-    show(P.linkCode && P.linkCode());
-  }).catch(function () { show(null); });
-}
 function turnOnNotifications(btn) {
   var P = window.PFNotify;
-  if (P && state.notify.needsLink) { openLinkStep(); return; }
+  if (!window.PF_TOKEN) return;
   /* Server-first: a paused device of this number is switched back on server-side,
      whatever this browser supports. */
   if (P && P.resume && window.PF_TOKEN && state.notify.hasDevice && !P.isStandalone()) {
@@ -1320,9 +1373,7 @@ function turnOnNotifications(btn) {
   P.enable(window.PF_TOKEN).then(function (st) {
     if (st === 'granted') {
       state.notify.on = true;
-      state.notify.needsLink = !window.PF_TOKEN && !!(P.linkCode && P.linkCode());
       refreshNotifyUI();
-      if (state.notify.needsLink) openLinkStep();
     }
     else if (btn) btn.removeAttribute('disabled');
   }).catch(function () { if (btn) btn.removeAttribute('disabled'); });
@@ -1646,15 +1697,16 @@ function emptyState() {
   var title = hasTo
     ? ('No ' + (state.mode === 'driver' ? 'drivers' : 'passengers') + ' going your way yet')
     : ('No ' + (state.mode === 'driver' ? 'drivers' : 'passengers') + ' from ' + esc(c.from) + ' yet');
+  var pingLine = window.PF_TOKEN ? ' Turn on notifications and we\'ll ping you as soon as one does.' : '';
   var body = hasTo
-    ? ('Nobody has posted ' + esc(c.from) + ' → ' + esc(c.to) + (c.date ? (' for ' + esc(dayLabel(c.date))) : '') + '. Turn on notifications and we\'ll ping you as soon as one does.')
-    : ('Nobody has posted from ' + esc(c.from) + (c.date ? (' for ' + esc(dayLabel(c.date))) : '') + ' yet. Turn on notifications and we\'ll ping you as soon as one does.');
+    ? ('Nobody has posted ' + esc(c.from) + ' → ' + esc(c.to) + (c.date ? (' for ' + esc(dayLabel(c.date))) : '') + '.' + pingLine)
+    : ('Nobody has posted from ' + esc(c.from) + (c.date ? (' for ' + esc(dayLabel(c.date))) : '') + ' yet.' + pingLine);
   return '<div class="empty-card"><div class="empty__art" aria-hidden="true">' +
     '<svg width="52" height="52" viewBox="0 0 52 52" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="14" cy="38" r="4"/><path d="M38 22s-7-6.5-7-11.5a7 7 0 0 1 14 0C45 15.5 38 22 38 22z"/><circle cx="38" cy="10.5" r="2"/><path d="M18 38h10a6 6 0 0 0 0-12h-2a6 6 0 0 1 0-12h1" stroke-dasharray="3 4"/></svg></div>' +
     '<h2 class="empty__title">' + title + '</h2>' +
     '<p class="empty__text">' + body + '</p>' +
     '<div class="empty__actions">' +
-    (state.notify.on === true ? '' : '<button type="button" class="btn btn--wa js-notify-on">' + icon('bell') + 'Turn on notifications</button>') +
+    (state.notify.on === true || !window.PF_TOKEN ? '' : '<button type="button" class="btn btn--wa js-notify-on">' + icon('bell') + 'Turn on notifications</button>') +
     '<!-- TODO: post-in-group bot link not built yet --><a class="btn btn--outline" href="#" data-action="noop">' + icon('plus') + 'Post in our WhatsApp group</a>' +
     '</div>' + nearbyHTML +
     "<!-- TODO: \"Close routes\" suggestions need nearby-route data we don't have yet --></div>";
@@ -1857,7 +1909,7 @@ function wireTimeWheels() {
 
 /* ---------- Sheet layer plumbing ---------- */
 function openSheetLayer() { document.getElementById('sheetLayer').classList.add('is-open'); document.body.classList.add('no-scroll'); }
-function closeSheetLayer() { document.getElementById('sheetLayer').classList.remove('is-open'); document.body.classList.remove('no-scroll'); document.getElementById('sheetBody').innerHTML = ''; }
+function closeSheetLayer() { linkSheet.open = false; linkSheet.seq++; document.getElementById('sheetLayer').classList.remove('is-open'); document.body.classList.remove('no-scroll'); document.getElementById('sheetBody').innerHTML = ''; }
 document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && document.getElementById('sheetLayer').classList.contains('is-open')) closeSheetLayer(); });
 
 /* ---------- Detail sheet ---------- */
@@ -2054,6 +2106,9 @@ document.addEventListener('click', function (e) {
 
   var newRidesPill = t.closest('#newRidesPill');
   if (newRidesPill) { applyPendingRows(); return; }
+
+  if (t.closest('.js-link-switch')) { linkSheet.role = linkSheet.role === 'passenger' ? 'driver' : 'passenger'; fetchLinkCode(); return; }
+  if (t.closest('.js-link-retry')) { fetchLinkCode(); return; }
 
   var closeSheet = t.closest('[data-action="close-sheet"], .js-close-sheet, .js-cancel-time');
   if (closeSheet) { closeSheetLayer(); return; }

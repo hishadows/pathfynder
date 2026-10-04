@@ -152,19 +152,6 @@
 
   function subText(isOn) { return isOn ? 'On — you\u2019ll get notifications' : 'Off — no notifications'; }
 
-  /* No token (didn't come from a WhatsApp link): same toggle, then the
-     "Last step: link your WhatsApp" sheet so the device gets tied to a number. */
-  function openLinkStep() {
-    var P = window.PFNotify;
-    var show = function () {
-      var code = P.linkCode && P.linkCode();
-      if (code && window.PFInstall && window.PFInstall.openLink) window.PFInstall.openLink(code, legacyBoot);
-      else legacyBoot();
-    };
-    if (P.linkCode && P.linkCode()) { show(); return; }
-    P.enable(null).then(show).catch(legacyBoot);
-  }
-
   function renderToggle(label, isOn, name, hasDevice, needsLink) {
     var alertsFor = label ? (name ? esc(name) + ' · ' : '') + esc(label) : '';
     card.innerHTML =
@@ -173,13 +160,10 @@
         '<div><p class="toggle-row__title">Ride notifications</p><p class="toggle-row__sub" id="pillText">' + subText(isOn) + '</p></div>' +
         '<button type="button" class="toggle' + (isOn ? ' is-on' : '') + '" id="toggleBtn" aria-pressed="' + isOn + '" aria-label="Ride notifications"></button>' +
       '</div>' +
-      (needsLink ? '<p class="note" style="margin:10px 0 0">One more step: <button type="button" class="btn btn--ghost" id="linkBtn" style="padding:6px 12px;margin-left:4px">Link on WhatsApp</button></p>' : '') +
       '<p class="section-title">Sent to you</p>' +
       '<div id="history"><p class="note">Loading…</p></div>' +
       FOOTER;
     renderHistory();
-    var linkBtn = document.getElementById('linkBtn');
-    if (linkBtn) linkBtn.addEventListener('click', openLinkStep);
 
     var btn = document.getElementById('toggleBtn');
     var pillText = document.getElementById('pillText');
@@ -194,6 +178,8 @@
 
     btn.addEventListener('click', function () {
       var P = window.PFNotify;
+      /* No token = no profile yet: nothing to attach alerts to (the WhatsApp link step was removed). */
+      if (!token) { pillText.textContent = 'Create your profile from a ride on Explore to get notifications'; return; }
       btn.disabled = true;
       var done = function () { btn.disabled = false; };
       if (on) {
@@ -213,7 +199,6 @@
       P.enable(token).then(function (newState) {
         setPill(newState === 'granted');
         done();
-        if (!token && newState === 'granted' && P.linkCode && P.linkCode()) openLinkStep();
       }).catch(done);
     });
   }
@@ -278,9 +263,7 @@
   function legacyBoot() {
     var state = window.PFNotify.state();
     window.PFNotify.status(token).then(function (data) {
-      var needsLink = !token && !!(data && data.on) && data.linked === false;
-      if (needsLink && data.link_code && window.PFNotify.setLinkCode) window.PFNotify.setLinkCode(data.link_code);
-      render(data && data.label, state, !!(data && data.on), data && data.name, needsLink);
+      render(data && data.label, state, !!(data && data.on), data && data.name, false);
     }).catch(function () {
       render(null, state, false);
     });
