@@ -18,6 +18,8 @@
   /* Profile token (driver /m or passenger /p link, saved by those pages): lets Message work on WhatsApp rides. Not a notify token. */
   var pt = null;
   try { pt = localStorage.getItem('pf_profile_token'); } catch (e) { pt = null; }
+  if (!pt) { try { pt = JSON.parse(localStorage.getItem('pf_passenger_token')); } catch (e) { pt = null; } } /* passenger token saved by the join page */
+  if (typeof pt !== 'string') pt = null;
   if (pt && !/^[A-Za-z0-9_-]{16,64}$/.test(pt)) pt = null;
   window.PF_PROFILE = pt;
   /* ?back=1 (opened from the driver/passenger home): show a back arrow for the whole session. */

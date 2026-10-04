@@ -14,7 +14,7 @@
   var mock = false;
   try { mock = new URLSearchParams(location.search).get('mock') === '1'; } catch (e) {}
   /* Remember this profile on the device so Explore's Message button works on WhatsApp rides. */
-  if (t && !mock && /^[A-Za-z0-9_-]{16,64}$/.test(t)) { try { localStorage.setItem('pf_profile_token', t); } catch (e) {} }
+  if (t && !mock && /^[A-Za-z0-9_-]{16,64}$/.test(t)) { try { localStorage.setItem('pf_profile_token', t); localStorage.setItem('pf_passenger_token', JSON.stringify(t)); /* join page reads this key */ } catch (e) {} }
   var l = document.createElement('link');
   l.rel = 'manifest';
   if (t && /^[A-Za-z0-9_-]{16,64}$/.test(t) && !mock) l.href = '/api/manifest?app=passenger&t=' + encodeURIComponent(t);
