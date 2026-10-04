@@ -1502,16 +1502,16 @@ function heroSection(payload) {
       '<div class="hero-top__text"><span class="hero-pill">' + statusLabel + '</span></div>' +
     '</div>' +
     '<div class="hero-route">' +
-      '<div class="hero-route__stop"><span class="hero-route__dot"></span><div><span class="hero-route__city">' + esc(shortLabel(trip.origin_label)) + '</span><span class="hero-route__sub">Pickup</span></div></div>' +
-      '<div class="hero-route__stop"><span class="hero-route__dot hero-route__dot--to"></span><div><span class="hero-route__city">' + esc(shortLabel(trip.dest_label)) + '</span><span class="hero-route__sub">Dropoff</span></div></div>' +
+      '<div class="hero-route__stop"><span class="hero-route__dot"></span><div><span class="hero-route__city">' + esc(shortLabel(trip.origin_label)) + '</span><span class="hero-route__sub">Origin</span></div></div>' +
+      '<div class="hero-route__stop"><span class="hero-route__dot hero-route__dot--to"></span><div><span class="hero-route__city">' + esc(shortLabel(trip.dest_label)) + '</span><span class="hero-route__sub">Destination</span></div></div>' +
     '</div>' +
     '<div class="hero-chips"><span class="hero-chip">' + esc(fmtDateShort(trip.depart_at)) + '</span><span class="hero-chip">' + esc(fmtTime12(trip.depart_at)) + '</span>' + priceChip + '</div>' +
     '<div class="hero-panels">' +
       '<div class="hero-panel"><span class="hero-panel__label">' + taken + ' of ' + trip.seats_total + ' seats taken</span><div class="hero-bar"><div class="hero-bar__fill" style="width:' + pct + '%"></div></div></div>' +
     '</div>' +
     '<div class="hero-actions">' +
-      '<a class="hero-btn" href="' + esc(findHref) + '">' + ico('search') + 'Find passengers</a>' +
       '<button type="button" class="hero-btn' + (editWhy ? ' is-off' : '') + '" data-action="open-edit"' + (editWhy ? ' aria-disabled="true"' : '') + '>' + ico('pencil') + 'Edit trip</button>' +
+      '<a class="hero-btn" href="' + esc(findHref) + '">' + ico('search') + 'Find passengers</a>' +
     '</div>';
 
   var route = computeRoute(payload);
