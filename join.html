@@ -599,7 +599,7 @@ function handleJoinError(code) {
 function goToPassengerHome(booking, token) {
   lsSet(BOOKING_KEY, booking); /* summary (no phone number) for the passenger home page */
   if (typeof token === 'string' && token) {
-    if (!STATE.isMock) lsSet(TOKEN_KEY, token);
+    if (!STATE.isMock) { lsSet(TOKEN_KEY, token); try { localStorage.setItem('pf_profile_token', token); } catch (e) {} } /* Explore's Message reads pf_profile_token */
     location.href = PASSENGER_HOME_URL + encodeURIComponent(token) + (STATE.isMock ? '?mock=1' : '?b=' + encodeURIComponent(booking.id));
     return;
   }
