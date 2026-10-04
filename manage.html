@@ -1231,6 +1231,7 @@ function loadHeaderProfile() {
     if (!STATE.profile) STATE.profile = data;
     hdrCacheWrite(); paintHeader();
     if (STATE.view === 'notifs') render();
+    maybeAskAlerts();
   }).catch(function (e) { console.error('[manage] header profile load failed', e); });
 }
 function header() {
@@ -1645,6 +1646,7 @@ function sheetHtml() {
   }
   sb.classList.remove('sheet--edit');
   if (s.kind === 'trips') { sb.innerHTML = tripsSheetHtml(); return; }
+  if (s.kind === 'alerts') { sb.innerHTML = alertsSheetHtml(); return; }
   sb.innerHTML =
     '<h3>' + esc(s.title) + '</h3><p>' + esc(s.message) + '</p>' +
     '<div class="sheet__actions">' +
@@ -1799,6 +1801,25 @@ function saveEdit() {
 
 function openSheet(opts) { hideToast(); STATE.sheet = opts; sheetHtml(); }
 function closeSheet() { STATE.sheet = null; sheetHtml(); }
+
+/* ---------- "Turn on ride alerts" sheet ---------- */
+var ALERTS_SNOOZE_KEY = 'pf_alerts_ask_snooze', alertsAsked = false;
+function alertsSnoozed() { try { return Number(localStorage.getItem(ALERTS_SNOOZE_KEY)) > Date.now(); } catch (e) { return false; } }
+function alertsSnooze() { try { localStorage.setItem(ALERTS_SNOOZE_KEY, String(Date.now() + 3 * 86400000)); } catch (e) {} }
+function openAlertsSheet() { hideToast(); STATE.sheet = { kind: 'alerts' }; sheetHtml(); }
+/* Launch trigger: installed app only, once per page load, home view, nothing else open, not snoozed. Called once the profile is known. */
+function maybeAskAlerts() {
+  if (alertsAsked || !isInstalledApp() || !bellOff() || alertsSnoozed()) return;
+  if (STATE.view !== 'home' || STATE.sheet || STATE.errorType || POST) return;
+  alertsAsked = true; openAlertsSheet();
+}
+function alertsSheetHtml() {
+  return '<h3>Turn on ride alerts</h3><p>Get pinged when passengers book or need a ride on your route.</p>' +
+    '<div class="sheet__actions">' +
+      '<button type="button" class="btn btn-cta btn-full" data-action="alerts-on"' + (STATE.notifBusy ? ' disabled' : '') + '>Turn on</button>' +
+      '<button type="button" class="btn btn-secondary" data-action="sheet-cancel">Not now</button>' +
+    '</div>';
+}
 
 /* ---------- Full render ---------- */
 function render() {
@@ -2459,6 +2480,7 @@ function postSubmit() {
     STATE.slideAuto = true; STATE.expanded = {}; STATE.payload = null; STATE.sheet = null;
     window.scrollTo(0, 0);
     load(true);
+    if (bellOff()) setTimeout(function () { if (STATE.view === 'home' && !STATE.sheet && !POST && bellOff()) openAlertsSheet(); }, 700); /* post trigger: ignores the snooze */
   }).catch(function (e) { console.error('[manage] post failed', e); P.busy = false; postRefreshNav(); toast("Couldn't post — try again"); });
 }
 /* Recent routes: fetched when the post view opens; failures are ignored silently. */
@@ -2588,7 +2610,8 @@ document.body.addEventListener('click', function (e) {
     return;
   }
   if (action === 'edit-save') { saveEdit(); return; }
-  if (action === 'sheet-cancel' || action === 'close-sheet') { closeSheet(); return; }
+  if (action === 'alerts-on') { toggleNotif(); closeSheet(); return; } /* toggleNotif first: the permission prompt needs this tap */
+  if (action === 'sheet-cancel' || action === 'close-sheet') { if (STATE.sheet && STATE.sheet.kind === 'alerts') alertsSnooze(); closeSheet(); return; }
   if (action === 'sheet-confirm') {
     var s = STATE.sheet;
     if (s) { doAction(s.doAction, s.bookingId, s.doAction); }
