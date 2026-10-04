@@ -332,6 +332,13 @@ textarea.pt-input{padding:12px 14px;min-height:88px;resize:vertical}
 .hero-top__text{display:flex;flex-direction:column;gap:4px;min-width:0}
 .hero-pill{align-self:flex-start;font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px;background:var(--hero-chip)}
 
+.hero-body{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px}
+.hero-body .hero-route{flex:1 1 0;min-width:0;margin-bottom:0}
+.hero-route__city{overflow-wrap:anywhere}
+.hero-when{flex:none;text-align:right;display:flex;flex-direction:column;align-items:flex-end}
+.hero-when__day{font-size:13px;font-weight:600;color:rgba(255,255,255,.78);white-space:nowrap}
+.hero-when__time{font-size:36px;line-height:1.05;font-weight:800;letter-spacing:-.5px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.hero-when__ap{font-size:14px;font-weight:700;letter-spacing:0;margin-left:3px;color:rgba(255,255,255,.78)}
 .hero-route{position:relative;padding-left:20px;margin-bottom:14px}
 .hero-route::before{content:"";position:absolute;left:4px;top:8px;bottom:8px;border-left:2px dotted rgba(255,255,255,.5)}
 .hero-route__stop{position:relative;display:flex;align-items:center;gap:10px;min-height:30px}
@@ -347,8 +354,12 @@ textarea.pt-input{padding:12px 14px;min-height:88px;resize:vertical}
 .hero-panel{background:var(--hero-chip);border-radius:12px;padding:10px 12px}
 .hero-panel__label{display:block;font-size:13px;font-weight:600;margin-bottom:6px}
 .hero-panel__value{display:block;font-size:15px;font-weight:700}
-.hero-bar{height:6px;border-radius:4px;background:rgba(255,255,255,.25);overflow:hidden}
-.hero-bar__fill{height:100%;background:var(--hero-fill);border-radius:4px}
+.hero-seats{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:8px}
+.hero-seats__label{font-size:14px;font-weight:700}
+.hero-seats__price{font:700 13px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:nowrap}
+.hero-segs{display:flex;gap:4px}
+.hero-seg{flex:1 1 0;height:9px;border-radius:5px;background:rgba(255,255,255,.25)}
+.hero-seg.is-on{background:var(--hero-fill)}
 .hero-actions{display:flex;gap:8px;margin-top:12px}
 .hero-btn{flex:1 1 0;min-width:0;min-height:40px;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 10px;border-radius:12px;background:transparent;border:1px solid rgba(255,255,255,.3);color:var(--hero-text);font:inherit;font-size:13.5px;font-weight:600;cursor:pointer;text-decoration:none;white-space:nowrap}
 .hero-btn .i{width:15px;height:15px;flex:none}
@@ -561,6 +572,18 @@ function timeOfDay(iso) { var h = new Date(iso).getHours(); return h < 12 ? 'Mor
 function fmtTime12(iso) { return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }); }
 function hhmm(iso) { var d = new Date(iso); return (d.getHours() < 10 ? '0' : '') + d.getHours() + ':' + (d.getMinutes() < 10 ? '0' : '') + d.getMinutes(); }
 function fmtPrice2(n) { return '$' + Number(n).toFixed(2); }
+function dayLabel(iso) {
+  var d = new Date(iso), now = new Date();
+  var a = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime(), b = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  var diff = Math.round((a - b) / 86400000);
+  if (diff === 0) return 'Today';
+  if (diff === 1) return 'Tomorrow';
+  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+}
+function timeParts(iso) {
+  var m = fmtTime12(iso).replace(/\u202f/g, ' ').match(/^(\d{1,2}:\d{2})\s*([AP]M)$/i);
+  return m ? { t: m[1], ap: m[2].toUpperCase() } : { t: fmtTime12(iso), ap: '' };
+}
 function fmtSeatPrice(n) { var v = Number(n); return Number.isInteger(v) ? '$' + v : '$' + v.toFixed(2); }
 function fmtMoneyShort(n) { var v = Number(n); return '$' + (Math.round(v * 100) / 100).toString(); }
 function relTime(iso) {
@@ -1489,8 +1512,10 @@ function heroSection(payload) {
   var trip = payload.trip;
   var statusLabel = trip.status === 'draft' ? 'Not started' : (trip.status === 'active' ? 'Started' : 'Ended');
   var taken = seatsTaken(payload);
-  var pct = trip.seats_total > 0 ? Math.min(100, Math.round(taken / trip.seats_total * 100)) : 0;
-  var priceChip = trip.price_per_seat != null ? '<span class="hero-chip">' + esc(fmtSeatPrice(trip.price_per_seat)) + '/seat</span>' : '';
+  var segs = '';
+  for (var si = 0; si < trip.seats_total; si++) segs += '<span class="hero-seg' + (si < taken ? ' is-on' : '') + '"></span>';
+  var priceTxt = trip.price_per_seat != null ? '<span class="hero-seats__price">' + esc(fmtSeatPrice(trip.price_per_seat)) + ' / seat</span>' : '';
+  var tp = timeParts(trip.depart_at);
   var editWhy = editBlockReason(payload);
   var findHref = '/explore?type=passenger&from=' + encodeURIComponent(trip.origin_label || '') + '&to=' + encodeURIComponent(trip.dest_label || '') +
     '&o=' + trip.origin_lat + ',' + trip.origin_lng + '&d=' + trip.dest_lat + ',' + trip.dest_lng +
@@ -1501,13 +1526,13 @@ function heroSection(payload) {
     '<div class="hero-top">' +
       '<div class="hero-top__text"><span class="hero-pill">' + statusLabel + '</span></div>' +
     '</div>' +
-    '<div class="hero-route">' +
+    '<div class="hero-body"><div class="hero-route">' +
       '<div class="hero-route__stop"><span class="hero-route__dot"></span><div><span class="hero-route__city">' + esc(shortLabel(trip.origin_label)) + '</span><span class="hero-route__sub">Origin</span></div></div>' +
       '<div class="hero-route__stop"><span class="hero-route__dot hero-route__dot--to"></span><div><span class="hero-route__city">' + esc(shortLabel(trip.dest_label)) + '</span><span class="hero-route__sub">Destination</span></div></div>' +
     '</div>' +
-    '<div class="hero-chips"><span class="hero-chip">' + esc(fmtDateShort(trip.depart_at)) + '</span><span class="hero-chip">' + esc(fmtTime12(trip.depart_at)) + '</span>' + priceChip + '</div>' +
+    '<div class="hero-when"><span class="hero-when__day">' + esc(dayLabel(trip.depart_at)) + '</span><span class="hero-when__time">' + esc(tp.t) + (tp.ap ? '<span class="hero-when__ap">' + tp.ap + '</span>' : '') + '</span></div></div>' +
     '<div class="hero-panels">' +
-      '<div class="hero-panel"><span class="hero-panel__label">' + taken + ' of ' + trip.seats_total + ' seats taken</span><div class="hero-bar"><div class="hero-bar__fill" style="width:' + pct + '%"></div></div></div>' +
+      '<div class="hero-panel"><div class="hero-seats"><span class="hero-seats__label">' + taken + ' of ' + trip.seats_total + ' seats taken</span>' + priceTxt + '</div><div class="hero-segs">' + segs + '</div></div>' +
     '</div>' +
     '<div class="hero-actions">' +
       '<button type="button" class="hero-btn' + (editWhy ? ' is-off' : '') + '" data-action="open-edit"' + (editWhy ? ' aria-disabled="true"' : '') + '>' + ico('pencil') + 'Edit trip</button>' +

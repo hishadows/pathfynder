@@ -296,7 +296,23 @@ textarea.pt-input{padding:12px 14px;min-height:88px;resize:vertical}
 /* Hero */
 .hero-wrap{padding:12px 12px 0}
 .hero{background:var(--hero-bg);color:var(--hero-text);padding:14px;border-radius:16px}
-.hero-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.hero-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:12px}
+.hero-top__r{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.hero-top__r .sw{position:static}
+.hero-when{display:flex;flex-direction:column}
+.hero-when__day{font-size:13px;font-weight:600;color:rgba(255,255,255,.78);white-space:nowrap}
+.hero-when__time{font-size:36px;line-height:1.05;font-weight:800;letter-spacing:-.5px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.hero-when__ap{font-size:14px;font-weight:700;letter-spacing:0;margin-left:3px;color:rgba(255,255,255,.78)}
+.hero-tear{position:relative;margin:14px -14px 12px;border-top:2px dashed rgba(255,255,255,.4)}
+.hero-tear::before,.hero-tear::after{content:"";position:absolute;top:-9px;width:16px;height:16px;border-radius:50%;background:var(--bg)}
+.hero-tear::before{left:-8px}
+.hero-tear::after{right:-8px}
+.hero-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.hero-stat{display:flex;flex-direction:column;gap:3px;min-width:0}
+.hero-stat:nth-child(2){text-align:center;align-items:center}
+.hero-stat:nth-child(3){text-align:right;align-items:flex-end}
+.hero-stat__l{font:600 10.5px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.7)}
+.hero-stat__v{font-size:20px;font-weight:800;line-height:1.15}
 .hero-pill{font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;background:var(--hero-chip)}
 .hero-pill--active{background:#F2B44D;color:#3B2600}
 .hero-pill--picked{background:#2FB574;color:#04241A}
@@ -438,6 +454,27 @@ function shortLabel(label) {
 function fmtDateShort(iso) { var d = new Date(iso); return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); }
 function fmtTime12(iso) { return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }); }
 function fmtSeatPrice(n) { var v = Number(n); return Number.isInteger(v) ? '$' + v : '$' + v.toFixed(2); }
+function dayLabel(iso) {
+  var d = new Date(iso), now = new Date();
+  var a = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime(), b = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  var diff = Math.round((a - b) / 86400000);
+  if (diff === 0) return 'Today';
+  if (diff === 1) return 'Tomorrow';
+  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+}
+function timeParts(iso) {
+  var m = fmtTime12(iso).replace(/\u202f/g, ' ').match(/^(\d{1,2}:\d{2})\s*([AP]M)$/i);
+  return m ? { t: m[1], ap: m[2].toUpperCase() } : { t: fmtTime12(iso), ap: '' };
+}
+function heroTop(iso, pillHtml) {
+  var tp = timeParts(iso);
+  return '<div class="hero-top"><div class="hero-when"><span class="hero-when__day">' + esc(dayLabel(iso)) + '</span><span class="hero-when__time">' + esc(tp.t) + (tp.ap ? '<span class="hero-when__ap">' + tp.ap + '</span>' : '') + '</span></div>' +
+    '<div class="hero-top__r">' + switcher() + pillHtml + '</div></div>';
+}
+function heroStats(seats, fare, onboard) {
+  function c(l, v) { return '<div class="hero-stat"><span class="hero-stat__l">' + l + '</span><span class="hero-stat__v">' + esc(v) + '</span></div>'; }
+  return '<div class="hero-tear" aria-hidden="true"></div><div class="hero-stats">' + c('Seats', seats) + c('Fare', fare) + c('On board', onboard) + '</div>';
+}
 function seatsWord(n) { return n + ' seat' + (n === 1 ? '' : 's'); }
 function haversineKm(lat1, lng1, lat2, lng2) {
   if ([lat1, lng1, lat2, lng2].some(function (v) { return v == null || isNaN(v); })) return null;
@@ -886,11 +923,11 @@ function heroCard(p) {
     return '<div class="hero-route__stop"><span class="hero-route__dot' + (last ? ' hero-route__dot--to' : '') + '"></span>' +
       '<div class="hero-route__text"><span class="hero-route__city">' + esc(shortLabel(pt.label)) + '</span><span class="hero-route__sub">' + esc(pt.sub) + '</span></div></div>';
   }).join('');
-  var priceChip = trip.price_per_seat != null ? fmtSeatPrice(trip.price_per_seat) + '/seat · ' + seatsWord(b.seats) + ' booked' : seatsWord(b.seats) + ' booked';
+  var onBoard = p.counts && p.counts.passengers != null ? String(Number(p.counts.passengers) || 0) : '\u2014';
   return '<section class="hero-wrap"><div class="hero">' +
-    '<div class="hero-top"><span class="hero-pill' + (STATUS_CLASS[st] || '') + '">' + esc(STATUS_LABEL[st] || 'Upcoming') + '</span></div>' + switcher() +
+    heroTop(trip.depart_at, '<span class="hero-pill' + (STATUS_CLASS[st] || '') + '">' + esc(STATUS_LABEL[st] || 'Upcoming') + '</span>') +
     '<div class="hero-route">' + rows + '</div>' +
-    '<div class="hero-chips"><span class="hero-chip">' + esc(fmtDateShort(trip.depart_at)) + '</span><span class="hero-chip">' + esc(fmtTime12(trip.depart_at)) + '</span><span class="hero-chip">' + esc(priceChip) + '</span></div>' +
+    heroStats(String(Number(b.seats) || 1), trip.price_per_seat != null ? fmtSeatPrice(trip.price_per_seat) : '\u2014', onBoard) +
     '</div></section>';
 }
 function driverRow(p) {
@@ -940,12 +977,12 @@ function rideBar(p) {
 }
 function requestView(it) {
   return '<div class="main-body"><section class="hero-wrap"><div class="hero">' +
-    '<div class="hero-top"><span class="hero-pill hero-pill--active">Looking for a driver</span></div>' + switcher() +
+    heroTop(it.depart_at, '<span class="hero-pill hero-pill--active">Looking for a driver</span>') +
     '<div class="hero-route">' +
       '<div class="hero-route__stop"><span class="hero-route__dot"></span><div class="hero-route__text"><span class="hero-route__city">' + esc(shortLabel(it.origin_label)) + '</span><span class="hero-route__sub">Pickup</span></div></div>' +
       '<div class="hero-route__stop"><span class="hero-route__dot hero-route__dot--to"></span><div class="hero-route__text"><span class="hero-route__city">' + esc(shortLabel(it.dest_label)) + '</span><span class="hero-route__sub">Drop-off</span></div></div>' +
     '</div>' +
-    '<div class="hero-chips"><span class="hero-chip">' + esc(fmtDateShort(it.depart_at)) + '</span><span class="hero-chip">' + esc(fmtTime12(it.depart_at)) + '</span><span class="hero-chip">' + esc(seatsWord(Number(it.seats) || 1)) + '</span></div>' +
+    heroStats(String(Number(it.seats) || 1), '\u2014', '\u2014') +
     '</div></section>' +
     '<section class="section"><div class="card"><h2 class="card__title">Your request</h2>' +
     '<p style="margin:0;font-size:14.5px">No driver has taken this request yet. You can also browse rides that are already posted.</p>' +
