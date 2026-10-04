@@ -459,6 +459,24 @@ function exploreHrefFor(it) {
   if (ok(it.dest_lat) && ok(it.dest_lng)) h += '&d=' + encodeURIComponent(Number(it.dest_lat) + ',' + Number(it.dest_lng));
   return h + '&date=' + encodeURIComponent(localDateKey(it.depart_at)) + '&time=' + encodeURIComponent(hhmm(it.depart_at)) + '&flex=60';
 }
+/* Explore target for a request (what a driver opens): passengers list, focused on this request. */
+function exploreTargetFor(it) {
+  return 'https://www.pathfynder.ca/explore?type=passenger&' + exploreHrefFor(it).slice('/explore?'.length) + '&focus=' + encodeURIComponent('pf:' + it.id);
+}
+/* Short share link per request id (explore_share_link). Resolves to the short link, or the full URL on error / in mock mode; never rejects. */
+var REQ_LINKS = {}, REQ_LINK_P = {};
+function reqLink(it) {
+  if (REQ_LINKS[it.id]) return Promise.resolve(REQ_LINKS[it.id]);
+  var full = exploreTargetFor(it);
+  if (STATE.isMock) return Promise.resolve(full);
+  if (REQ_LINK_P[it.id]) return REQ_LINK_P[it.id];
+  var pr = rpc('explore_share_link', { p_token: STATE.token, p_target: full }).then(function (url) {
+    if (typeof url !== 'string' || url.indexOf('https://') !== 0) throw new Error('empty');
+    REQ_LINKS[it.id] = url; delete REQ_LINK_P[it.id]; return url;
+  }).catch(function (e) { console.error('[passenger] share link failed', e); delete REQ_LINK_P[it.id]; return full; });
+  REQ_LINK_P[it.id] = pr;
+  return pr;
+}
 function todayKey() { return localDateKey(new Date().toISOString()); }
 function isInstalledApp() { try { return (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true; } catch (e) { return false; } }
 function hideToast() { clearTimeout(toastTimer); document.getElementById('toast').classList.remove('is-visible'); }
@@ -645,6 +663,27 @@ function doShare() {
     navigator.share({ text: text }).catch(function (e) { if (e && e.name === 'AbortError') return; copyToClipboard(text); });
   } else { copyToClipboard(text); }
 }
+function requestShareText(it, link) {
+  return 'Need a ride ' + shortLabel(it.origin_label) + ' \u2192 ' + shortLabel(it.dest_label) + ', ' + fmtDateShort(it.depart_at) + ' ' + fmtTime12(it.depart_at) + '. See my request: ' + link;
+}
+function doShareRequest() {
+  var it = STATE.payload && STATE.payload.request;
+  if (!it) return;
+  var send = function (link) {
+    var text = requestShareText(it, link);
+    if (navigator.share) {
+      navigator.share({ text: text }).catch(function (e) { if (e && e.name === 'AbortError') return; copyToClipboard(text); });
+    } else { copyToClipboard(text); }
+  };
+  /* link already fetched (prefetched on render): share inside the tap; else resolve first (a lost gesture falls back to copy) */
+  if (REQ_LINKS[it.id] || STATE.isMock) send(REQ_LINKS[it.id] || exploreTargetFor(it));
+  else reqLink(it).then(send);
+}
+function doExploreRequest() {
+  var it = STATE.payload && STATE.payload.request;
+  if (!it) return;
+  reqLink(it).then(function (link) { location.href = exploreHrefFor(it) + '&ref=' + encodeURIComponent(link) + '&refk=req'; });
+}
 function copyToClipboard(text) {
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(text).then(function () { toast('Link copied'); }, function () { toast('Link copied'); });
@@ -673,7 +712,8 @@ var PATHS = {
   bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
   mail: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/>',
   search: '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
-  plus: '<path d="M12 5v14M5 12h14"/>'
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  share: '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/>'
 };
 function ico(name) {
   return '<svg class="i" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + PATHS[name] + '</svg>';
@@ -909,12 +949,13 @@ function requestView(it) {
     '</div></section>' +
     '<section class="section"><div class="card"><h2 class="card__title">Your request</h2>' +
     '<p style="margin:0;font-size:14.5px">No driver has taken this request yet. You can also browse rides that are already posted.</p>' +
-    '<a class="btn btn-secondary btn-full" style="margin-top:12px" href="' + esc(exploreHrefFor(it)) + '">' + ico('search') + 'Explore rides</a></div></section>' +
+    '<a class="btn btn-secondary btn-full" style="margin-top:12px" data-action="explore-req" href="' + esc(exploreHrefFor(it)) + '">' + ico('search') + 'Explore rides</a></div></section>' +
     '<div class="footer-space"></div><div class="legal-foot"><a href="/terms">Terms</a> &middot; <a href="/privacy">Privacy</a></div></div>';
 }
 function requestBar() {
   return '<div class="action-bar"><div class="action-bar__row">' +
-    '<button type="button" class="btn btn-secondary btn-danger-text" data-action="open-cancel-req-sheet"' + (STATE.pendingKey === 'cancel' ? ' disabled' : '') + '>' + ico('x') + 'Cancel request</button></div></div>';
+    '<button type="button" class="btn btn-secondary btn-danger-text" data-action="open-cancel-req-sheet"' + (STATE.pendingKey === 'cancel' ? ' disabled' : '') + '>' + ico('x') + 'Cancel request</button>' +
+    '<button type="button" class="btn btn-secondary" data-action="share-req">' + ico('share') + 'Share request</button></div></div>';
 }
 
 /* ---------- Sheet ---------- */
@@ -976,7 +1017,7 @@ function render() {
   var fade = STATE.fade && !STATE.loading; STATE.fade = STATE.loading ? STATE.fade : false;
   if (STATE.loading) { showBar = true; body = skeleton() + actionBarPlaceholder(); }
   else if (!p) body = emptyDay();
-  else if (p.request) { showBar = true; body = '<div class="' + (fade ? 'fade-in' : '') + '">' + requestView(p.request) + '</div>' + requestBar(); }
+  else if (p.request) { showBar = true; reqLink(p.request); body = '<div class="' + (fade ? 'fade-in' : '') + '">' + requestView(p.request) + '</div>' + requestBar(); }
   else {
     var bar = rideBar(p);
     showBar = !!bar;
@@ -1660,6 +1701,8 @@ document.body.addEventListener('click', function (e) {
   if (action === 'pick-item') { var pid = t.getAttribute('data-id'); if (STATE.sheet) closeSheet(); selectItem(pid); return; }
   if (action === 'pick-date') { selectDate(t.getAttribute('data-date')); return; }
   if (action === 'share') { doShare(); return; }
+  if (action === 'share-req') { doShareRequest(); return; }
+  if (action === 'explore-req') { if (e.preventDefault) e.preventDefault(); doExploreRequest(); return; }
   if (action === 'open-cancel-sheet') {
     if (!STATE.payload || !STATE.payload.booking || cancelWhy(STATE.payload)) return;
     openSheet({ title: 'Cancel your seat?', message: 'Your driver will be told and the seat goes back to other riders.', confirmLabel: 'Cancel my seat', keepLabel: 'Keep my seat', kind: 'booking', id: STATE.payload.booking.id });

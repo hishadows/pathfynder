@@ -24,6 +24,20 @@
   var bk = false;
   try { bk = u && u.searchParams.get('back') === '1'; if (bk) sessionStorage.setItem('pf_back', '1'); else bk = sessionStorage.getItem('pf_back') === '1'; } catch (e) {}
   window.PF_BACK = !!bk;
+  /* ?ref=<pathfynder.ca link>&refk=trip|req: link appended to the WhatsApp message (kept for the visit). ?focus=<row id>: pin + highlight that row. */
+  var rf = null, rk = 'trip', fc = null;
+  try {
+    var rfq = u && u.searchParams.get('ref');
+    if (rfq && /^https:\/\/(www\.)?pathfynder\.ca\//.test(rfq) && rfq.length < 1500) {
+      rk = u.searchParams.get('refk') === 'req' ? 'req' : 'trip';
+      sessionStorage.setItem('pf_ref', rfq); sessionStorage.setItem('pf_refk', rk);
+    }
+    rf = sessionStorage.getItem('pf_ref'); rk = sessionStorage.getItem('pf_refk') === 'req' ? 'req' : 'trip';
+    if (rf && !/^https:\/\/(www\.)?pathfynder\.ca\//.test(rf)) rf = null;
+    var fq = u && u.searchParams.get('focus');
+    if (fq && /^[A-Za-z0-9_.:-]{1,90}$/.test(fq)) fc = fq;
+  } catch (e) {}
+  window.PF_REF = rf; window.PF_REFK = rk; window.PF_FOCUS = fc;
   var l = document.createElement('link');
   l.rel = 'manifest';
   l.href = t ? '/api/manifest?t=' + encodeURIComponent(t) : '/manifest.webmanifest';
@@ -213,6 +227,7 @@ body.no-scroll{overflow:hidden}
 /* Ride card */
 .ride-card{display:flex;flex-direction:column;gap:12px;padding:14px 16px 16px;border-radius:12px;background:var(--card);box-shadow:var(--card-shadow);cursor:pointer;outline:none}
 .ride-card:focus-visible{box-shadow:0 0 0 2px var(--primary)}
+.ride-card--focus{box-shadow:0 0 0 2px var(--primary),var(--card-shadow)}
 .ride-card__top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
 .ride-card__ago{flex:none;font-size:12.5px;line-height:24px;color:var(--text-2);white-space:nowrap}
 .role-badge{display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 9px 0 7px;border-radius:6px;font-size:12.5px;font-weight:600;white-space:nowrap}
@@ -1003,6 +1018,7 @@ function syncUrl() {
   if (state.toPlace) p.set('d', state.toPlace.lat.toFixed(5) + ',' + state.toPlace.lng.toFixed(5));
   if (state.date) p.set('date', state.date);
   if (state.sort && state.sort !== 'best') p.set('sort', state.sort);
+  if (window.PF_FOCUS) p.set('focus', window.PF_FOCUS);
   var f = state.filters;
   var defSrc = defaultFilters().sources;
   var srcIsDefault = f.sources.length === defSrc.length && defSrc.every(function (s) { return f.sources.indexOf(s) > -1; });
@@ -1202,6 +1218,18 @@ function toast(msg) {
   clearTimeout(toast._t);
   toast._t = setTimeout(function () { el.classList.remove('is-on'); }, 3200);
 }
+/* Append the visit's ?ref link to the wa.me message (WhatsApp rows only). */
+function withRef(url) {
+  if (!window.PF_REF) return url;
+  try {
+    var u = new URL(url);
+    if (u.hostname !== 'wa.me') return url;
+    var txt = u.searchParams.get('text') || '';
+    txt += (txt ? '\n\n' : '') + (window.PF_REFK === 'req' ? 'See my request: ' : 'Book your seat here: ') + window.PF_REF;
+    u.searchParams.set('text', txt);
+    return u.toString();
+  } catch (e) { return url; }
+}
 function contactToken() { return window.PF_TOKEN || window.PF_PROFILE || null; }
 function contact(id, btn) {
   var srcRow = state.rows.find(function (r) { return r.id === id; });
@@ -1222,7 +1250,7 @@ function contact(id, btn) {
     if (res.error) throw res.error;
     var row = Array.isArray(res.data) ? res.data[0] : res.data;
     if (!row || !row.url) throw new Error('empty');
-    if (row.contact_type === 'whatsapp') location.href = row.url;
+    if (row.contact_type === 'whatsapp') location.href = withRef(row.url);
     else if (popup) popup.location.href = row.url;
     else location.href = row.url;
   }).catch(function (err) {
@@ -1253,6 +1281,7 @@ function renderLinkSheet() {
     '<button type="button" class="link-sheet__switch js-link-switch">I\'m a ' + other + ' instead</button></div>' +
     '<button type="button" class="icon-btn js-close-sheet" aria-label="Close">' + icon('x') + '</button></div>' +
     '<p class="link-sheet__body">Send this code to Pathfynder on WhatsApp to create your profile. All your communication with ' + who + ' will happen directly on your WhatsApp.</p>' +
+    (isP ? '' : '<p class="link-sheet__body">Then post your ride and send its join link to the passenger.</p>') +
     '<p class="link-sheet__code' + (code ? '' : ' is-loading') + '" aria-live="polite">' + (code ? esc(code) : '······') + '</p>' +
     '</div><div class="sheet__cta">' + cta + '</div>';
 }
@@ -1544,7 +1573,7 @@ function renderRideCard(r, landingOpts) {
     ? '<div class="ride-card__swipe" data-swipe><div class="swipe-track"><div class="swipe-pane swipe-pane--details">' + details + '</div>' + messagePane(r) + '</div></div>' +
       '<div class="swipe-dots"><button class="swipe-dot is-on" aria-label="Show ride details"></button><button class="swipe-dot" aria-label="Show original message"></button><span class="swipe-hint">Swipe for original message</span></div>'
     : details;
-  return '<article class="ride-card ride-card--' + r.source + (r.is_business ? ' ride-card--business' : '') + (req ? ' ride-card--request' : '') + '" data-ride-id="' + r.id + '" tabindex="0">' +
+  return '<article class="ride-card ride-card--' + r.source + (r.is_business ? ' ride-card--business' : '') + (req ? ' ride-card--request' : '') + (window.PF_FOCUS === r.id ? ' ride-card--focus' : '') + '" data-ride-id="' + r.id + '" tabindex="0">' +
     body + '<div class="ride-card__foot">' + poster(r) + cta(r) + '</div></article>';
 }
 function renderRawCard(r) {
@@ -1658,6 +1687,10 @@ function sortedRows() {
       if (a.price_num === b.price_num) return compareSoonest(a, b);
       return a.price_num - b.price_num;
     });
+  }
+  if (window.PF_FOCUS) {
+    var fi = rows.findIndex(function (r) { return r.id === window.PF_FOCUS; });
+    if (fi > 0) rows.unshift(rows.splice(fi, 1)[0]);
   }
   return rows;
 }

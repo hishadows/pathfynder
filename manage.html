@@ -1494,7 +1494,8 @@ function heroSection(payload) {
   var editWhy = editBlockReason(payload);
   var findHref = '/explore?type=passenger&from=' + encodeURIComponent(trip.origin_label || '') + '&to=' + encodeURIComponent(trip.dest_label || '') +
     '&o=' + trip.origin_lat + ',' + trip.origin_lng + '&d=' + trip.dest_lat + ',' + trip.dest_lng +
-    '&date=' + localDateKey(trip.depart_at) + '&time=' + hhmm(trip.depart_at) + '&flex=60';
+    '&date=' + localDateKey(trip.depart_at) + '&time=' + hhmm(trip.depart_at) + '&flex=60' +
+    (trip.join_url ? '&ref=' + encodeURIComponent(trip.join_url) + '&refk=trip' : '');
 
   var slideDetails =
     '<div class="hero-top">' +
