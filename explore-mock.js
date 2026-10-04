@@ -113,5 +113,8 @@
     return rows;
   }
 
-  global.EXPLORE_MOCK = { search: mockSearch, rows: ROWS };
+  /* contact_link_start fallback (RPC missing): fake code so the create-profile sheet can be demoed */
+  function mockLinkStart(role) { return Promise.resolve(role === 'driver' ? 'MOCKD4' : 'MOCKP7'); }
+
+  global.EXPLORE_MOCK = { search: mockSearch, rows: ROWS, linkStart: mockLinkStart };
 })(window);
