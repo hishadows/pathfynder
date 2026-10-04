@@ -390,7 +390,7 @@ textarea.pt-input{padding:12px 14px;min-height:88px;resize:vertical}
 .ns-prog__row{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:13px;margin-bottom:6px}
 .ns-prog__row strong{font-weight:700}
 .ns-prog__row span{color:var(--text-2);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ns-bar{position:relative;padding-top:16px;margin-bottom:14px}
+.ns-bar{position:relative;padding-top:16px;margin-bottom:16px}
 .ns-segs{display:flex;gap:3px}
 .ns-seg{flex:1;height:6px;border-radius:3px;background:var(--divider)}
 .ns-seg.is-done{background:var(--primary)}
@@ -399,29 +399,29 @@ textarea.pt-input{padding:12px 14px;min-height:88px;resize:vertical}
 .ns-car svg{display:block;width:20px;height:14px}
 @keyframes nsPulse{0%,100%{opacity:1}50%{opacity:.5}}
 @media (prefers-reduced-motion:reduce){.ns-seg.is-current{animation:none}.ns-car{transition:none}}
-.ns-pillrow{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
-.ns-pill{display:inline-flex;align-items:center;font-size:11.5px;font-weight:700;letter-spacing:.02em;padding:5px 10px;border-radius:999px;background:var(--chip-soft);color:var(--chip-soft-text)}
-.ns-eta{font-size:13px;color:var(--text-2);font-weight:600;white-space:nowrap}
-.ns-addr__label{display:block;font-size:12px;font-weight:600;color:var(--text-2);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+.ns-pillrow{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:14px}
+.ns-pill{display:inline-flex;align-items:center;font-size:10.5px;font-weight:700;letter-spacing:.03em;padding:4px 9px;border-radius:999px;background:var(--chip-soft);color:var(--chip-soft-text)}
+.ns-eta{font-size:12.5px;color:var(--text-2);font-weight:600;white-space:nowrap}
+.ns-addr__label{display:block;font-size:11px;font-weight:600;color:var(--text-2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
 .ns-addr{display:block;color:inherit;text-decoration:none;-webkit-tap-highlight-color:transparent}
-.ns-addr__row{display:flex;align-items:flex-start;gap:8px;margin-bottom:12px}
+.ns-addr__row{display:flex;align-items:flex-start;gap:8px;margin-bottom:14px}
 .ns-addr__go{width:16px;height:16px;flex:none;margin-top:2px;margin-left:auto;color:var(--text-2)}
 .ns-addr:active .ns-addr__text{text-decoration:underline}
 .ns-addr__row>svg:first-child{width:20px;height:20px;flex:none;color:var(--primary);margin-top:0}
-.ns-addr__text{font-size:15px;font-weight:600;line-height:1.35;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.ns-pax{padding:12px;border-radius:12px;background:var(--pax-tint);margin-bottom:8px}
+.ns-addr__text{font-size:14px;font-weight:600;line-height:1.35;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ns-pax{padding:12px 12px 12px 14px;border-radius:12px;background:var(--pax-tint);margin-bottom:8px}
 .ns-pax__top{display:flex;align-items:center;gap:10px}
 .ns-pax__id{flex:1;min-width:0}
-.ns-pax__name{display:block;font-size:16px;font-weight:600;overflow-wrap:anywhere}
-.ns-pax__seats{display:block;font-size:13px;color:var(--text-2)}
-.ns-ic{width:44px;height:44px;border-radius:50%;border:1px solid var(--divider);background:transparent;color:var(--primary);display:grid;place-items:center;flex:none;text-decoration:none}
-.ns-ic svg{width:20px;height:20px}
+.ns-pax__name{display:block;font-size:15px;font-weight:600;overflow-wrap:anywhere}
+.ns-pax__seats{display:block;font-size:12px;margin-top:1px;color:var(--text-2)}
+.ns-ic{width:40px;height:40px;border-radius:50%;border:1px solid var(--divider);background:transparent;color:var(--primary);display:grid;place-items:center;flex:none;text-decoration:none}
+.ns-ic svg{width:18px;height:18px}
 .ns-note{display:flex;align-items:flex-start;gap:8px;margin-top:8px;padding:8px 10px;border-radius:12px;background:var(--bg);font-size:13.5px;overflow-wrap:anywhere}
 .ns-note svg{width:16px;height:16px;flex:none;margin-top:2px;color:var(--text-2)}
-.ns-btns{display:flex;gap:8px;margin-top:10px}
+.ns-btns{display:flex;gap:8px;margin-top:12px}
 .ns-btns .btn{flex:1}
-.ns-btns--main .btn{min-height:44px}
-.hero-slide--next .btn{min-height:44px}
+.ns-btns--main .btn{min-height:42px}
+.hero-slide--next .btn{min-height:42px;font-size:14px}
 .ns-done{text-align:center;padding:10px 0 4px}
 .ns-done h3{margin:0 0 6px;font-size:18px}
 .ns-done p{margin:0 0 14px;color:var(--text-2);font-size:14px}
@@ -593,6 +593,8 @@ function relTime(iso) {
   var h = Math.round(min / 60); if (h < 24) return h + 'h ago';
   return Math.round(h / 24) + 'd ago';
 }
+/* Minutes -> "45 min" / "1 hr" / "6 hr 5 min". */
+function fmtDur(min) { var m = Math.max(1, Math.round(min)), h = Math.floor(m / 60), r = m % 60; return h ? h + ' hr' + (r ? ' ' + r + ' min' : '') : r + ' min'; }
 function km1(n) { return n == null ? '' : (Math.round(n * 10) / 10).toFixed(1) + ' km'; }
 
 /* ---------- Route logic (pure, self-contained — unit-testable) ---------- */
@@ -1497,7 +1499,7 @@ function nextStopSlide(payload) {
     var fix = STATE.gps.fix, eta = '';
     var tLat = stop ? stop.lat : trip.dest_lat, tLng = stop ? stop.lng : trip.dest_lng;
     var d = fix ? PFRoute.haversineKm(fix.lat, fix.lng, tLat, tLng) : null;
-    if (d != null) eta = '~' + Math.max(1, Math.round(d / 40 * 60)) + ' min · ' + (Math.round(d * 10) / 10).toFixed(1) + ' km';
+    if (d != null) eta = '~' + fmtDur(d / 40 * 60) + ' · ' + (Math.round(d * 10) / 10).toFixed(1) + ' km';
     var multi = members.length > 1;
     var mapsHref = 'https://www.google.com/maps/dir/?api=1&destination=' + (tLat != null && tLng != null ? tLat + ',' + tLng : encodeURIComponent(addrText));
     body = '<div class="ns-pillrow"><span class="ns-pill">' + pillText + '</span>' + (eta ? '<span class="ns-eta">' + eta + '</span>' : '') + '</div>' +
