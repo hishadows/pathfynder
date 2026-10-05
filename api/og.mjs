@@ -55,9 +55,9 @@ function whenParts(iso, now) {
   return { day: day, time: time };
 }
 // Right-hand date/time block: day label over a big time, behind a thin divider.
-function whenBlock(w, dark) {
-  return box({ flexDirection: 'column', alignItems: 'flex-end', flexShrink: 0, paddingLeft: 36, borderLeft: dark ? '3px solid rgba(255,255,255,0.25)' : '3px solid #c9dbd1' }, [
-    txt({ fontSize: dark ? 30 : 28, fontWeight: 700, color: dark ? '#9fe3c3' : '#3b6b59', whiteSpace: 'nowrap' }, w.day),
+function whenBlock(w, dark, tint) {
+  return box({ flexDirection: 'column', alignItems: 'flex-end', flexShrink: 0, paddingLeft: 36, borderLeft: tint ? '3px solid rgba(255,255,255,0.25)' : dark ? '3px solid rgba(255,255,255,0.25)' : '3px solid #c9dbd1' }, [
+    txt({ fontSize: dark ? 30 : 28, fontWeight: 700, color: tint ? '#BFEFF0' : dark ? '#9fe3c3' : '#3b6b59', whiteSpace: 'nowrap' }, w.day),
     txt({ marginTop: 6, fontSize: dark ? 92 : 76, fontWeight: 800, lineHeight: 1, whiteSpace: 'nowrap' }, w.time),
   ]);
 }
@@ -151,20 +151,19 @@ function inviteCard(t) {
   var drvName = String(t.driver_first_name || '').trim() || 'your driver';
   var w = whenParts(t.depart_at);
   var sub = from + ' to ' + to + (!w && t.schedule_text ? ' · ' + t.schedule_text : '');
-  return box({ width: W, height: H, position: 'relative', flexDirection: 'column', padding: '64px 72px', background: '#EEF3EF', color: '#0B3D2E', fontFamily: 'Inter' }, [
-    box({ position: 'absolute', left: 0, right: 0, bottom: 0, height: 128, background: '#0F5C43' }),
-    brandHeader(false),
+  return box({ width: W, height: H, position: 'relative', flexDirection: 'column', padding: '64px 72px', color: '#FFFFFF', fontFamily: 'Inter', backgroundImage: 'linear-gradient(135deg, #0B5559 0%, #0E6F73 55%, #13949A 100%)' }, [
+    brandHeader(true),
     box({ alignItems: 'center', justifyContent: 'space-between', marginTop: 26, width: 1056 }, [
       box({ alignItems: 'center' }, [
-      txt({ width: 120, height: 120, borderRadius: 60, background: '#0F5C43', color: '#FFFFFF', fontSize: 58, fontWeight: 800, alignItems: 'center', justifyContent: 'center', border: '8px solid #EEF3EF' }, initial(drvName)),
-      txt({ width: 120, height: 120, borderRadius: 60, background: '#25D366', color: '#0B3D2E', fontSize: 58, fontWeight: 800, alignItems: 'center', justifyContent: 'center', border: '8px solid #EEF3EF', marginLeft: -34 }, '+'),
+      txt({ width: 120, height: 120, borderRadius: 60, background: '#FFFFFF', color: '#0E6F73', fontSize: 58, fontWeight: 800, alignItems: 'center', justifyContent: 'center', border: '8px solid #0E6F73' }, initial(drvName)),
+      txt({ width: 120, height: 120, borderRadius: 60, background: '#7FDDE0', color: '#0F2A2B', fontSize: 58, fontWeight: 800, alignItems: 'center', justifyContent: 'center', border: '8px solid #0E6F73', marginLeft: -34 }, '+'),
       ]),
-      w ? whenBlock(w, false) : null,
+      w ? whenBlock(w, false, true) : null,
     ].filter(Boolean)),
     txt({ marginTop: 22, fontSize: 64, fontWeight: 800, lineHeight: 1.08, maxWidth: 1056, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }, 'Ride together with ' + drvName),
-    txt({ marginTop: 10, fontSize: 36, fontWeight: 700, color: '#3b6b59', maxWidth: 1056, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }, sub),
-    txt({ position: 'absolute', left: 72, bottom: 30, background: '#FFFFFF', color: '#0B3D2E', borderRadius: 999, padding: '16px 38px', fontSize: 34, fontWeight: 800 }, 'Join the ride'),
-    txt({ position: 'absolute', right: 72, bottom: 44, color: '#cfeee0', fontSize: 32, fontWeight: 700 }, 'pathfynder.ca'),
+    txt({ marginTop: 10, fontSize: 36, fontWeight: 700, color: '#BFEFF0', maxWidth: 1056, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }, sub),
+    txt({ position: 'absolute', left: 72, bottom: 30, background: '#FFFFFF', color: '#0E6F73', borderRadius: 999, padding: '16px 38px', fontSize: 34, fontWeight: 800 }, 'Join the ride'),
+    txt({ position: 'absolute', right: 72, bottom: 44, color: '#BFEFF0', fontSize: 32, fontWeight: 700 }, 'pathfynder.ca'),
   ]);
 }
 
