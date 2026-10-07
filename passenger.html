@@ -291,6 +291,9 @@ textarea.pt-input{padding:12px 14px;min-height:88px;resize:vertical}
 .btn-secondary{background:var(--muted-card);color:var(--text);border:1px solid var(--divider)}
 .btn-danger{background:var(--danger);color:#FFFFFF}
 .btn-secondary.btn-danger-text{color:var(--danger)}
+.btn[aria-disabled="true"]{opacity:.5;pointer-events:none;cursor:default}
+.btn-secondary.btn-quiet{background:transparent;color:var(--text-2);width:100%;min-height:46px;border-radius:12px}
+.btn-secondary.btn-quiet svg{color:var(--text-2)}
 .btn-full{width:100%}
 
 /* Hero */
@@ -359,7 +362,8 @@ textarea.pt-input{padding:12px 14px;min-height:88px;resize:vertical}
 .prog__seg.is-picked{background:var(--ok)}
 .card--driver{background:var(--muted-card);box-shadow:none}
 .card--driver .card__title{text-transform:none;letter-spacing:0;font-size:15px;font-weight:700;color:var(--text);margin:0 0 4px}
-.card--driver .drv--in{margin-top:0;background:transparent;padding-left:0}
+.card--driver .drv--in{margin-top:0;background:var(--card);border:1px solid var(--divider);border-radius:16px;padding:8px 8px 8px 12px;box-shadow:0 2px 8px rgba(15,42,43,.10)}
+.card--driver .btn-quiet{margin-top:12px}
 .bk-label{margin:10px 0 2px;font-size:12px;color:var(--text-2)}
 .bk-note{display:flex;align-items:flex-start;gap:8px;padding:10px 12px;border-radius:12px;background:var(--card);border:1px solid var(--divider);font-size:14px;overflow-wrap:anywhere}
 .bk-note svg{width:16px;height:16px;flex:none;margin-top:2px;color:var(--text-2)}
@@ -936,8 +940,7 @@ function driverRow(p) {
   var fn = firstName(d.name) || 'driver';
   var avatar = d.photo ? '<img src="' + esc(d.photo) + '" alt="">' : pfAvatarHtml(d.id, 40, initial(d.name));
   var contacts = digits
-    ? '<a class="ic-btn" href="tel:+' + digits + '" aria-label="Call ' + esc(fn) + '">' + ICON_PHONE + '</a>' +
-      '<a class="ic-btn" href="https://wa.me/' + digits + '" target="_blank" rel="noopener" aria-label="Message ' + esc(fn) + ' on WhatsApp">' + ICON_WA + '</a>'
+    ? '<a class="ic-btn" href="tel:+' + digits + '" aria-label="Call ' + esc(fn) + '">' + ICON_PHONE + '</a>'
     : '';
   return '<div class="drv drv--in">' +
     '<span class="drv__avatar">' + avatar + '</span>' +
@@ -964,15 +967,18 @@ function bookingCard(p) {
     '<p class="bk-label">Route</p><div class="trip-route">' + route + '</div>' +
     note + picked +
     (why && (b.status === 'active' || b.status === 'picked_up') ? '<p class="note-hint" id="cancelWhy">' + esc(why) + '</p>' : '') +
+    (b.status !== 'completed' && b.status !== 'cancelled' ? '<button type="button" class="btn btn-secondary btn-quiet" data-action="open-cancel-sheet"' + ((!!why || STATE.pendingKey === 'cancel') ? ' disabled' : '') + '>' + ico('x') + 'Cancel my seat</button>' : '') +
     '</div></section>';
 }
 function rideBar(p) {
   var s = p.booking.status;
   if (s === 'completed' || s === 'cancelled') return '';
-  var off = !!cancelWhy(p) || STATE.pendingKey === 'cancel';
+  var digits = String((p.trip.driver || {}).phone || '').replace(/\D/g, '');
   return '<div class="action-bar"><div class="action-bar__row">' +
-    '<button type="button" class="btn btn-secondary btn-danger-text" data-action="open-cancel-sheet"' + (off ? ' disabled' : '') + '>' + ico('x') + 'Cancel my seat</button>' +
     '<button type="button" class="btn btn-secondary" data-action="share">' + ico('userPlus') + 'Invite a friend</button>' +
+    (digits
+      ? '<a class="btn btn-secondary" href="https://wa.me/' + digits + '" target="_blank" rel="noopener">' + ICON_WA_LG + 'Contact driver</a>'
+      : '<a class="btn btn-secondary" aria-disabled="true">' + ICON_WA_LG + 'Contact driver</a>') +
     '</div></div>';
 }
 function requestView(it) {
