@@ -29,6 +29,9 @@
 <meta name="apple-mobile-web-app-title" content="Rideshare">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon-180.png">
 <title>My rides · Pathfynder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script>try{var __t=localStorage.getItem("pf_theme");if(__t==="light"||__t==="dark")document.documentElement.setAttribute("data-theme",__t);}catch(e){}</script>
 <style>
 :root{
@@ -400,9 +403,151 @@ textarea.pt-input{padding:12px 14px;min-height:88px;resize:vertical}
 .footer-space{height:8px}
 .legal-foot{text-align:center;font-size:13px;color:var(--text-2);padding:0 16px 8px}
 .legal-foot a{display:inline-block;min-height:44px;line-height:44px;padding:0 10px;color:var(--text-2);text-decoration:underline}
+
+/* ===== Fog & Apricot (light only) - passenger hub restyle. Delete this whole block (and class="fog" on <body>) to undo. =====
+   Light applies when data-theme is not "dark" and the OS is not dark, or data-theme="light" (also under OS dark). Dark is left untouched. */
+@media (prefers-color-scheme: light){
+:root:not([data-theme="dark"]) body.fog{--page:#ECEFF3;--surface:#F8F9FB;--surface-2:#EEF1F6;--border:#E1E6EE;--muted:#5B6475;--hero-muted:#566079;--accent:#F4A673;--on-accent:#2A1406;--accent-text:#9A4A1A;--success:#2F7D5B;--wa-bg:#E3F1EA;--wa-fg:#2F7D5B;--timeline:#9AA6BD;
+  --header:#ECEFF3;--header-text:#1C2333;--header-sub:#5B6475;--primary:#9A4A1A;--cta:#F4A673;--cta-text:#2A1406;--cta-hover:#EF9858;
+  --bg:#ECEFF3;--card:#F8F9FB;--muted-card:#EEF1F6;--text:#1C2333;--text-2:#5B6475;--divider:#E1E6EE;
+  --chip-soft:#E8ECF4;--chip-soft-text:#1C2333;--danger:#B4412C;--ok:#2F7D5B;--ok-soft:#E3F1EA;--warn:#9A4A1A;--warn-soft:#FBE9DC;--bad-soft:#F6E1DC;
+  --hero-bg:#D7DEEC;--hero-text:#1C2333;--hero-chip:#E8ECF4;--overlay:rgba(28,35,51,.4);--shadow:none;--sel-bg:#D6DDEB;--sel-border:#B5C0D6;
+  font-family:'Urbanist',system-ui,sans-serif}
+/* header */
+:root:not([data-theme="dark"]) body.fog .hd-avatar{width:44px;height:44px;background:var(--surface);color:var(--text);border:1px solid #DCE1E9}
+:root:not([data-theme="dark"]) body.fog .hd-name{font-weight:700;color:var(--text)}
+:root:not([data-theme="dark"]) body.fog .hd-sub{font-size:14px;letter-spacing:0;color:var(--muted)}
+:root:not([data-theme="dark"]) body.fog .bell-btn,:root:not([data-theme="dark"]) body.fog .hd-explore{width:48px;height:48px;background:var(--surface);border:1px solid #DCE1E9;color:var(--text)}
+:root:not([data-theme="dark"]) body.fog .bell-btn.is-off{background:var(--surface);color:var(--text)}
+:root:not([data-theme="dark"]) body.fog .hd-post{width:48px;height:48px;background:var(--accent);color:var(--on-accent)}
+/* date chips */
+:root:not([data-theme="dark"]) body.fog .date-pill{height:46px;border-radius:22px;border:1px solid #DCE1E9;background:var(--surface);color:var(--text);font-size:15.5px;font-weight:700}
+:root:not([data-theme="dark"]) body.fog .date-pill.is-selected{background:#D6DDEB;border:2px solid #B5C0D6;padding:0 12px;color:var(--text)}
+:root:not([data-theme="dark"]) body.fog .date-pill--empty{background:transparent;opacity:1;color:#6A7386}
+:root:not([data-theme="dark"]) body.fog .date-pill__dot{background:var(--accent)}
+:root:not([data-theme="dark"]) body.fog .date-pill__dot--done{background:#8790A3}
+:root:not([data-theme="dark"]) body.fog .date-pill__dot--cancelled{background:#D98A6B;opacity:1}
+:root:not([data-theme="dark"]) body.fog .date-pill__dot--request{background:#D9A23B}
+:root:not([data-theme="dark"]) body.fog .date-pill__n{background:var(--accent);color:var(--on-accent)}
+:root:not([data-theme="dark"]) body.fog .date-pill--post{height:46px;border-radius:22px;border:1px dashed #B5C0D6;color:var(--accent-text);opacity:1;font-size:15.5px}
+/* trip card (hero) */
+:root:not([data-theme="dark"]) body.fog .hero{border-radius:28px;padding:20px}
+:root:not([data-theme="dark"]) body.fog .hero-tear{margin:14px -20px 12px;border-top-color:rgba(86,96,121,.4)}
+:root:not([data-theme="dark"]) body.fog .hero-when__day,:root:not([data-theme="dark"]) body.fog .hero-when__ap,:root:not([data-theme="dark"]) body.fog .hero-route__sub,:root:not([data-theme="dark"]) body.fog .hero-stat__l{color:var(--hero-muted)}
+:root:not([data-theme="dark"]) body.fog .hero-route::before{border-left-color:var(--hero-muted)}
+:root:not([data-theme="dark"]) body.fog .hero-route__dot{border-color:var(--hero-text)}
+:root:not([data-theme="dark"]) body.fog .hero-route__dot--to,:root:not([data-theme="dark"]) body.fog .hero-route__dot--you{background:var(--hero-text)}
+:root:not([data-theme="dark"]) body.fog .hero-route__city{font-weight:700;color:var(--hero-text)}
+:root:not([data-theme="dark"]) body.fog .hero-pill{font-size:13.5px;font-weight:700;padding:5px 12px;border-radius:22px;background:var(--surface);color:var(--text)}
+:root:not([data-theme="dark"]) body.fog .hero-pill--active{background:var(--accent);color:var(--on-accent)}
+:root:not([data-theme="dark"]) body.fog .hero-pill--picked{background:var(--wa-bg);color:var(--success)}
+:root:not([data-theme="dark"]) body.fog .hero-pill--done{background:var(--surface);color:var(--text)}
+:root:not([data-theme="dark"]) body.fog .hero-pill--cancelled{background:#F6E1DC;color:var(--danger)}
+:root:not([data-theme="dark"]) body.fog .hero-chip{font-size:14.5px;font-weight:700;padding:5px 12px;border-radius:22px;background:var(--hero-chip);color:var(--hero-text)}
+:root:not([data-theme="dark"]) body.fog .sw{background:var(--surface);border:1px solid var(--border);color:var(--text)}
+/* cards: ride progress + trip details */
+:root:not([data-theme="dark"]) body.fog .card{background:var(--surface);border:1px solid var(--border);border-radius:28px;padding:18px 20px}
+:root:not([data-theme="dark"]) body.fog .card__title{font-size:13px;font-weight:600;letter-spacing:0;text-transform:none;color:var(--muted);margin:0 0 8px}
+:root:not([data-theme="dark"]) body.fog .prog__text{font-size:18px;font-weight:700;color:var(--text);margin-bottom:12px}
+:root:not([data-theme="dark"]) body.fog .prog__segs{gap:6px}
+:root:not([data-theme="dark"]) body.fog .prog__seg{height:8px;border-radius:4px;background:#C5CEE0}
+:root:not([data-theme="dark"]) body.fog .prog__seg.is-picked{background:var(--success)}
+:root:not([data-theme="dark"]) body.fog .card--driver{background:var(--surface)}
+:root:not([data-theme="dark"]) body.fog .card--driver .drv--in{background:var(--surface-2);border-radius:20px;padding:6px 8px 6px 12px}
+:root:not([data-theme="dark"]) body.fog .drv__name{font-weight:700;color:var(--text)}
+:root:not([data-theme="dark"]) body.fog .drv__role{color:var(--muted)}
+:root:not([data-theme="dark"]) body.fog .ic-btn{width:50px;height:50px;background:var(--surface);border:1px solid var(--border);color:var(--accent-text)}
+:root:not([data-theme="dark"]) body.fog .ic-btn[href^="https://wa.me"]{color:var(--wa-fg)}
+:root:not([data-theme="dark"]) body.fog .trip-route::before{border-left-color:var(--timeline)}
+:root:not([data-theme="dark"]) body.fog .trip-route__dot{border-color:var(--accent-text)}
+:root:not([data-theme="dark"]) body.fog .trip-route__stop:last-child .trip-route__dot{background:var(--accent-text)}
+:root:not([data-theme="dark"]) body.fog .trip-route__city{font-weight:700;color:var(--text)}
+:root:not([data-theme="dark"]) body.fog .trip-route__sub,:root:not([data-theme="dark"]) body.fog .bk-label{color:var(--muted)}
+:root:not([data-theme="dark"]) body.fog .bk-picked,:root:not([data-theme="dark"]) body.fog .kv dd.ok{color:var(--success);font-weight:700}
+/* bottom action bar (not the loading placeholder) */
+:root:not([data-theme="dark"]) body.fog .action-bar:not(.action-bar--ph){background:var(--page);border-top:1px solid var(--border)}
+:root:not([data-theme="dark"]) body.fog .action-bar:not(.action-bar--ph) .btn{min-height:54px;border-radius:18px;font-size:16px;font-weight:700}
+:root:not([data-theme="dark"]) body.fog .action-bar:not(.action-bar--ph) .btn-secondary{background:var(--surface);border:1px solid var(--border)}
+:root:not([data-theme="dark"]) body.fog .action-bar:not(.action-bar--ph) .btn-secondary.btn-danger-text{color:var(--danger)}
+:root:not([data-theme="dark"]) body.fog .action-bar:not(.action-bar--ph) .btn-secondary:not(.btn-danger-text){background:var(--accent);color:var(--on-accent);border:0}
+/* misc states */
+:root:not([data-theme="dark"]) body.fog .toast{background:#1C2333}
+:root:not([data-theme="dark"]) body.fog .pf-avatar{color:var(--on-accent)}
+:root:not([data-theme="dark"]) body.fog .legal-foot,:root:not([data-theme="dark"]) body.fog .legal-foot a{color:var(--muted)}
+}
+@media (prefers-color-scheme: dark){
+:root[data-theme="light"] body.fog{--page:#ECEFF3;--surface:#F8F9FB;--surface-2:#EEF1F6;--border:#E1E6EE;--muted:#5B6475;--hero-muted:#566079;--accent:#F4A673;--on-accent:#2A1406;--accent-text:#9A4A1A;--success:#2F7D5B;--wa-bg:#E3F1EA;--wa-fg:#2F7D5B;--timeline:#9AA6BD;
+  --header:#ECEFF3;--header-text:#1C2333;--header-sub:#5B6475;--primary:#9A4A1A;--cta:#F4A673;--cta-text:#2A1406;--cta-hover:#EF9858;
+  --bg:#ECEFF3;--card:#F8F9FB;--muted-card:#EEF1F6;--text:#1C2333;--text-2:#5B6475;--divider:#E1E6EE;
+  --chip-soft:#E8ECF4;--chip-soft-text:#1C2333;--danger:#B4412C;--ok:#2F7D5B;--ok-soft:#E3F1EA;--warn:#9A4A1A;--warn-soft:#FBE9DC;--bad-soft:#F6E1DC;
+  --hero-bg:#D7DEEC;--hero-text:#1C2333;--hero-chip:#E8ECF4;--overlay:rgba(28,35,51,.4);--shadow:none;--sel-bg:#D6DDEB;--sel-border:#B5C0D6;
+  font-family:'Urbanist',system-ui,sans-serif}
+/* header */
+:root[data-theme="light"] body.fog .hd-avatar{width:44px;height:44px;background:var(--surface);color:var(--text);border:1px solid #DCE1E9}
+:root[data-theme="light"] body.fog .hd-name{font-weight:700;color:var(--text)}
+:root[data-theme="light"] body.fog .hd-sub{font-size:14px;letter-spacing:0;color:var(--muted)}
+:root[data-theme="light"] body.fog .bell-btn,:root[data-theme="light"] body.fog .hd-explore{width:48px;height:48px;background:var(--surface);border:1px solid #DCE1E9;color:var(--text)}
+:root[data-theme="light"] body.fog .bell-btn.is-off{background:var(--surface);color:var(--text)}
+:root[data-theme="light"] body.fog .hd-post{width:48px;height:48px;background:var(--accent);color:var(--on-accent)}
+/* date chips */
+:root[data-theme="light"] body.fog .date-pill{height:46px;border-radius:22px;border:1px solid #DCE1E9;background:var(--surface);color:var(--text);font-size:15.5px;font-weight:700}
+:root[data-theme="light"] body.fog .date-pill.is-selected{background:#D6DDEB;border:2px solid #B5C0D6;padding:0 12px;color:var(--text)}
+:root[data-theme="light"] body.fog .date-pill--empty{background:transparent;opacity:1;color:#6A7386}
+:root[data-theme="light"] body.fog .date-pill__dot{background:var(--accent)}
+:root[data-theme="light"] body.fog .date-pill__dot--done{background:#8790A3}
+:root[data-theme="light"] body.fog .date-pill__dot--cancelled{background:#D98A6B;opacity:1}
+:root[data-theme="light"] body.fog .date-pill__dot--request{background:#D9A23B}
+:root[data-theme="light"] body.fog .date-pill__n{background:var(--accent);color:var(--on-accent)}
+:root[data-theme="light"] body.fog .date-pill--post{height:46px;border-radius:22px;border:1px dashed #B5C0D6;color:var(--accent-text);opacity:1;font-size:15.5px}
+/* trip card (hero) */
+:root[data-theme="light"] body.fog .hero{border-radius:28px;padding:20px}
+:root[data-theme="light"] body.fog .hero-tear{margin:14px -20px 12px;border-top-color:rgba(86,96,121,.4)}
+:root[data-theme="light"] body.fog .hero-when__day,:root[data-theme="light"] body.fog .hero-when__ap,:root[data-theme="light"] body.fog .hero-route__sub,:root[data-theme="light"] body.fog .hero-stat__l{color:var(--hero-muted)}
+:root[data-theme="light"] body.fog .hero-route::before{border-left-color:var(--hero-muted)}
+:root[data-theme="light"] body.fog .hero-route__dot{border-color:var(--hero-text)}
+:root[data-theme="light"] body.fog .hero-route__dot--to,:root[data-theme="light"] body.fog .hero-route__dot--you{background:var(--hero-text)}
+:root[data-theme="light"] body.fog .hero-route__city{font-weight:700;color:var(--hero-text)}
+:root[data-theme="light"] body.fog .hero-pill{font-size:13.5px;font-weight:700;padding:5px 12px;border-radius:22px;background:var(--surface);color:var(--text)}
+:root[data-theme="light"] body.fog .hero-pill--active{background:var(--accent);color:var(--on-accent)}
+:root[data-theme="light"] body.fog .hero-pill--picked{background:var(--wa-bg);color:var(--success)}
+:root[data-theme="light"] body.fog .hero-pill--done{background:var(--surface);color:var(--text)}
+:root[data-theme="light"] body.fog .hero-pill--cancelled{background:#F6E1DC;color:var(--danger)}
+:root[data-theme="light"] body.fog .hero-chip{font-size:14.5px;font-weight:700;padding:5px 12px;border-radius:22px;background:var(--hero-chip);color:var(--hero-text)}
+:root[data-theme="light"] body.fog .sw{background:var(--surface);border:1px solid var(--border);color:var(--text)}
+/* cards: ride progress + trip details */
+:root[data-theme="light"] body.fog .card{background:var(--surface);border:1px solid var(--border);border-radius:28px;padding:18px 20px}
+:root[data-theme="light"] body.fog .card__title{font-size:13px;font-weight:600;letter-spacing:0;text-transform:none;color:var(--muted);margin:0 0 8px}
+:root[data-theme="light"] body.fog .prog__text{font-size:18px;font-weight:700;color:var(--text);margin-bottom:12px}
+:root[data-theme="light"] body.fog .prog__segs{gap:6px}
+:root[data-theme="light"] body.fog .prog__seg{height:8px;border-radius:4px;background:#C5CEE0}
+:root[data-theme="light"] body.fog .prog__seg.is-picked{background:var(--success)}
+:root[data-theme="light"] body.fog .card--driver{background:var(--surface)}
+:root[data-theme="light"] body.fog .card--driver .drv--in{background:var(--surface-2);border-radius:20px;padding:6px 8px 6px 12px}
+:root[data-theme="light"] body.fog .drv__name{font-weight:700;color:var(--text)}
+:root[data-theme="light"] body.fog .drv__role{color:var(--muted)}
+:root[data-theme="light"] body.fog .ic-btn{width:50px;height:50px;background:var(--surface);border:1px solid var(--border);color:var(--accent-text)}
+:root[data-theme="light"] body.fog .ic-btn[href^="https://wa.me"]{color:var(--wa-fg)}
+:root[data-theme="light"] body.fog .trip-route::before{border-left-color:var(--timeline)}
+:root[data-theme="light"] body.fog .trip-route__dot{border-color:var(--accent-text)}
+:root[data-theme="light"] body.fog .trip-route__stop:last-child .trip-route__dot{background:var(--accent-text)}
+:root[data-theme="light"] body.fog .trip-route__city{font-weight:700;color:var(--text)}
+:root[data-theme="light"] body.fog .trip-route__sub,:root[data-theme="light"] body.fog .bk-label{color:var(--muted)}
+:root[data-theme="light"] body.fog .bk-picked,:root[data-theme="light"] body.fog .kv dd.ok{color:var(--success);font-weight:700}
+/* bottom action bar (not the loading placeholder) */
+:root[data-theme="light"] body.fog .action-bar:not(.action-bar--ph){background:var(--page);border-top:1px solid var(--border)}
+:root[data-theme="light"] body.fog .action-bar:not(.action-bar--ph) .btn{min-height:54px;border-radius:18px;font-size:16px;font-weight:700}
+:root[data-theme="light"] body.fog .action-bar:not(.action-bar--ph) .btn-secondary{background:var(--surface);border:1px solid var(--border)}
+:root[data-theme="light"] body.fog .action-bar:not(.action-bar--ph) .btn-secondary.btn-danger-text{color:var(--danger)}
+:root[data-theme="light"] body.fog .action-bar:not(.action-bar--ph) .btn-secondary:not(.btn-danger-text){background:var(--accent);color:var(--on-accent);border:0}
+/* misc states */
+:root[data-theme="light"] body.fog .toast{background:#1C2333}
+:root[data-theme="light"] body.fog .pf-avatar{color:var(--on-accent)}
+:root[data-theme="light"] body.fog .legal-foot,:root[data-theme="light"] body.fog .legal-foot a{color:var(--muted)}
+}
+/* ===== end Fog & Apricot ===== */
 </style>
 </head>
-<body>
+<body class="fog">
 
 <div class="app" id="app"></div>
 <div class="sheet-layer" id="sheetLayer"><div class="sheet-backdrop" data-action="close-sheet"></div><div class="sheet" id="sheetBody"></div></div>
